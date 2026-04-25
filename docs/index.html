@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finviz Theme Tracker</title>
+  <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+  <header>
+    <h1>Finviz Theme Tracker</h1>
+    <div class="header-controls">
+      <span id="fetch-time" class="fetch-time" data-i18n="notLoaded">— noch nicht geladen —</span>
+      <button id="lang-btn" class="btn-lang">EN</button>
+    </div>
+  </header>
+
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="heatmap" data-i18n="tabHeatmap">Heatmap</button>
+    <button class="tab-btn" data-tab="picks" data-i18n="tabPicks">&#9733; Setup Picks</button>
+    <button class="tab-btn" data-tab="top10" data-i18n="tabTop10">Top 10</button>
+  </nav>
+
+  <main>
+    <section class="section-heatmap tab-panel" data-panel="heatmap">
+      <h2 data-i18n="heatmapTitle">Industry Heatmap</h2>
+      <div id="loading" class="loading" data-i18n="loading">Daten werden geladen…</div>
+      <div id="error-msg" class="error hidden"></div>
+      <div class="table-scroll">
+        <table id="heatmap-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th data-col="industry" data-label="Industry" data-i18n="colIndustry">Industry</th>
+              <th data-col="1D" data-label="1D">1D</th>
+              <th data-col="1W" data-label="1W">1W</th>
+              <th data-col="1M" data-label="1M">1M</th>
+              <th data-col="3M" data-label="3M">3M</th>
+              <th data-col="YTD" data-label="YTD">YTD</th>
+              <th data-col="score" data-label="Score" data-i18n="colScore">Score ▲</th>
+              <th data-col="accel" data-label="Accel" data-i18n="colAccel">Accel</th>
+              <th data-i18n="colTrend">Trend</th>
+            </tr>
+          </thead>
+          <tbody id="heatmap-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section-picks tab-panel hidden" data-panel="picks">
+      <h2 data-i18n="picksTitle">&#9733; Setup Picks — First Flag</h2>
+      <p class="picks-subtitle" data-i18n="picksSubtitle">Industries mit positivem Momentum-Profil für den First-Flag-Breakout-Trade.</p>
+      <div id="picks-container"></div>
+    </section>
+
+    <section class="section-top10 tab-panel hidden" data-panel="top10">
+      <h2 data-i18n="top10Title">Top 10 per Zeitraum</h2>
+      <div class="cards-row" id="cards-row"></div>
+    </section>
+  </main>
+
+  <script src="static/app.js"></script>
+</body>
+</html>
