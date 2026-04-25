@@ -54,8 +54,33 @@
     </section>
 
     <section class="section-top10 tab-panel hidden" data-panel="top10">
+      <!-- Top 10 per Timeframe -->
       <h2 data-i18n="top10Title">Top 10 per Zeitraum</h2>
       <div class="cards-row" id="cards-row"></div>
+
+      <!-- Movers -->
+      <div class="movers-section">
+        <div class="movers-header">
+          <h2 data-i18n="moversTitle">Where is the Puck going?</h2>
+          <div class="period-selector">
+            <button class="period-btn active" data-days="7">1W</button>
+            <button class="period-btn" data-days="14">2W</button>
+            <button class="period-btn" data-days="30">1M</button>
+            <button class="period-btn" data-days="90">3M</button>
+          </div>
+        </div>
+        <p class="picks-subtitle" data-i18n="moversSubtitle">Rank-Veränderung seit dem gewählten Zeitraum. Je größer der Sprung, desto stärker das Momentum.</p>
+        <div class="movers-grid" id="movers-grid">
+          <div class="movers-col">
+            <div class="movers-col-header movers-rising-header">🚀 <span data-i18n="moversRising">Rising — Puck kommt hier an</span></div>
+            <div id="movers-rising"></div>
+          </div>
+          <div class="movers-col">
+            <div class="movers-col-header movers-fading-header">🔻 <span data-i18n="moversFading">Fading — Puck verlässt</span></div>
+            <div id="movers-fading"></div>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 

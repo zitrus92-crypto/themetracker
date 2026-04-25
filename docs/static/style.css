@@ -147,3 +147,34 @@ svg.sparkline { display: block; }
 .pick-empty { color: var(--text-dim); text-align: center; padding: 40px; font-size: 14px; }
 .pick-link { color: var(--accent); text-decoration: none; font-weight: 600; }
 .pick-link:hover { text-decoration: underline; }
+
+/* Movers */
+.movers-section { margin-top: 40px; }
+.movers-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 12px; }
+.movers-header h2 { margin-bottom: 0; }
+.period-selector { display: flex; gap: 6px; }
+.period-btn {
+  background: var(--bg3); border: 1px solid var(--border); color: var(--text-dim);
+  padding: 4px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
+  transition: background 0.15s, color 0.15s;
+}
+.period-btn:hover:not(:disabled) { color: var(--text); border-color: var(--accent); }
+.period-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+.period-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.movers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+@media (max-width: 700px) { .movers-grid { grid-template-columns: 1fr; } }
+.movers-col { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.movers-col-header { padding: 10px 16px; font-size: 13px; font-weight: 700; border-bottom: 1px solid var(--border); }
+.movers-rising-header { color: #39d353; background: #0d1f12; }
+.movers-fading-header { color: var(--red-2); background: #1f0d0d; }
+.mover-compare { font-size: 11px; color: var(--text-dim); padding: 6px 16px 4px; }
+.mover-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 16px; border-bottom: 1px solid var(--border);
+}
+.mover-row:last-child { border-bottom: none; }
+.mover-rank { font-size: 11px; color: var(--text-dim); min-width: 32px; }
+.mover-name { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mover-delta-pos { font-size: 13px; font-weight: 700; color: #39d353; min-width: 44px; text-align: right; }
+.mover-delta-neg { font-size: 13px; font-weight: 700; color: var(--red-2); min-width: 44px; text-align: right; }
+.mover-delta-neu { font-size: 13px; color: var(--text-dim); min-width: 44px; text-align: right; }

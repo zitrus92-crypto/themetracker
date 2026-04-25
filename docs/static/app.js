@@ -29,6 +29,12 @@ const I18N = {
     reasonSteady: ()         => `Gleichmäßig stark über 1W/1M — konsistentes Sektoren-Momentum.`,
     reasonAccel:  (acc)      => `Starke Beschleunigung (Accel +${acc}) deutet auf frisches institutionelles Interesse hin.`,
     reasonIntraday: (p1d)    => `Intraday +${p1d}% — Breakout läuft heute bereits.`,
+    moversTitle:  "Where is the Puck going?",
+    moversSubtitle: "Rank-Veränderung seit dem gewählten Zeitraum. Je größer der Sprung, desto stärker das Momentum.",
+    moversRising: "Rising — Puck kommt hier an",
+    moversFading: "Fading — Puck verlässt",
+    moversNoData: (period) => `Noch nicht genug Daten für ${period}. Bitte warte bis genug tägliche Snapshots gesammelt wurden.`,
+    moversCompare:(date) => `vs. ${date}`,
   },
   en: {
     notLoaded:    "— not yet loaded —",
@@ -56,6 +62,12 @@ const I18N = {
     reasonSteady: ()         => `Consistently strong across 1W/1M — steady sector momentum.`,
     reasonAccel:  (acc)      => `Strong acceleration (Accel +${acc}) suggests fresh institutional interest.`,
     reasonIntraday: (p1d)    => `Intraday +${p1d}% — breakout already running today.`,
+    moversTitle:  "Where is the Puck going?",
+    moversSubtitle: "Rank change since the selected period. The bigger the jump, the stronger the momentum.",
+    moversRising: "Rising — Puck heading here",
+    moversFading: "Fading — Puck leaving",
+    moversNoData: (period) => `Not enough data for ${period} yet. Wait until enough daily snapshots are collected.`,
+    moversCompare:(date) => `vs. ${date}`,
   },
 };
 
@@ -79,6 +91,7 @@ function applyTranslations() {
   document.documentElement.lang = _lang;
   document.getElementById("lang-btn").textContent = _lang === "de" ? "EN" : "DE";
   if (_lastPayload) renderAll(_lastPayload);
+  if (_lastHistory) renderMovers(_lastHistory, _activePeriodDays);
 }
 
 // --- Finviz link ---
@@ -230,6 +243,117 @@ function renderCards(industries) {
   container.innerHTML = cards.join("");
 }
 
+// --- Movers ---
+let _lastHistory = null;
+let _activePeriodDays = 7;
+
+function computeMovers(history, periodDays) {
+  if (!history || history.length < 2) return null;
+
+  const today = history[history.length - 1];
+  const todayDate = new Date(today.date);
+  const cutoff = new Date(todayDate.getTime() - periodDays * 24 * 60 * 60 * 1000);
+
+  // Find closest snapshot at or before cutoff
+  let past = null;
+  for (let i = history.length - 2; i >= 0; i--) {
+    if (new Date(history[i].date) <= cutoff) {
+      past = history[i];
+      break;
+    }
+  }
+  if (!past) return null;
+
+  // Derive composite ranks (lower composite = better rank = lower number)
+  const rankOf = (scores) => {
+    const sorted = Object.entries(scores).sort(([, a], [, b]) => a.c - b.c);
+    return Object.fromEntries(sorted.map(([n], i) => [n, i + 1]));
+  };
+
+  const todayRanks = rankOf(today.scores);
+  const pastRanks  = rankOf(past.scores);
+
+  const deltas = Object.keys(todayRanks)
+    .filter(n => pastRanks[n] !== undefined)
+    .map(name => ({
+      name,
+      delta:     pastRanks[name] - todayRanks[name], // positive = rose in rank
+      todayRank: todayRanks[name],
+      ticker:    today.scores[name]?.t ?? "",
+    }));
+
+  return {
+    rising:   [...deltas].sort((a, b) => b.delta - a.delta).slice(0, 10),
+    fading:   [...deltas].sort((a, b) => a.delta - b.delta).slice(0, 10),
+    pastDate: past.date,
+  };
+}
+
+function moverRow(item) {
+  const url = finvizUrl(item.ticker);
+  const nameEl = url
+    ? `<a class="pick-link mover-name" href="${url}" target="_blank" rel="noopener">${item.name} ↗</a>`
+    : `<span class="mover-name">${item.name}</span>`;
+  const sign = item.delta > 0 ? "+" : "";
+  const cls  = item.delta > 0 ? "mover-delta-pos" : item.delta < 0 ? "mover-delta-neg" : "mover-delta-neu";
+  return `<div class="mover-row">
+    <span class="mover-rank">#${item.todayRank}</span>
+    ${nameEl}
+    <span class="${cls}">${sign}${item.delta}</span>
+  </div>`;
+}
+
+function renderMovers(history, periodDays) {
+  const risingEl = document.getElementById("movers-rising");
+  const fadingEl = document.getElementById("movers-fading");
+  if (!risingEl || !fadingEl) return;
+
+  const periodLabel = document.querySelector(`.period-btn[data-days="${periodDays}"]`)?.textContent || "";
+  const result = computeMovers(history, periodDays);
+
+  if (!result) {
+    const msg = `<p class="pick-empty">${t("moversNoData", periodLabel)}</p>`;
+    risingEl.innerHTML = msg;
+    fadingEl.innerHTML = msg;
+    return;
+  }
+
+  const compareNote = `<div class="mover-compare">${t("moversCompare", result.pastDate)}</div>`;
+  risingEl.innerHTML = compareNote + result.rising.map(moverRow).join("");
+  fadingEl.innerHTML = compareNote + result.fading.map(moverRow).join("");
+}
+
+function updatePeriodButtons(history) {
+  const btns = document.querySelectorAll(".period-btn");
+  let lastAvailable = null;
+
+  btns.forEach(btn => {
+    const days = parseInt(btn.dataset.days);
+    const available = computeMovers(history, days) !== null;
+    btn.disabled = !available;
+    if (available) lastAvailable = btn;
+  });
+
+  // If current active period got disabled, switch to longest available
+  const activeBtn = document.querySelector(".period-btn.active");
+  if (activeBtn && activeBtn.disabled && lastAvailable) {
+    document.querySelectorAll(".period-btn").forEach(b => b.classList.remove("active"));
+    lastAvailable.classList.add("active");
+    _activePeriodDays = parseInt(lastAvailable.dataset.days);
+  }
+}
+
+function initPeriodSelector() {
+  document.querySelectorAll(".period-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".period-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      _activePeriodDays = parseInt(btn.dataset.days);
+      if (_lastHistory) renderMovers(_lastHistory, _activePeriodDays);
+    });
+  });
+}
+
 // --- Setup Picks ---
 function buildReason(perfs, accel) {
   const tags = [];
@@ -353,17 +477,29 @@ function initTabs() {
 
 initTabs();
 initSortHeaders();
+initPeriodSelector();
 
-// --- Load data from static JSON ---
+// --- Load data ---
 (async () => {
   const loading = document.getElementById("loading");
   const errorEl = document.getElementById("error-msg");
   try {
-    const res = await fetch("data.json");
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const payload = await res.json();
+    // Load current snapshot and history in parallel
+    const [dataRes, histRes] = await Promise.all([
+      fetch("data.json"),
+      fetch("history.json"),
+    ]);
+
+    if (!dataRes.ok) throw new Error(`data.json: HTTP ${dataRes.status}`);
+    const payload = await dataRes.json();
     loading.classList.add("hidden");
     renderAll(payload);
+
+    if (histRes.ok) {
+      _lastHistory = await histRes.json();
+      updatePeriodButtons(_lastHistory);
+      renderMovers(_lastHistory, _activePeriodDays);
+    }
   } catch (err) {
     loading.classList.add("hidden");
     errorEl.textContent = "Fehler beim Laden der Daten: " + err.message;
