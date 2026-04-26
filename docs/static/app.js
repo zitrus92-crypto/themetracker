@@ -100,6 +100,14 @@ function applyTranslations() {
   if (_lastHistory) renderMovers(_lastHistory, _activePeriodDays);
 }
 
+// --- INST helper ---
+function isInst(row) {
+  return (row.ranks?.["1M"] ?? 999) <= 40 && (row.ranks?.["3M"] ?? 999) <= 40;
+}
+function instTag() {
+  return `<span class="pick-tag tag-inst" style="font-size:10px;padding:1px 5px;vertical-align:middle">${t("tagInst")}</span>`;
+}
+
 // --- Finviz link ---
 function finvizUrl(ticker) {
   if (!ticker) return "";
@@ -194,9 +202,10 @@ function renderHeatmap(industries) {
     const nameCell = url
       ? `<a class="pick-link" href="${url}" target="_blank" rel="noopener">${name} ↗</a>`
       : name;
+    const instMark = isInst(row) ? " " + instTag() : "";
     return `<tr>
       <td>${idx + 1}</td>
-      <td title="${name}">${nameCell}</td>
+      <td title="${name}">${nameCell}${instMark}</td>
       ${perfCells}
       <td>${row.composite.toFixed(2)}</td>
       <td class="${accelCls}">${accelStr}</td>
@@ -238,9 +247,10 @@ function renderCards(industries) {
       const nameEl = url
         ? `<a class="card-name pick-link" href="${url}" target="_blank" rel="noopener" title="${name}">${name}</a>`
         : `<span class="card-name" title="${name}">${name}</span>`;
+      const instMark = isInst(row) ? " " + instTag() : "";
       return `<div class="card-row">
         <span class="card-rank">${i + 1}</span>
-        ${nameEl}
+        ${nameEl}${instMark}
         <span class="badge ${v >= 0 ? "badge-pos" : "badge-neg"}">${fmtPct(v)}</span>
       </div>`;
     }).join("");
@@ -272,8 +282,9 @@ function renderBarChart(industries) {
       const nameEl = url
         ? `<a class="pick-link bar-label" href="${url}" target="_blank" rel="noopener">${name}</a>`
         : `<span class="bar-label">${name}</span>`;
+      const instMark = isInst(row) ? " " + instTag() : "";
       return `<div class="bar-row">
-        ${nameEl}
+        <span class="bar-name-wrap">${nameEl}${instMark}</span>
         <div class="bar-track"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div>
         <span class="bar-value ${v >= 0 ? "accel-pos" : "accel-neg"}">${fmtPct(v)}</span>
       </div>`;
@@ -363,11 +374,12 @@ function moverRow(item) {
   const nameEl = url
     ? `<a class="pick-link mover-name" href="${url}" target="_blank" rel="noopener">${item.name} ↗</a>`
     : `<span class="mover-name">${item.name}</span>`;
+  const instMark = (_lastIndustries?.[item.name] && isInst(_lastIndustries[item.name])) ? " " + instTag() : "";
   const sign = item.delta > 0 ? "+" : "";
   const cls  = item.delta > 0 ? "mover-delta-pos" : item.delta < 0 ? "mover-delta-neg" : "mover-delta-neu";
   return `<div class="mover-row">
     <span class="mover-rank">#${item.todayRank}</span>
-    ${nameEl}
+    ${nameEl}${instMark}
     <span class="${cls}">${sign}${item.delta}</span>
   </div>`;
 }
