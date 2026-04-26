@@ -144,9 +144,45 @@ svg.sparkline { display: block; }
 .tag-hot   { background: #0d4429; color: #39d353; }
 .tag-accel { background: #1a2a4a; color: #58a6ff; }
 .tag-fresh { background: #2a1a00; color: #e3a227; }
+.tag-inst  { background: #1a0d4a; color: #b794f4; }
 .pick-empty { color: var(--text-dim); text-align: center; padding: 40px; font-size: 14px; }
 .pick-link { color: var(--accent); text-decoration: none; font-weight: 600; }
 .pick-link:hover { text-decoration: underline; }
+
+/* Top 10 header + view toggle */
+.top10-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+.top10-header h2 { margin-bottom: 0; }
+.view-toggle { display: flex; gap: 6px; }
+.view-btn {
+  background: var(--bg3); border: 1px solid var(--border); color: var(--text-dim);
+  padding: 4px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
+  transition: background 0.15s, color 0.15s;
+}
+.view-btn:hover { color: var(--text); border-color: var(--accent); }
+.view-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+/* Bar Chart */
+.barchart-panel { margin-bottom: 32px; }
+.barchart-title {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+  color: var(--text-dim); text-transform: uppercase;
+  padding: 10px 0 8px; border-bottom: 1px solid var(--border); margin-bottom: 4px;
+}
+.bar-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 3px 0; border-bottom: 1px solid rgba(48,54,61,0.4);
+}
+.bar-label {
+  width: 220px; min-width: 220px; font-size: 12px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--text); text-decoration: none;
+}
+.bar-label:hover { color: var(--accent); }
+.bar-track { flex: 1; height: 14px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s ease; }
+.bar-fill-pos { background: #26a641; }
+.bar-fill-neg { background: var(--red-3); }
+.bar-value { width: 64px; text-align: right; font-size: 12px; font-weight: 600; white-space: nowrap; }
 
 /* Movers */
 .movers-section { margin-top: 40px; }

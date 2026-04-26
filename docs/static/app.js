@@ -35,6 +35,9 @@ const I18N = {
     moversFading: "Fading — Puck verlässt",
     moversNoData: (period) => `Noch nicht genug Daten für ${period}. Bitte warte bis genug tägliche Snapshots gesammelt wurden.`,
     moversCompare:(date) => `vs. ${date}`,
+    viewCards:    "📊 Karten",
+    viewBars:     "📈 Balken",
+    tagInst:      "INST",
   },
   en: {
     notLoaded:    "— not yet loaded —",
@@ -68,6 +71,9 @@ const I18N = {
     moversFading: "Fading — Puck leaving",
     moversNoData: (period) => `Not enough data for ${period} yet. Wait until enough daily snapshots are collected.`,
     moversCompare:(date) => `vs. ${date}`,
+    viewCards:    "📊 Cards",
+    viewBars:     "📈 Bar Chart",
+    tagInst:      "INST",
   },
 };
 
@@ -243,6 +249,69 @@ function renderCards(industries) {
   container.innerHTML = cards.join("");
 }
 
+// --- Bar Chart View ---
+let _top10View = "cards";
+
+function renderBarChart(industries) {
+  const container = document.getElementById("bars-view");
+  const entries = Object.entries(industries);
+  const TFS = ["1M", "3M"];
+
+  const panels = TFS.map(tf => {
+    const sorted = entries
+      .filter(([, row]) => row.perfs[tf] != null)
+      .sort(([, a], [, b]) => b.perfs[tf] - a.perfs[tf]);
+
+    const maxVal = Math.max(...sorted.map(([, r]) => Math.abs(r.perfs[tf])), 0.01);
+
+    const bars = sorted.map(([name, row]) => {
+      const v = row.perfs[tf];
+      const pct = Math.min(Math.abs(v) / maxVal * 100, 100).toFixed(1);
+      const cls = v >= 0 ? "bar-fill-pos" : "bar-fill-neg";
+      const url = finvizUrl(row.ticker);
+      const nameEl = url
+        ? `<a class="pick-link bar-label" href="${url}" target="_blank" rel="noopener">${name}</a>`
+        : `<span class="bar-label">${name}</span>`;
+      return `<div class="bar-row">
+        ${nameEl}
+        <div class="bar-track"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div>
+        <span class="bar-value ${v >= 0 ? "accel-pos" : "accel-neg"}">${fmtPct(v)}</span>
+      </div>`;
+    }).join("");
+
+    const months = tf === "1M" ? "1 MONTH" : "3 MONTH";
+    return `<div class="barchart-panel">
+      <div class="barchart-title">${months} PERFORMANCE</div>
+      <div class="barchart-body">${bars}</div>
+    </div>`;
+  });
+
+  container.innerHTML = panels.join("");
+}
+
+function renderTop10(industries) {
+  if (_top10View === "bars") {
+    document.getElementById("cards-row").classList.add("hidden");
+    document.getElementById("bars-view").classList.remove("hidden");
+    renderBarChart(industries);
+  } else {
+    document.getElementById("bars-view").classList.add("hidden");
+    document.getElementById("cards-row").classList.remove("hidden");
+    renderCards(industries);
+  }
+}
+
+function initViewToggle() {
+  document.querySelectorAll(".view-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".view-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      _top10View = btn.dataset.view;
+      if (_lastIndustries) renderTop10(_lastIndustries);
+    });
+  });
+}
+
 // --- Movers ---
 let _lastHistory = null;
 let _activePeriodDays = 7;
@@ -366,6 +435,9 @@ function buildReason(perfs, accel) {
   if (p1w >= 3 && p1m >= 5) tags.push(`<span class="pick-tag tag-hot">${t("tagHot")}</span>`);
   if (accel >= 20)           tags.push(`<span class="pick-tag tag-accel">${t("tagAccel")}</span>`);
   if (p3m < 5 && p1w >= 2 && p1m >= 3) tags.push(`<span class="pick-tag tag-fresh">${t("tagFresh")}</span>`);
+  // INST: institutional confirmation — top 40 in both 1M and 3M (Ariel criterion)
+  if ((perfs._rank1M ?? 999) <= 40 && (perfs._rank3M ?? 999) <= 40)
+    tags.push(`<span class="pick-tag tag-inst">${t("tagInst")}</span>`);
 
   if (p3m < 5 && p1m >= 3)        lines.push(t("reasonFresh", (p3m >= 0 ? "+" : "") + p3m.toFixed(1), p1m.toFixed(1)));
   else if (p3m >= 5 && accel >= 10) lines.push(t("reasonSolid"));
@@ -418,7 +490,8 @@ function renderPicks(industries) {
     <div style="padding-left:12px">${t("picksColReason")}</div></div>`;
 
   const cards = candidates.map(([name, row]) => {
-    const p = row.perfs;
+    // Attach 1M/3M ranks so buildReason can detect INST badge
+    const p = { ...row.perfs, _rank1M: row.ranks["1M"], _rank3M: row.ranks["3M"] };
     const acc = row.acceleration;
     const accelCls = acc > 0 ? "accel-pos" : "accel-neg";
     const accelStr = acc > 0 ? `+${acc}` : `${acc}`;
@@ -452,7 +525,7 @@ function renderAll(payload) {
   if (!payload || !payload.industries || Object.keys(payload.industries).length === 0) return;
   _lastPayload = payload;
   renderHeatmap(payload.industries);
-  renderCards(payload.industries);
+  renderTop10(payload.industries);
   renderPicks(payload.industries);
   updateTimestamp(payload.fetched_at);
 }
@@ -478,6 +551,7 @@ function initTabs() {
 initTabs();
 initSortHeaders();
 initPeriodSelector();
+initViewToggle();
 
 // --- Load data ---
 (async () => {

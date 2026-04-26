@@ -55,8 +55,15 @@
 
     <section class="section-top10 tab-panel hidden" data-panel="top10">
       <!-- Top 10 per Timeframe -->
-      <h2 data-i18n="top10Title">Top 10 per Zeitraum</h2>
-      <div class="cards-row" id="cards-row"></div>
+      <div class="top10-header">
+        <h2 data-i18n="top10Title">Top 10 per Zeitraum</h2>
+        <div class="view-toggle">
+          <button class="view-btn active" data-view="cards" data-i18n="viewCards">📊 Karten</button>
+          <button class="view-btn" data-view="bars" data-i18n="viewBars">📈 Balken</button>
+        </div>
+      </div>
+      <div id="cards-row" class="cards-row"></div>
+      <div id="bars-view" class="hidden"></div>
 
       <!-- Movers -->
       <div class="movers-section">
