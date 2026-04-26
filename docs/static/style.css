@@ -123,6 +123,17 @@ svg.sparkline { display: block; }
 .error { color: var(--red-2); background: var(--red-5); padding: 12px 16px; border-radius: 6px; }
 .hidden { display: none !important; }
 
+/* Heatmap header + INST toggle */
+.heatmap-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.heatmap-header h2 { margin-bottom: 0; }
+.inst-toggle-btn {
+  background: var(--bg3); border: 1px solid var(--border); color: var(--text-dim);
+  padding: 4px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.inst-toggle-btn:hover { color: var(--text); border-color: #b794f4; }
+.inst-toggle-btn.active { background: #1a0d4a; color: #b794f4; border-color: #b794f4; }
+
 /* Setup Picks */
 .picks-subtitle { color: var(--text-dim); font-size: 13px; margin-bottom: 20px; margin-top: -8px; }
 .picks-grid { display: flex; flex-direction: column; gap: 10px; }

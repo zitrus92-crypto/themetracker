@@ -158,6 +158,7 @@ function buildSparkline(ranks, maxRank) {
 
 // --- Heatmap ---
 let _sortState = { col: "score", dir: 1 };
+let _instFilter = false;
 let _lastIndustries = null;
 let _lastPayload = null;
 
@@ -175,9 +176,10 @@ function sortedEntries(industries) {
 }
 
 function renderHeatmap(industries) {
-  _lastIndustries = industries;
+  _lastIndustries = industries; // always full dataset (Movers needs it)
   const tbody = document.getElementById("heatmap-body");
-  const sorted = sortedEntries(industries);
+  let sorted = sortedEntries(industries);
+  if (_instFilter) sorted = sorted.filter(([, row]) => isInst(row));
 
   document.querySelectorAll("#heatmap-table thead th[data-col]").forEach(th => {
     const col = th.dataset.col;
@@ -214,6 +216,15 @@ function renderHeatmap(industries) {
   });
 
   tbody.innerHTML = rows.join("") || `<tr><td colspan="10" class="empty-msg">${t("noData")}</td></tr>`;
+}
+
+function initInstToggle() {
+  const btn = document.getElementById("inst-toggle");
+  btn.addEventListener("click", () => {
+    _instFilter = !_instFilter;
+    btn.classList.toggle("active", _instFilter);
+    if (_lastIndustries) renderHeatmap(_lastIndustries);
+  });
 }
 
 function initSortHeaders() {
@@ -562,6 +573,7 @@ function initTabs() {
 
 initTabs();
 initSortHeaders();
+initInstToggle();
 initPeriodSelector();
 initViewToggle();
 
