@@ -38,6 +38,8 @@ const I18N = {
     viewCards:    "📊 Karten",
     viewBars:     "📈 Balken",
     tagInst:      "INST",
+    infoScore:    "Gewichteter Rang-Score: 1W×40% + 1M×35% + 1D×15% + 3M×10%. Niedriger = besser (Rang 1 = stärkste Industry).",
+    infoAccel:    "Beschleunigung = 3M-Rang minus 1W-Rang. Positiv (+) = Momentum steigt. Negativ (−) = Momentum lässt nach.",
   },
   en: {
     notLoaded:    "— not yet loaded —",
@@ -74,6 +76,8 @@ const I18N = {
     viewCards:    "📊 Cards",
     viewBars:     "📈 Bar Chart",
     tagInst:      "INST",
+    infoScore:    "Weighted rank score: 1W×40% + 1M×35% + 1D×15% + 3M×10%. Lower = better (rank 1 = strongest industry).",
+    infoAccel:    "Acceleration = 3M rank minus 1W rank. Positive (+) = momentum rising. Negative (−) = momentum fading.",
   },
 };
 
@@ -89,7 +93,7 @@ function applyTranslations() {
     if (key === "colScore") {
       const isActive = el.classList.contains("sort-active");
       const arrow = isActive ? (_sortState.dir === 1 ? " ▲" : " ▼") : (_sortState.col === "score" ? " ▲" : "");
-      el.textContent = t(key) + arrow;
+      el.innerHTML = t(key) + arrow + ` <span class="col-info" title="${t('infoScore')}">i</span>`;
     } else {
       el.textContent = t(key);
     }
@@ -188,7 +192,9 @@ function renderHeatmap(industries) {
     const i18nKey = "col" + col.charAt(0).toUpperCase() + col.slice(1);
     const label = I18N[_lang][i18nKey] !== undefined ? t(i18nKey) : (th.dataset.label || col);
     const arrow = isActive ? (_sortState.dir === 1 ? " ▲" : " ▼") : "";
-    th.textContent = label + arrow;
+    const tipKey = col === "score" ? "infoScore" : col === "accel" ? "infoAccel" : null;
+    const icon = tipKey ? ` <span class="col-info" title="${t(tipKey)}">i</span>` : "";
+    th.innerHTML = label + arrow + icon;
   });
 
   const maxRank = sorted.length;

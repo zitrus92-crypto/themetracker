@@ -76,6 +76,16 @@ tr:hover td { background: var(--bg3); }
 th[data-col]:hover { color: var(--accent); }
 th.sort-active { color: var(--accent); }
 
+.col-info {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 13px; height: 13px; border-radius: 50%;
+  border: 1px solid currentColor; color: var(--text-dim);
+  font-size: 9px; font-weight: 700; font-style: italic;
+  cursor: help; margin-left: 3px; vertical-align: middle;
+  line-height: 1; user-select: none;
+}
+.col-info:hover { color: var(--accent); border-color: var(--accent); }
+
 .perf-5  { background: var(--green-5); color: var(--green-2); }
 .perf-4  { background: var(--green-4); color: var(--green-1); }
 .perf-3  { background: #1a3320; color: var(--green-3); }
