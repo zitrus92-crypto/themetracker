@@ -40,6 +40,10 @@ const I18N = {
     tagInst:      "INST",
     infoScore:    "Gewichteter Rang-Score: 1M×70% + 1W×20% + 3M×10%. Niedriger = besser (Rang 1 = stärkste Industry).",
     infoAccel:    "Accel = 3M-Rang minus 1W-Rang. Hoch positiv = war vor 3M noch schwach, jetzt stark = erster Leg, nicht extended. Ideal fuer First-Flag-Setups.",
+    hintHeatmap:  "Score sortieren: Marktüberblick — welche Industries aktuell führen.\nAccel sortieren: First Flag Suche — frisches Momentum (3M schwach + 1W stark = erster Leg, nicht extended).\nINST-Filter: zeigt nur institutionell bestätigte Industries (Top 40 in 1M und 3M).\nKlick auf Spaltenkopf = sortieren, nochmal klicken = umkehren.",
+    hintPicks:    "Vorgefilterter First-Flag-Kandidatenliste: Score Top 40 + positiver Accel + 1W > 1% + 1M > 0%.\nSortierung: 60% Accel-Gewicht + 40% Score — frischeste Bewegungen zuerst.\nINST-Badge = institutionelles Kapital bestätigt die Industry = höchste Konfluenz.\nKlick auf Industry-Name öffnet Finviz-Screener mit passenden Filtern.",
+    hintTop10:    "Top 10 Performer pro Zeitraum — zeigt aktuelle Marktführer.\nKarten: kompakte Übersicht pro Zeitraum.\nBalken: alle Industries sortiert nach 1M und 3M Performance.\nINST-Badge zeigt institutionelles Interesse.",
+    hintMovers:   "Rang-Veränderung seit dem gewählten Zeitraum.\nRising: Industries die am stärksten gestiegen sind — frisches Kapital fließt ein. Hier suchen!\nFading: Industries die Ränge verloren haben — Kapital verlässt diesen Bereich. Meiden.\nZeitraum wählen: 1W / 2W / 1M / 3M (ausgegraut = noch nicht genug Daten).",
   },
   en: {
     notLoaded:    "— not yet loaded —",
@@ -78,6 +82,10 @@ const I18N = {
     tagInst:      "INST",
     infoScore:    "Weighted rank score: 1M×70% + 1W×20% + 3M×10%. Lower = better (rank 1 = strongest industry).",
     infoAccel:    "Accel = 3M rank minus 1W rank. High positive = was weak 3M ago, now strong = first leg, not extended. Ideal for First Flag setups.",
+    hintHeatmap:  "Sort by Score: market overview — which industries are currently leading.\nSort by Accel: First Flag search — fresh momentum (weak 3M + strong 1W = first leg, not extended).\nINST filter: shows only institutionally confirmed industries (Top 40 in 1M and 3M).\nClick any column header to sort, click again to reverse.",
+    hintPicks:    "Pre-filtered First Flag candidate list: Score Top 40 + positive Accel + 1W > 1% + 1M > 0%.\nSorted by: 60% Accel weight + 40% Score — freshest moves first.\nINST badge = institutional capital confirms the industry = highest confluence.\nClick any industry name to open Finviz screener with matching filters.",
+    hintTop10:    "Top 10 performers per timeframe — shows current market leaders.\nCards: compact overview per timeframe.\nBar chart: all industries sorted by 1M and 3M performance.\nINST badge shows institutional interest.",
+    hintMovers:   "Rank change since the selected period.\nRising: industries that climbed most in ranking — fresh capital flowing in. Look here!\nFading: industries that lost ranks — capital leaving. Avoid.\nSelect period: 1W / 2W / 1M / 3M (greyed out = not enough data yet).",
   },
 };
 
@@ -86,6 +94,12 @@ const t = (key, ...args) => {
   const val = I18N[_lang][key];
   return typeof val === "function" ? val(...args) : (val ?? key);
 };
+
+function initSectionHints() {
+  document.querySelectorAll(".section-hint[data-hint-key]").forEach(el => {
+    el.setAttribute("data-tip", t(el.dataset.hintKey));
+  });
+}
 
 function applyTranslations() {
   document.querySelectorAll("[data-i18n]").forEach(el => {
@@ -100,6 +114,7 @@ function applyTranslations() {
   });
   document.documentElement.lang = _lang;
   document.getElementById("lang-btn").textContent = _lang === "de" ? "EN" : "DE";
+  initSectionHints();
   if (_lastPayload) renderAll(_lastPayload);
   if (_lastHistory) renderMovers(_lastHistory, _activePeriodDays);
 }
@@ -580,6 +595,7 @@ function initTabs() {
 initTabs();
 initSortHeaders();
 initInstToggle();
+initSectionHints();
 initPeriodSelector();
 initViewToggle();
 

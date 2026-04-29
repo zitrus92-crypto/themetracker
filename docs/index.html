@@ -24,7 +24,10 @@
   <main>
     <section class="section-heatmap tab-panel" data-panel="heatmap">
       <div class="heatmap-header">
-        <h2 data-i18n="heatmapTitle">Industry Heatmap</h2>
+        <div class="heading-group">
+          <h2 data-i18n="heatmapTitle">Industry Heatmap</h2>
+          <span class="section-hint" data-hint-key="hintHeatmap">i</span>
+        </div>
         <button id="inst-toggle" class="inst-toggle-btn">🏛 INST only</button>
       </div>
       <div id="loading" class="loading" data-i18n="loading">Daten werden geladen…</div>
@@ -51,7 +54,10 @@
     </section>
 
     <section class="section-picks tab-panel hidden" data-panel="picks">
-      <h2 data-i18n="picksTitle">&#9733; Setup Picks — First Flag</h2>
+      <div class="heading-group">
+        <h2 data-i18n="picksTitle">&#9733; Setup Picks — First Flag</h2>
+        <span class="section-hint" data-hint-key="hintPicks">i</span>
+      </div>
       <p class="picks-subtitle" data-i18n="picksSubtitle">Industries mit positivem Momentum-Profil für den First-Flag-Breakout-Trade.</p>
       <div id="picks-container"></div>
     </section>
@@ -59,7 +65,10 @@
     <section class="section-top10 tab-panel hidden" data-panel="top10">
       <!-- Top 10 per Timeframe -->
       <div class="top10-header">
-        <h2 data-i18n="top10Title">Top 10 per Zeitraum</h2>
+        <div class="heading-group">
+          <h2 data-i18n="top10Title">Top 10 per Zeitraum</h2>
+          <span class="section-hint" data-hint-key="hintTop10">i</span>
+        </div>
         <div class="view-toggle">
           <button class="view-btn active" data-view="cards" data-i18n="viewCards">📊 Karten</button>
           <button class="view-btn" data-view="bars" data-i18n="viewBars">📈 Balken</button>
@@ -71,7 +80,10 @@
       <!-- Movers -->
       <div class="movers-section">
         <div class="movers-header">
-          <h2 data-i18n="moversTitle">Where is the Puck going?</h2>
+          <div class="heading-group">
+            <h2 data-i18n="moversTitle">Where is the Puck going?</h2>
+            <span class="section-hint" data-hint-key="hintMovers">i</span>
+          </div>
           <div class="period-selector">
             <button class="period-btn active" data-days="7">1W</button>
             <button class="period-btn" data-days="14">2W</button>
