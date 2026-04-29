@@ -38,7 +38,7 @@ const I18N = {
     viewCards:    "📊 Karten",
     viewBars:     "📈 Balken",
     tagInst:      "INST",
-    infoScore:    "Gewichteter Rang-Score: 1W×40% + 1M×35% + 1D×15% + 3M×10%. Niedriger = besser (Rang 1 = stärkste Industry).",
+    infoScore:    "Gewichteter Rang-Score: 1M×45% + 1W×35% + 3M×20%. Niedriger = besser (Rang 1 = stärkste Industry).",
     infoAccel:    "Beschleunigung = 3M-Rang minus 1W-Rang. Positiv (+) = Momentum steigt. Negativ (−) = Momentum lässt nach.",
   },
   en: {
@@ -76,7 +76,7 @@ const I18N = {
     viewCards:    "📊 Cards",
     viewBars:     "📈 Bar Chart",
     tagInst:      "INST",
-    infoScore:    "Weighted rank score: 1W×40% + 1M×35% + 1D×15% + 3M×10%. Lower = better (rank 1 = strongest industry).",
+    infoScore:    "Weighted rank score: 1M×45% + 1W×35% + 3M×20%. Lower = better (rank 1 = strongest industry).",
     infoAccel:    "Acceleration = 3M rank minus 1W rank. Positive (+) = momentum rising. Negative (−) = momentum fading.",
   },
 };
