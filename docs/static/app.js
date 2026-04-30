@@ -1,4 +1,5 @@
-const TIMEFRAMES = ["1D", "1W", "1M", "3M", "YTD"];
+const TIMEFRAMES     = ["1D", "1W", "1M", "3M", "YTD"];
+const ETF_TIMEFRAMES = ["1D", "1W", "1M", "3M", "YTD"];
 const SPARKLINE_ORDER = ["YTD", "3M", "1M", "1W", "1D"];
 
 // --- i18n ---
@@ -44,6 +45,13 @@ const I18N = {
     hintPicks:    "Vorgefilterter First-Flag-Kandidatenliste: Score Top 40 + positiver Accel + 1W > 1% + 1M > 0%.\nSortierung: 60% Accel-Gewicht + 40% Score — frischeste Bewegungen zuerst.\nINST-Badge = institutionelles Kapital bestätigt die Industry = höchste Konfluenz.\nKlick auf Industry-Name öffnet Finviz-Screener mit passenden Filtern.",
     hintTop10:    "Top 10 Performer pro Zeitraum — zeigt aktuelle Marktführer.\nKarten: kompakte Übersicht pro Zeitraum.\nBalken: alle Industries sortiert nach 1M und 3M Performance.\nINST-Badge zeigt institutionelles Interesse.",
     hintMovers:   "Rang-Veränderung seit dem gewählten Zeitraum.\nRising: Industries die am stärksten gestiegen sind — frisches Kapital fließt ein. Hier suchen!\nFading: Industries die Ränge verloren haben — Kapital verlässt diesen Bereich. Meiden.\nZeitraum wählen: 1W / 2W / 1M / 3M (ausgegraut = noch nicht genug Daten).",
+    tabEtfs:      "📈 ETF Themes",
+    etfTitle:     "Thematische ETF Heatmap",
+    etfViewThemes:"🎨 Themes",
+    etfViewEtfs:  "📊 Einzelne ETFs",
+    etfColEtfs:   "ETFs (P1)",
+    etfNoData:    "ETF-Daten werden geladen oder sind noch nicht verfügbar.",
+    hintEtfs:     "Thematische ETF-Performance über alle Zeitfenster.\nThemes-Ansicht: Aggregiert aus Priority-1 ETFs je Theme. Score = gewichteter Rank (1M×70%+1W×20%+3M×10%).\nETFs-Ansicht: Alle Einzel-ETFs sortierbar. Priorität 1 = Kern-ETF für das Theme.\nNutzung: Themes mit starkem 1M UND 3M Score = institutionell bestätigtes Momentum (wie Ariel-Kriterium).",
   },
   en: {
     notLoaded:    "— not yet loaded —",
@@ -86,6 +94,13 @@ const I18N = {
     hintPicks:    "Pre-filtered First Flag candidate list: Score Top 40 + positive Accel + 1W > 1% + 1M > 0%.\nSorted by: 60% Accel weight + 40% Score — freshest moves first.\nINST badge = institutional capital confirms the industry = highest confluence.\nClick any industry name to open Finviz screener with matching filters.",
     hintTop10:    "Top 10 performers per timeframe — shows current market leaders.\nCards: compact overview per timeframe.\nBar chart: all industries sorted by 1M and 3M performance.\nINST badge shows institutional interest.",
     hintMovers:   "Rank change since the selected period.\nRising: industries that climbed most in ranking — fresh capital flowing in. Look here!\nFading: industries that lost ranks — capital leaving. Avoid.\nSelect period: 1W / 2W / 1M / 3M (greyed out = not enough data yet).",
+    tabEtfs:      "📈 ETF Themes",
+    etfTitle:     "Thematic ETF Heatmap",
+    etfViewThemes:"🎨 Themes",
+    etfViewEtfs:  "📊 Individual ETFs",
+    etfColEtfs:   "ETFs (P1)",
+    etfNoData:    "ETF data loading or not yet available.",
+    hintEtfs:     "Thematic ETF performance across all timeframes.\nThemes view: aggregated from Priority-1 ETFs per theme. Score = weighted rank (1M×70%+1W×20%+3M×10%).\nETFs view: all individual ETFs, sortable. Priority 1 = core ETF for the theme.\nUsage: themes with strong 1M AND 3M score = institutionally confirmed momentum (Ariel criterion equivalent).",
   },
 };
 
@@ -592,22 +607,231 @@ function initTabs() {
   });
 }
 
+// ── ETF Themes Tab ────────────────────────────────────────────────────────────
+
+let _etfData       = null;
+let _etfView       = "themes";   // "themes" | "etfs"
+let _etfThemeSort  = { col: "score", dir: 1 };
+let _etfListSort   = { col: "score", dir: 1 };
+
+// Theme badge colours (cycle through a palette)
+const THEME_COLORS = {
+  "AI & Tech":      { bg: "#0d2240", fg: "#58a6ff" },
+  "Semiconductors": { bg: "#1a2a4a", fg: "#79c0ff" },
+  "Cybersecurity":  { bg: "#1a0d4a", fg: "#b794f4" },
+  "Digital Infra":  { bg: "#0d1a40", fg: "#6fa8dc" },
+  "Cloud & SaaS":   { bg: "#0d2830", fg: "#56d3d3" },
+  "Nuclear":        { bg: "#2a1a00", fg: "#e3a227" },
+  "Clean Energy":   { bg: "#0d2a0d", fg: "#39d353" },
+  "Infrastructure": { bg: "#1a2200", fg: "#8bc34a" },
+  "Defense":        { bg: "#2a1200", fg: "#ff8c42" },
+  "Biotech":        { bg: "#2a0d1a", fg: "#f78ca0" },
+  "EV & Mobility":  { bg: "#002a1a", fg: "#26c084" },
+  "Fintech":        { bg: "#1a2a0d", fg: "#aed581" },
+  "Materials":      { bg: "#2a1a0d", fg: "#ffab40" },
+  "Momentum":       { bg: "#0d2a2a", fg: "#4dd0e1" },
+  "Crypto":         { bg: "#2a1a00", fg: "#ffd700" },
+};
+
+function themeBadge(theme) {
+  const c = THEME_COLORS[theme] || { bg: "#1a1a2a", fg: "#8b949e" };
+  return `<span class="etf-theme-badge" style="background:${c.bg};color:${c.fg}">${theme}</span>`;
+}
+
+function priorityDot(p) {
+  const colors = { 1: "#39d353", 2: "#e3a227", 3: "#8b949e" };
+  return `<span class="etf-prio-dot" style="background:${colors[p] || '#8b949e'}" title="Priority ${p}"></span>`;
+}
+
+function etfYahooUrl(ticker) {
+  return `https://finance.yahoo.com/quote/${ticker}`;
+}
+
+// --- Themes table ---
+function renderEtfThemes(data) {
+  const tbody = document.getElementById("etf-themes-body");
+  if (!data || !data.themes) {
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-msg">${t("etfNoData")}</td></tr>`;
+    return;
+  }
+
+  // Update sort headers
+  document.querySelectorAll("#etf-themes-table thead th[data-etfcol]").forEach(th => {
+    const col = th.dataset.etfcol;
+    const isActive = col === _etfThemeSort.col;
+    th.classList.toggle("sort-active", isActive);
+    const arrow = isActive ? (_etfThemeSort.dir === 1 ? " ▲" : " ▼") : "";
+    if (col === "score") {
+      th.innerHTML = t("colScore") + arrow;
+    } else if (col === "theme") {
+      th.textContent = "Theme" + arrow;
+    } else {
+      th.textContent = (col === "theme" ? "Theme" : col) + arrow;
+    }
+  });
+
+  let entries = Object.entries(data.themes);
+  const { col, dir } = _etfThemeSort;
+  entries.sort(([na, a], [nb, b]) => {
+    if (col === "theme") return dir * na.localeCompare(nb);
+    if (col === "score") return dir * (a.score - b.score);
+    const va = a.perfs[col] ?? -Infinity;
+    const vb = b.perfs[col] ?? -Infinity;
+    return dir * (va - vb);
+  });
+
+  const rows = entries.map(([theme, row], idx) => {
+    const perfCells = ETF_TIMEFRAMES.map(tf =>
+      `<td class="${perfClass(row.perfs[tf])}">${fmtPct(row.perfs[tf])}</td>`
+    ).join("");
+
+    // P1 tickers as clickable chips
+    const etfChips = (row.etfs_p1 || []).map(tk => {
+      const url = etfYahooUrl(tk);
+      return `<a class="etf-ticker-chip" href="${url}" target="_blank" rel="noopener">${tk}</a>`;
+    }).join(" ");
+
+    const c = THEME_COLORS[theme] || { bg: "#1a1a2a", fg: "#8b949e" };
+    return `<tr>
+      <td>${idx + 1}</td>
+      <td style="text-align:left">
+        <span class="etf-theme-badge" style="background:${c.bg};color:${c.fg}">${theme}</span>
+      </td>
+      ${perfCells}
+      <td>${row.score.toFixed(1)}</td>
+      <td style="text-align:left">${etfChips}</td>
+    </tr>`;
+  });
+
+  tbody.innerHTML = rows.join("") || `<tr><td colspan="9" class="empty-msg">${t("etfNoData")}</td></tr>`;
+}
+
+// --- Individual ETFs table ---
+function renderEtfList(data) {
+  const tbody = document.getElementById("etf-list-body");
+  if (!data || !data.etfs) {
+    tbody.innerHTML = `<tr><td colspan="10" class="empty-msg">${t("etfNoData")}</td></tr>`;
+    return;
+  }
+
+  // Update sort headers
+  document.querySelectorAll("#etf-list-table thead th[data-etflistcol]").forEach(th => {
+    const col = th.dataset.etflistcol;
+    const isActive = col === _etfListSort.col;
+    th.classList.toggle("sort-active", isActive);
+    const arrow = isActive ? (_etfListSort.dir === 1 ? " ▲" : " ▼") : "";
+    if (col === "score") {
+      th.innerHTML = t("colScore") + arrow;
+    } else {
+      th.textContent = th.textContent.replace(/ [▲▼]$/, "") + arrow;
+    }
+  });
+
+  let entries = Object.entries(data.etfs);
+  const { col, dir } = _etfListSort;
+  entries.sort(([ta, a], [tb, b]) => {
+    if (col === "ticker") return dir * ta.localeCompare(tb);
+    if (col === "name")   return dir * a.name.localeCompare(b.name);
+    if (col === "theme")  return dir * a.theme.localeCompare(b.theme);
+    if (col === "score")  return dir * (a.score - b.score);
+    const va = a.perfs[col] ?? -Infinity;
+    const vb = b.perfs[col] ?? -Infinity;
+    return dir * (va - vb);
+  });
+
+  const rows = entries.map(([ticker, row], idx) => {
+    const perfCells = ETF_TIMEFRAMES.map(tf =>
+      `<td class="${perfClass(row.perfs[tf])}">${fmtPct(row.perfs[tf])}</td>`
+    ).join("");
+    const url = etfYahooUrl(ticker);
+    return `<tr>
+      <td>${idx + 1}</td>
+      <td>${priorityDot(row.priority)}<a class="pick-link" href="${url}" target="_blank" rel="noopener">${ticker}</a></td>
+      <td style="text-align:left;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${row.name}">${row.name}</td>
+      <td style="text-align:left">${themeBadge(row.theme)}</td>
+      ${perfCells}
+      <td>${row.score.toFixed(1)}</td>
+    </tr>`;
+  });
+
+  tbody.innerHTML = rows.join("") || `<tr><td colspan="10" class="empty-msg">${t("etfNoData")}</td></tr>`;
+}
+
+function renderEtfTab() {
+  if (!_etfData) return;
+  if (_etfView === "themes") {
+    document.getElementById("etf-themes-view").classList.remove("hidden");
+    document.getElementById("etf-etfs-view").classList.add("hidden");
+    renderEtfThemes(_etfData);
+  } else {
+    document.getElementById("etf-themes-view").classList.add("hidden");
+    document.getElementById("etf-etfs-view").classList.remove("hidden");
+    renderEtfList(_etfData);
+  }
+}
+
+function initEtfViewToggle() {
+  document.querySelectorAll(".etf-view-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".etf-view-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      _etfView = btn.dataset.etfview;
+      renderEtfTab();
+    });
+  });
+}
+
+function initEtfSortHeaders() {
+  // Theme table sort
+  document.querySelectorAll("#etf-themes-table thead th[data-etfcol]").forEach(th => {
+    th.style.cursor = "pointer";
+    th.addEventListener("click", () => {
+      const col = th.dataset.etfcol;
+      if (_etfThemeSort.col === col) {
+        _etfThemeSort.dir *= -1;
+      } else {
+        _etfThemeSort.col = col;
+        _etfThemeSort.dir = (col === "score" || col === "theme") ? 1 : -1;
+      }
+      renderEtfThemes(_etfData);
+    });
+  });
+
+  // ETF list table sort
+  document.querySelectorAll("#etf-list-table thead th[data-etflistcol]").forEach(th => {
+    th.style.cursor = "pointer";
+    th.addEventListener("click", () => {
+      const col = th.dataset.etflistcol;
+      if (_etfListSort.col === col) {
+        _etfListSort.dir *= -1;
+      } else {
+        _etfListSort.col = col;
+        _etfListSort.dir = (col === "score" || col === "ticker" || col === "name" || col === "theme") ? 1 : -1;
+      }
+      renderEtfList(_etfData);
+    });
+  });
+}
+
 initTabs();
 initSortHeaders();
 initInstToggle();
 initSectionHints();
 initPeriodSelector();
 initViewToggle();
+initEtfViewToggle();
+initEtfSortHeaders();
 
 // --- Load data ---
 (async () => {
   const loading = document.getElementById("loading");
   const errorEl = document.getElementById("error-msg");
   try {
-    // Load current snapshot and history in parallel
-    const [dataRes, histRes] = await Promise.all([
+    // Load all data sources in parallel
+    const [dataRes, histRes, etfRes] = await Promise.all([
       fetch("data.json"),
       fetch("history.json"),
+      fetch("etf_data.json"),
     ]);
 
     if (!dataRes.ok) throw new Error(`data.json: HTTP ${dataRes.status}`);
@@ -619,6 +843,16 @@ initViewToggle();
       _lastHistory = await histRes.json();
       updatePeriodButtons(_lastHistory);
       renderMovers(_lastHistory, _activePeriodDays);
+    }
+
+    if (etfRes.ok) {
+      _etfData = await etfRes.json();
+      renderEtfTab();
+    } else {
+      // Show placeholder in ETF tab
+      document.getElementById("etf-loading").classList.add("hidden");
+      document.getElementById("etf-error").textContent = t("etfNoData");
+      document.getElementById("etf-error").classList.remove("hidden");
     }
   } catch (err) {
     loading.classList.add("hidden");

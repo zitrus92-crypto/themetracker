@@ -23,16 +23,28 @@ def main():
     scored = compute_scores(raw)
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
+    DOCS.mkdir(exist_ok=True)
+
     # --- Write data.json (full snapshot for current tabs) ---
     payload = {
         "industries": scored,
         "fetched_at": datetime.now(timezone.utc).isoformat(),
     }
-    DOCS.mkdir(exist_ok=True)
     (DOCS / "data.json").write_text(
         json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     )
     print(f"  Saved data.json")
+
+    # --- Write etf_data.json (thematic ETF tab) ---
+    print("Fetching thematic ETF data...")
+    try:
+        etf_payload = scraper.fetch_etf_data()
+        (DOCS / "etf_data.json").write_text(
+            json.dumps(etf_payload, ensure_ascii=False, separators=(",", ":"))
+        )
+        print(f"  Saved etf_data.json ({len(etf_payload['etfs'])} ETFs, {len(etf_payload['themes'])} themes)")
+    except Exception as e:
+        print(f"  WARNING: ETF fetch failed: {e}")
 
     # --- Append to history.json (compact, for Movers) ---
     history_path = DOCS / "history.json"

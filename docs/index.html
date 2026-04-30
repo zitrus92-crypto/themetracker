@@ -19,6 +19,7 @@
     <button class="tab-btn active" data-tab="heatmap" data-i18n="tabHeatmap">Heatmap</button>
     <button class="tab-btn" data-tab="picks" data-i18n="tabPicks">&#9733; Setup Picks</button>
     <button class="tab-btn" data-tab="top10" data-i18n="tabTop10">Top 10</button>
+    <button class="tab-btn" data-tab="etfs" data-i18n="tabEtfs">&#128200; ETF Themes</button>
   </nav>
 
   <main>
@@ -101,6 +102,67 @@
             <div class="movers-col-header movers-fading-header">🔻 <span data-i18n="moversFading">Fading — Puck verlässt</span></div>
             <div id="movers-fading"></div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ETF Themes tab -->
+    <section class="section-etfs tab-panel hidden" data-panel="etfs">
+      <div class="etf-header">
+        <div class="heading-group">
+          <h2 data-i18n="etfTitle">&#128200; Thematic ETF Heatmap</h2>
+          <span class="section-hint" data-hint-key="hintEtfs">i</span>
+        </div>
+        <div class="view-toggle">
+          <button class="etf-view-btn active" data-etfview="themes" data-i18n="etfViewThemes">&#127912; Themes</button>
+          <button class="etf-view-btn" data-etfview="etfs" data-i18n="etfViewEtfs">&#128202; Einzelne ETFs</button>
+        </div>
+      </div>
+      <div id="etf-loading" class="loading hidden" data-i18n="loading">Daten werden geladen…</div>
+      <div id="etf-error" class="error hidden"></div>
+
+      <!-- Themes view -->
+      <div id="etf-themes-view">
+        <div class="table-scroll">
+          <table id="etf-themes-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th data-etfcol="theme">Theme</th>
+                <th data-etfcol="1D">1D</th>
+                <th data-etfcol="1W">1W</th>
+                <th data-etfcol="1M">1M</th>
+                <th data-etfcol="3M">3M</th>
+                <th data-etfcol="YTD">YTD</th>
+                <th data-etfcol="score" data-i18n="colScore">Score ▲</th>
+                <th data-i18n="etfColEtfs">ETFs</th>
+              </tr>
+            </thead>
+            <tbody id="etf-themes-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Individual ETFs view -->
+      <div id="etf-etfs-view" class="hidden">
+        <div class="table-scroll">
+          <table id="etf-list-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th data-etflistcol="ticker">Ticker</th>
+                <th data-etflistcol="name" style="text-align:left">Name</th>
+                <th data-etflistcol="theme">Theme</th>
+                <th data-etflistcol="1D">1D</th>
+                <th data-etflistcol="1W">1W</th>
+                <th data-etflistcol="1M">1M</th>
+                <th data-etflistcol="3M">3M</th>
+                <th data-etflistcol="YTD">YTD</th>
+                <th data-etflistcol="score" data-i18n="colScore">Score ▲</th>
+              </tr>
+            </thead>
+            <tbody id="etf-list-body"></tbody>
+          </table>
         </div>
       </div>
     </section>
