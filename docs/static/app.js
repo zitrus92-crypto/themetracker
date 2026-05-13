@@ -668,6 +668,19 @@ function themeBadge(theme) {
   return `<a href="${themeScreenerUrl(theme)}" target="_blank" rel="noopener" class="etf-theme-badge" style="background:${c.bg};color:${c.fg};text-decoration:none">${theme}</a>`;
 }
 
+function showToast(msg) {
+  let toast = document.getElementById("copy-toast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "copy-toast";
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.classList.add("copy-toast--visible");
+  clearTimeout(toast._hideTimer);
+  toast._hideTimer = setTimeout(() => toast.classList.remove("copy-toast--visible"), 2000);
+}
+
 // --- Themes table (40 Finviz top-level themes) ---
 function renderEtfThemes(data) {
   const tbody = document.getElementById("etf-themes-body");
@@ -747,6 +760,9 @@ function renderEtfThemes(data) {
         btn.textContent = "✓";
         btn.classList.add("ticker-copy-btn--done");
         setTimeout(() => { btn.textContent = orig; btn.classList.remove("ticker-copy-btn--done"); }, 2000);
+        // Toast message
+        const msg = _lang === "de" ? "Tickerliste kopiert!" : "Ticker list copied!";
+        showToast(msg);
       });
     });
   });
