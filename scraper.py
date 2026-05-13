@@ -39,7 +39,11 @@ def fetch_all() -> dict:
 
 
 def parse_js_rows(html: str) -> dict:
-    match = re.search(r"var rows\s*=\s*(\[.*?\]);", html, re.DOTALL)
+    # New Finviz format (2026+): FinvizInitGroupsPerformance([...])
+    match = re.search(r"FinvizInitGroupsPerformance\((\[.*?\])\)", html, re.DOTALL)
+    if not match:
+        # Fallback: old format var rows = [...]
+        match = re.search(r"var rows\s*=\s*(\[.*?\]);", html, re.DOTALL)
     if not match:
         raise ValueError("Could not find data table on Finviz page")
     rows = json.loads(match.group(1).replace("\\u0026", "&"))
