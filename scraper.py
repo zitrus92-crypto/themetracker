@@ -420,118 +420,60 @@ for _node in NODE_LABELS:
 _TIMEFRAMES_ST = {"1D": "d1", "1W": "w1", "1M": "w4", "3M": "w13", "YTD": "ytd"}
 
 
+# Finviz screener theme slugs that differ from the auto-derived form.
+# Auto-derivation: display_name.lower() → remove non-alphanum.
+# These overrides correct cases where Finviz uses a longer/different internal name,
+# or where no screener filter exists (empty string → skip ticker fetch).
+_THEME_SLUG_OVERRIDES: dict[str, str] = {
+    "Commodities — Agri":      "commoditiesagriculture",  # not "commoditiesagri"
+    "Education Tech":          "educationtechnology",      # not "educationtech"
+    # The following 5 themes have no matching Finviz screener theme filter:
+    "Agriculture & Food":      "",
+    "Clean Energy":            "",
+    "Environmental":           "",
+    "Aging Population":        "",
+    "VR & Augmented Reality":  "",
+}
+
+
 def _theme_slug_for_screener(display_name: str) -> str:
-    """Convert theme display name to Finviz screener slug (all lowercase, alphanum only)."""
+    """
+    Return the Finviz screener theme slug for a display name.
+    Returns empty string if the theme has no screener filter.
+    """
+    if display_name in _THEME_SLUG_OVERRIDES:
+        return _THEME_SLUG_OVERRIDES[display_name]
     return re.sub(r'[^a-z0-9]', '', display_name.lower())
-
-
-def _parse_screener_page(html: str) -> list[str]:
-    """
-    Extract 'EXCHANGE:TICKER' (or plain 'TICKER') strings from a Finviz screener page.
-    Tries new JS init format first, then old var-rows format, then HTML link fallback.
-    """
-    # --- New JS format: FinvizInitScreener([...], {...}) ---
-    match = re.search(r'FinvizInitScreener\s*\(\s*(\[.*?\])\s*[,)]', html, re.DOTALL)
-    if match:
-        try:
-            rows = json.loads(match.group(1))
-            result = []
-            for row in rows:
-                if isinstance(row, dict):
-                    ticker = (row.get('ticker') or row.get('t') or '').strip().upper()
-                    exchange = (row.get('exchange') or row.get('ex') or row.get('e') or '').strip().upper()
-                    if ticker:
-                        result.append(f"{exchange}:{ticker}" if exchange else ticker)
-                elif isinstance(row, list) and len(row) >= 2:
-                    ticker = str(row[1]).strip().upper()
-                    if re.fullmatch(r'[A-Z]{1,5}', ticker):
-                        result.append(ticker)
-            if result:
-                return result
-        except Exception:
-            pass
-
-    # --- Old JS format: var rows = [...] ---
-    match = re.search(r'var rows\s*=\s*(\[.*?\]);', html, re.DOTALL)
-    if match:
-        try:
-            rows = json.loads(match.group(1))
-            result = []
-            for row in rows:
-                if isinstance(row, dict):
-                    ticker = (row.get('ticker') or '').strip().upper()
-                    exchange = (row.get('exchange') or '').strip().upper()
-                    if ticker:
-                        result.append(f"{exchange}:{ticker}" if exchange else ticker)
-                elif isinstance(row, list) and len(row) >= 2:
-                    ticker = str(row[1]).strip().upper()
-                    if re.fullmatch(r'[A-Z]{1,5}', ticker):
-                        result.append(ticker)
-            if result:
-                return result
-        except Exception:
-            pass
-
-    # --- HTML fallback: find ticker links like quote.ashx?t=NVDA ---
-    tickers = re.findall(r'quote\.ashx\?t=([A-Z]{1,5})', html)
-    return list(dict.fromkeys(tickers))
-
-
-def _get_screener_total(html: str) -> int:
-    """Try to extract total stock count from Finviz screener HTML."""
-    m = re.search(r'Total:\s*(\d+)', html)
-    if m:
-        return int(m.group(1))
-    m = re.search(r'\d+\s*[-–]\s*\d+\s+of\s+(\d+)', html)
-    if m:
-        return int(m.group(1))
-    return 0
 
 
 def _fetch_tickers_for_slug(slug: str) -> list[str]:
     """
-    Fetch all stock tickers for a Finviz theme screener slug.
-    Paginates automatically (20 rows per page).
-    Returns list of 'EXCHANGE:TICKER' (or 'TICKER') strings.
+    Fetch all stock tickers for a Finviz theme via the bubble-chart view (v=410).
+    This view is server-rendered HTML and returns all tickers in one request via
+    data-boxover-ticker attributes — no JS rendering required, no pagination.
+    Returns list of plain ticker symbols (e.g. ['NVDA', 'AMD', 'ASML', ...]).
     """
-    all_tickers: list[str] = []
-    seen: set[str] = set()
-    row_start = 1
-    PAGE_SIZE = 20
+    MAX_RETRIES = 3
+    url = f"https://finviz.com/screener.ashx?v=410&f=theme_{slug}&r=1"
 
-    while True:
-        url = f"https://finviz.com/screener.ashx?v=141&f=theme_{slug}&r={row_start}"
+    for attempt in range(MAX_RETRIES):
         try:
             resp = requests.get(url, headers=HEADERS, timeout=15)
+            if resp.status_code == 429:
+                wait = 8 * (attempt + 1)
+                print(f"      429 rate-limit [{slug}], retrying in {wait}s…")
+                time.sleep(wait)
+                continue
             resp.raise_for_status()
-            html = resp.text
+            tickers = re.findall(r'data-boxover-ticker="([A-Z]{1,6})"', resp.text)
+            return list(dict.fromkeys(tickers))  # deduplicate, preserve order
         except Exception as e:
-            print(f"      WARNING: screener fetch failed [{slug} r={row_start}]: {e}")
-            break
+            if attempt == MAX_RETRIES - 1:
+                print(f"      WARNING: ticker fetch failed [{slug}]: {e}")
+            else:
+                time.sleep(4)
 
-        page = _parse_screener_page(html)
-        new_on_page = 0
-        for entry in page:
-            base_ticker = entry.split(":")[-1]
-            if base_ticker not in seen:
-                seen.add(base_ticker)
-                all_tickers.append(entry)
-                new_on_page += 1
-
-        if not new_on_page:
-            break
-
-        # Stop if we already have everything or page was incomplete
-        total = _get_screener_total(html)
-        if total > 0 and len(all_tickers) >= total:
-            break
-        if len(page) < PAGE_SIZE:
-            break
-
-        row_start += PAGE_SIZE
-        time.sleep(0.35)   # be polite to Finviz between pages
-
-    return all_tickers
+    return []
 
 
 def _fetch_one_timeframe(tf: str) -> tuple[str, dict]:
@@ -626,23 +568,25 @@ def fetch_themes_data() -> dict:
     for rank, theme in enumerate(sorted_themes, 1):
         themes_out[theme]["rank"] = rank
 
-    # ── Fetch ticker lists for each theme from Finviz screener ───────────────
+    # ── Fetch ticker lists for each theme sequentially (avoids 429 rate-limit) ─
     print(f"    Fetching ticker lists for {len(themes_out)} themes…")
-    slug_map = {_theme_slug_for_screener(theme): theme for theme in themes_out}
-    with ThreadPoolExecutor(max_workers=3) as pool:
-        fut_map = {
-            pool.submit(_fetch_tickers_for_slug, slug): slug
-            for slug in slug_map
-        }
-        for fut in as_completed(fut_map):
-            slug = fut_map[fut]
-            theme = slug_map[slug]
-            try:
-                tickers = fut.result()
-                themes_out[theme]["tickers"] = tickers
-            except Exception as e:
-                themes_out[theme]["tickers"] = []
-                print(f"      WARNING: ticker fetch failed for {theme}: {e}")
+    time.sleep(3)  # brief pause after the parallel timeframe fetches
+    theme_list = list(themes_out.keys())
+    for idx, theme in enumerate(theme_list):
+        slug = _theme_slug_for_screener(theme)
+        if not slug:
+            themes_out[theme]["tickers"] = []
+            print(f"      [{idx+1}/{len(theme_list)}] {theme}: no screener filter available")
+            continue
+        try:
+            tickers = _fetch_tickers_for_slug(slug)
+            themes_out[theme]["tickers"] = tickers
+            print(f"      [{idx+1}/{len(theme_list)}] {theme}: {len(tickers)} tickers")
+        except Exception as e:
+            themes_out[theme]["tickers"] = []
+            print(f"      WARNING: ticker fetch failed for {theme}: {e}")
+        if idx < len(theme_list) - 1:
+            time.sleep(1.2)  # polite gap between themes
 
     total_tickers = sum(len(themes_out[t]["tickers"]) for t in themes_out)
     print(f"    {len(themes_out)} themes, {len(subnodes)} sub-nodes, {total_tickers} tickers total")
