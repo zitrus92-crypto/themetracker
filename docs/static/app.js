@@ -658,9 +658,14 @@ const THEME_COLORS = {
   "Healthy Food & Nutrition":   { bg: "#001a10", fg: "#6ee7b7" },
 };
 
+function themeScreenerUrl(theme) {
+  const slug = theme.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return `https://finviz.com/screener.ashx?v=141&f=theme_${slug}`;
+}
+
 function themeBadge(theme) {
   const c = THEME_COLORS[theme] || { bg: "#1a1a2a", fg: "#8b949e" };
-  return `<span class="etf-theme-badge" style="background:${c.bg};color:${c.fg}">${theme}</span>`;
+  return `<a href="${themeScreenerUrl(theme)}" target="_blank" rel="noopener" class="etf-theme-badge" style="background:${c.bg};color:${c.fg};text-decoration:none">${theme}</a>`;
 }
 
 // --- Themes table (40 Finviz top-level themes) ---
@@ -700,11 +705,10 @@ function renderEtfThemes(data) {
       return `<span class="etf-ticker-chip">${label}</span>`;
     }).join(" ");
 
-    const c = THEME_COLORS[theme] || { bg: "#1a1a2a", fg: "#8b949e" };
     return `<tr>
       <td>${idx + 1}</td>
       <td style="text-align:left">
-        <span class="etf-theme-badge" style="background:${c.bg};color:${c.fg}">${theme}</span>
+        ${themeBadge(theme)}
         <span style="color:var(--text-dim);font-size:11px;margin-left:6px">${row.count}</span>
       </td>
       ${perfCells}
