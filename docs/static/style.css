@@ -272,6 +272,15 @@ svg.sparkline { display: block; }
 }
 a.etf-theme-badge:hover { filter: brightness(1.25); }
 
+.ticker-copy-btn {
+  display: inline-block; font-size: 12px; padding: 1px 5px;
+  margin-left: 6px; border-radius: 4px; border: 1px solid var(--border);
+  background: var(--bg3); color: var(--text-dim); cursor: pointer;
+  vertical-align: middle; line-height: 1.4; transition: all 0.15s;
+}
+.ticker-copy-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+.ticker-copy-btn--done { background: #1a4a1a; color: #4ade80; border-color: #4ade80; }
+
 .etf-ticker-chip {
   display: inline-block; font-size: 11px; font-weight: 700;
   padding: 1px 6px; border-radius: 3px; margin: 1px 2px 1px 0;

@@ -705,11 +705,17 @@ function renderEtfThemes(data) {
       return `<span class="etf-ticker-chip">${label}</span>`;
     }).join(" ");
 
+    const hasTickers = row.tickers && row.tickers.length > 0;
+    const copyBtn = hasTickers
+      ? `<button class="ticker-copy-btn" data-theme="${theme.replace(/"/g, '&quot;')}" title="Ticker kopieren (${row.tickers.length} Stocks)">📋</button>`
+      : '';
+
     return `<tr>
       <td>${idx + 1}</td>
       <td style="text-align:left">
         ${themeBadge(theme)}
         <span style="color:var(--text-dim);font-size:11px;margin-left:6px">${row.count}</span>
+        ${copyBtn}
       </td>
       ${perfCells}
       <td>${row.score.toFixed(1)}</td>
@@ -718,6 +724,22 @@ function renderEtfThemes(data) {
   });
 
   tbody.innerHTML = rows.join("") || `<tr><td colspan="9" class="empty-msg">${t("etfNoData")}</td></tr>`;
+
+  // Attach copy-button handlers
+  tbody.querySelectorAll(".ticker-copy-btn").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const theme = btn.dataset.theme;
+      const tickers = _etfData?.themes?.[theme]?.tickers;
+      if (!tickers || !tickers.length) return;
+      navigator.clipboard.writeText(tickers.join(",")).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = "✓";
+        btn.classList.add("ticker-copy-btn--done");
+        setTimeout(() => { btn.textContent = orig; btn.classList.remove("ticker-copy-btn--done"); }, 2000);
+      });
+    });
+  });
 }
 
 // --- Sub-Themes table (268 Finviz sub-nodes) ---
