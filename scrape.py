@@ -1,8 +1,8 @@
 """
 Daily scrape script — run by GitHub Actions.
-Fetches Finviz industry data AND thematic ETF data in parallel, writes:
+Fetches Finviz industry data AND Finviz thematic map data in parallel, writes:
   docs/data.json     — industry snapshot (Heatmap, Picks, Top 10 tabs)
-  docs/etf_data.json — thematic ETF snapshot (ETF Themes tab)
+  docs/etf_data.json — thematic map snapshot (ETF Themes tab)
   docs/history.json  — compact daily history (Movers tab)
 """
 import json
@@ -24,9 +24,9 @@ def fetch_industries():
     return compute_scores(raw)
 
 
-def fetch_etfs():
-    print("Fetching thematic ETF data...")
-    return scraper.fetch_etf_data()
+def fetch_themes():
+    print("Fetching Finviz thematic map data...")
+    return scraper.fetch_themes_data()
 
 
 def main():
@@ -39,7 +39,7 @@ def main():
 
     with ThreadPoolExecutor(max_workers=2) as pool:
         fut_ind = pool.submit(fetch_industries)
-        fut_etf = pool.submit(fetch_etfs)
+        fut_etf = pool.submit(fetch_themes)
 
         for fut in as_completed([fut_ind, fut_etf]):
             try:
@@ -72,7 +72,7 @@ def main():
         (DOCS / "etf_data.json").write_text(
             json.dumps(etf_payload, ensure_ascii=False, separators=(",", ":"))
         )
-        print(f"  Saved etf_data.json ({len(etf_payload['etfs'])} ETFs, {len(etf_payload['themes'])} themes)")
+        print(f"  Saved etf_data.json ({len(etf_payload['themes'])} themes, {len(etf_payload['subnodes'])} sub-nodes)")
     else:
         print("  SKIPPED etf_data.json (fetch failed)")
 

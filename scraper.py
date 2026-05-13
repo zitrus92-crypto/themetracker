@@ -1,12 +1,8 @@
 import json
 import re
 import requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
-
-import yfinance as yf
-import pandas as pd
-
-from etf_universe import THEMATIC_ETFS, ETF_BY_TICKER, ALL_TICKERS, ALL_THEMES
 
 HEADERS = {
     "User-Agent": (
@@ -59,133 +55,465 @@ def parse_js_rows(html: str) -> dict:
     return data
 
 
-# ── ETF Data ─────────────────────────────────────────────────────────────────
+# ── Finviz Thematic Map Data ─────────────────────────────────────────────────
 
-def _pct(series: pd.Series, offset: int) -> float | None:
-    """Return % change from `offset` bars ago to last bar. None if not enough data."""
-    if len(series) <= offset:
-        return None
-    past = series.iloc[-(offset + 1)]
-    now  = series.iloc[-1]
-    if pd.isna(past) or pd.isna(now) or past == 0:
-        return None
-    return round((now / past - 1) * 100, 2)
+# Top-level theme display names keyed by node prefix
+THEME_LABELS = {
+    "ai":             "Artificial Intelligence",
+    "agriculture":    "Agriculture & Food",
+    "automation":     "Industrial Automation",
+    "autonomous":     "Autonomous Systems",
+    "bigdata":        "Big Data",
+    "biometrics":     "Biometrics",
+    "blockchain":     "Crypto & Blockchain",
+    "cloud":          "Cloud Computing",
+    "commag":         "Commodities — Agri",
+    "commenergy":     "Commodities — Energy",
+    "commmetals":     "Commodities — Metals",
+    "consumer":       "Consumer Goods",
+    "cybersecurity":  "Cybersecurity",
+    "defense":        "Defense & Aerospace",
+    "ecommerce":      "E-Commerce",
+    "education":      "Education Tech",
+    "energybase":     "Energy Traditional",
+    "energyclean":    "Clean Energy",
+    "entertainment":  "Digital Entertainment",
+    "environmental":  "Environmental",
+    "evs":            "Electric Vehicles",
+    "fintech":        "Fintech",
+    "hardware":       "Hardware",
+    "healthcare":     "Healthcare & Biotech",
+    "iot":            "Internet of Things",
+    "longevity":      "Aging Population",
+    "nanotech":       "Nanotechnology",
+    "nutrition":      "Healthy Food & Nutrition",
+    "quantum":        "Quantum Computing",
+    "realestate":     "Real Estate & REITs",
+    "robotics":       "Robotics",
+    "semis":          "Semiconductors",
+    "smarthome":      "Smart Home",
+    "social":         "Social Media",
+    "software":       "Software",
+    "space":          "Space Tech",
+    "telecom":        "Telecommunications",
+    "transportation": "Transportation & Logistics",
+    "vareality":      "VR & Augmented Reality",
+    "wearables":      "Wearables",
+}
+
+# Human-readable labels for each of the 268 sub-nodes
+NODE_LABELS = {
+    # Artificial Intelligence
+    "aicompute": "Compute",          "aicloud": "Cloud",
+    "aimodels": "Models",            "aidata": "Data",
+    "aienterprise": "Enterprise",    "ainetworking": "Networking",
+    "aisecurity": "Security",        "aiedge": "Edge",
+    "airobotics": "Robotics",        "aiapplications": "Applications",
+    "aiadssearch": "Ads & Search",   "aienergy": "Energy",
+    "aiagi": "AGI",
+    # Agriculture & Food
+    "agriculturealtprotein": "Alt Protein",
+    "agriculturecropinputs": "Crop Inputs",
+    "agricultureindoorfarming": "Indoor Farming",
+    "agricultureprocessing": "Processing",
+    "agriculturesmartfarming": "Smart Farming",
+    # Industrial Automation
+    "automationautomation": "Automation",
+    "automationdprinting": "3D Printing",
+    "automationiot": "IoT",
+    "automationlogistics": "Logistics",
+    "automationmachinevision": "Machine Vision",
+    "automationrobotics": "Robotics",
+    "automationsoftware": "Software",
+    # Autonomous Systems
+    "autonomousavmobility": "AV & Mobility",
+    "autonomousdefense": "Defense",
+    "autonomousindustrial": "Industrial",
+    "autonomousmachinevision": "Machine Vision",
+    "autonomoussoftware": "Software",
+    "autonomousspecialized": "Specialized",
+    # Big Data
+    "bigdataaiplatforms": "AI Platforms",
+    "bigdataanalyticsbi": "Analytics & BI",
+    "bigdatainfrastructure": "Infrastructure",
+    "bigdataproviders": "Providers",
+    # Biometrics
+    "biometricsgovdefense": "Gov & Defense",
+    "biometricshardware": "Hardware",
+    "biometricsidentity": "Identity",
+    "biometricssoftware": "Software",
+    # Crypto & Blockchain
+    "blockchainenterprise": "Enterprise",
+    "blockchaininfrastructure": "Infrastructure",
+    "blockchainmining": "Mining",
+    "blockchainpayments": "Payments",
+    "blockchainplatforms": "Platforms",
+    "blockchaintokenization": "Tokenization",
+    # Cloud Computing
+    "clouddatabases": "Databases",
+    "clouddatacenters": "Data Centers",
+    "clouddevops": "DevOps",
+    "cloudedge": "Edge",
+    "cloudhardware": "Hardware",
+    "cloudhsaas": "H-SaaS",
+    "cloudhybridcloud": "Hybrid Cloud",
+    "cloudhyperscalers": "Hyperscalers",
+    "cloudmulticloud": "Multi-Cloud",
+    "cloudpaas": "PaaS",
+    "cloudsecurity": "Security",
+    "cloudserverless": "Serverless",
+    # Commodities — Agri
+    "commagribiofuels": "Biofuels",
+    "commagrifertilizers": "Fertilizers",
+    "commagrigrains": "Grains",
+    "commagrilivestock": "Livestock",
+    "commagrisofts": "Softs",
+    # Commodities — Energy
+    "commenergybiofuels": "Biofuels",
+    "commenergygaslng": "Gas & LNG",
+    "commenergyoil": "Oil",
+    "commenergyuranium": "Uranium",
+    # Commodities — Metals
+    "commmetalsbattery": "Battery Metals",
+    "commmetalsgold": "Gold",
+    "commmetalsindustrial": "Industrial",
+    "commmetalsprecious": "Precious",
+    "commmetalsrareearth": "Rare Earth",
+    "commmetalsrecycling": "Recycling",
+    "commmetalssilver": "Silver",
+    # Consumer Goods
+    "consumerapparel": "Apparel",
+    "consumerfarmdirect": "Farm Direct",
+    "consumerfood": "Food",
+    "consumerhousehold": "Household",
+    "consumerluxury": "Luxury",
+    "consumersecondhand": "Secondhand",
+    # Cybersecurity
+    "cybersecurityappsecurity": "App Security",
+    "cybersecuritycloud": "Cloud",
+    "cybersecurityendpoint": "Endpoint",
+    "cybersecurityidentityiam": "Identity & IAM",
+    "cybersecuritynetwork": "Network",
+    "cybersecuritysiem": "SIEM",
+    "cybersecuritythreatops": "ThreatOps",
+    "cybersecurityzerotrust": "Zero Trust",
+    # Defense & Aerospace
+    "defenseaviation": "Aviation",
+    "defensecyberdefense": "Cyber Defense",
+    "defensedrones": "Drones",
+    "defensemanufacturing": "Manufacturing",
+    "defensemissiles": "Missiles",
+    "defensespacetech": "Space Tech",
+    "defenseweapons": "Weapons",
+    # E-Commerce
+    "ecommerceadsmedia": "Ads & Media",
+    "ecommercedtc": "DTC",
+    "ecommercegrocery": "Grocery",
+    "ecommercelogistics": "Logistics",
+    "ecommercemarketplaces": "Marketplaces",
+    "ecommerceomnichannel": "Omnichannel",
+    "ecommerceplatforms": "Platforms",
+    "ecommercesecondhand": "Secondhand",
+    "ecommercesocial": "Social Commerce",
+    # Education Tech
+    "educationcurriculum": "Curriculum",
+    "educationinfrastructure": "Infrastructure",
+    "educationplatforms": "Platforms",
+    "educationworkforce": "Workforce",
+    # Energy Traditional
+    "energybasemajors": "Majors",
+    "energybasenuclear": "Nuclear",
+    "energybaseoilproduction": "Oil Production",
+    "energybaseoilrefining": "Oil Refining",
+    "energybaseoilservices": "Oil Services",
+    "energybasethermal": "Thermal",
+    "energybaseutilities": "Utilities",
+    # Clean Energy
+    "energycleanbatteries": "Batteries",
+    "energycleanbiofuels": "Biofuels",
+    "energycleangeothermal": "Geothermal",
+    "energycleanhydrogen": "Hydrogen",
+    "energycleanmaterials": "Materials",
+    "energycleansmartgrid": "Smart Grid",
+    "energycleansolar": "Solar",
+    "energycleanutilities": "Utilities",
+    "energycleanwind": "Wind",
+    # Digital Entertainment
+    "entertainmentbetting": "Betting",
+    "entertainmentgambling": "Gambling",
+    "entertainmentgaming": "Gaming",
+    "entertainmentinfrastructure": "Infrastructure",
+    "entertainmentmusic": "Music",
+    "entertainmentvideo": "Video",
+    # Environmental
+    "environmentalagriculture": "Agriculture",
+    "environmentalairquality": "Air Quality",
+    "environmentalclimate": "Climate",
+    "environmentalwaste": "Waste",
+    "environmentalwater": "Water",
+    # Electric Vehicles
+    "evsbatteries": "Batteries",
+    "evscharging": "Charging",
+    "evschips": "Chips",
+    "evsfleets": "Fleets",
+    "evsmanufacturers": "Manufacturers",
+    "evsselfdriving": "Self-Driving",
+    "evssuppliers": "Suppliers",
+    # Fintech
+    "fintechblockchain": "Blockchain",
+    "fintechexchanges": "Exchanges",
+    "fintechinsurance": "Insurance",
+    "fintechlending": "Lending",
+    "fintechneobanks": "Neobanks",
+    "fintechpayments": "Payments",
+    "fintechtrading": "Trading",
+    # Hardware
+    "hardwaredatacenters": "Data Centers",
+    "hardwareelectronics": "Electronics",
+    "hardwaregaming": "Gaming",
+    "hardwareindustrialiot": "Industrial IoT",
+    "hardwarenetworking": "Networking",
+    "hardwarenextgen": "Next-Gen",
+    "hardwarepcsdevices": "PCs & Devices",
+    "hardwareprinting": "Printing",
+    "hardwareservers": "Servers",
+    "hardwarestorage": "Storage",
+    "hardwaretelecom": "Telecom",
+    # Healthcare & Biotech
+    "healthcaredevices": "Devices",
+    "healthcarediagnostics": "Diagnostics",
+    "healthcaregenomics": "Genomics",
+    "healthcareitdata": "IT & Data",
+    "healthcaremetabolic": "Metabolic",
+    "healthcarenextgen": "Next-Gen",
+    "healthcareoncology": "Oncology",
+    "healthcaretelemedicine": "Telemedicine",
+    "healthcaretherapeutics": "Therapeutics",
+    # Internet of Things
+    "iotedgedevices": "Edge Devices",
+    "iotenterprise": "Enterprise",
+    "iothardware": "Hardware",
+    "iotnetworking": "Networking",
+    "iotsecurity": "Security",
+    "iotsoftware": "Software",
+    # Aging Population
+    "longevityagingpharma": "Aging Pharma",
+    "longevityhealthcare": "Healthcare",
+    "longevityhealthyaging": "Healthy Aging",
+    "longevityseniorliving": "Senior Living",
+    # Nanotechnology
+    "nanotechelectronics": "Electronics",
+    "nanotechenergy": "Energy",
+    "nanotechmaterials": "Materials",
+    "nanotechmedicine": "Medicine",
+    "nanotechproducts": "Products",
+    "nanotechresearchtools": "Research Tools",
+    # Healthy Food & Nutrition
+    "nutritionaltprotein": "Alt Protein",
+    "nutritionmealdelivery": "Meal Delivery",
+    "nutritionretailers": "Retailers",
+    "nutritionsupplements": "Supplements",
+    # Quantum Computing
+    "quantumapplications": "Applications",
+    "quantumcloud": "Cloud",
+    "quantumenablingtech": "Enabling Tech",
+    "quantumhardware": "Hardware",
+    "quantumnetworking": "Networking",
+    "quantumsoftware": "Software",
+    # Real Estate & REITs
+    "realestatehealthcare": "Healthcare",
+    "realestatehousing": "Housing",
+    "realestateittelecom": "IT & Telecom",
+    "realestateoffice": "Office",
+    "realestateretail": "Retail",
+    "realestatetourism": "Tourism",
+    "realestatewarehousing": "Warehousing",
+    # Robotics
+    "roboticsautomation": "Automation",
+    "roboticsavmobility": "AV & Mobility",
+    "roboticsconsumer": "Consumer",
+    "roboticslogistics": "Logistics",
+    "roboticsmachinevision": "Machine Vision",
+    "roboticsmedical": "Medical",
+    # Semiconductors
+    "semisanalog": "Analog",
+    "semiscompute": "Compute",
+    "semisdesigntools": "Design Tools",
+    "semisfoundries": "Foundries",
+    "semislithography": "Lithography",
+    "semismemory": "Memory",
+    "semisnextgen": "Next-Gen",
+    "semispackaging": "Packaging",
+    "semiswireless": "Wireless",
+    # Smart Home
+    "smarthomeautomation": "Automation",
+    "smarthomedevices": "Devices",
+    "smarthomeenergy": "Energy",
+    "smarthomenetworking": "Networking",
+    "smarthomesecurity": "Security",
+    "smarthomevoiceai": "Voice & AI",
+    # Social Media
+    "socialadvertising": "Advertising",
+    "socialgaming": "Gaming",
+    "socialnetworks": "Networks",
+    "socialniche": "Niche",
+    "socialvisualcontent": "Visual Content",
+    # Software
+    "softwarecollaboration": "Collaboration",
+    "softwarecrm": "CRM",
+    "softwaredataanalytics": "Data Analytics",
+    "softwaredesign": "Design",
+    "softwaredevops": "DevOps",
+    "softwareecommerce": "E-Commerce",
+    "softwareenterprise": "Enterprise",
+    "softwaregaming": "Gaming",
+    "softwarehsaas": "H-SaaS",
+    "softwareos": "OS",
+    "softwaresecurity": "Security",
+    "softwarevsaas": "V-SaaS",
+    # Space Tech
+    "spacedataanalytics": "Data Analytics",
+    "spacedefense": "Defense",
+    "spaceinfrastructure": "Infrastructure",
+    "spacelaunch": "Launch",
+    "spacesatellites": "Satellites",
+    # Telecommunications
+    "telecomcloudedge": "Cloud & Edge",
+    "telecomenterprise": "Enterprise",
+    "telecomg": "5G",
+    "telecominfrastructure": "Infrastructure",
+    "telecomsatcom": "Satcom",
+    "telecomwireless": "Wireless",
+    # Transportation & Logistics
+    "transportationaircargo": "Air Cargo",
+    "transportationairtravel": "Air Travel",
+    "transportationinfrastructure": "Infrastructure",
+    "transportationmaritime": "Maritime",
+    "transportationnextgen": "Next-Gen",
+    "transportationrail": "Rail",
+    "transportationtrucking": "Trucking",
+    "transportationwarehousing": "Warehousing",
+    # VR & Augmented Reality
+    "varealityapplications": "Applications",
+    "varealityenterprise": "Enterprise",
+    "varealityhardware": "Hardware",
+    "varealityinfrastructure": "Infrastructure",
+    "varealitysoftware": "Software",
+    # Wearables
+    "wearablesimmersive": "Immersive",
+    "wearablesmedical": "Medical",
+    "wearablessmartwatches": "Smartwatches",
+    "wearablessoftware": "Software",
+    "wearablessport": "Sport",
+}
+
+# Derive node_key → theme label from longest-prefix match
+_sorted_prefixes = sorted(THEME_LABELS.keys(), key=len, reverse=True)
+NODE_TO_THEME = {}
+for _node in NODE_LABELS:
+    for _prefix in _sorted_prefixes:
+        if _node.startswith(_prefix):
+            NODE_TO_THEME[_node] = THEME_LABELS[_prefix]
+            break
+
+_TIMEFRAMES_ST = {"1D": "d1", "1W": "w1", "1M": "w4", "3M": "w13", "YTD": "ytd"}
 
 
-def _ytd_pct(series: pd.Series) -> float | None:
-    """YTD: last close vs. last close of previous year."""
-    if series.empty:
-        return None
-    today_year = series.index[-1].year
-    prev_year_end = series[series.index.year < today_year]
-    if prev_year_end.empty:
-        return None
-    past = prev_year_end.iloc[-1]
-    now  = series.iloc[-1]
-    if pd.isna(past) or pd.isna(now) or past == 0:
-        return None
-    return round((now / past - 1) * 100, 2)
+def _fetch_one_timeframe(tf: str) -> tuple[str, dict]:
+    """Fetch Finviz themes map for one timeframe. Returns (tf, {node_key: perf_%})."""
+    st = _TIMEFRAMES_ST[tf]
+    url = f"https://finviz.com/map?t=themes&st={st}"
+    r = requests.get(url, headers=HEADERS, timeout=15)
+    r.raise_for_status()
+    canvas_match = re.search(r"FinvizInitCanvas\((.*?)\);", r.text, re.DOTALL)
+    if not canvas_match:
+        raise ValueError(f"FinvizInitCanvas not found for {tf}")
+    args = canvas_match.group(1)
+    perf_match = re.search(r"initialPerf:\s*(\{[^}]+\})", args)
+    if not perf_match:
+        raise ValueError(f"initialPerf not found for {tf}")
+    pairs = re.findall(r'"(\w+)":(-?[\d.]+)', perf_match.group(1))
+    return tf, {k: float(v) for k, v in pairs if k in NODE_LABELS}
 
 
-def fetch_etf_data() -> dict:
+def fetch_themes_data() -> dict:
     """
-    Download 1 year of daily close prices for all thematic ETFs via yfinance.
+    Fetch all 5 timeframes of Finviz thematic map data in parallel.
     Returns a dict ready to be serialised as etf_data.json.
     """
-    print(f"  Fetching {len(ALL_TICKERS)} ETF prices via yfinance…")
-    raw = yf.download(
-        ALL_TICKERS,
-        period="1y",
-        auto_adjust=True,
-        progress=False,
-        threads=True,
-    )
+    print("  Fetching Finviz themes map (5 timeframes in parallel)…")
 
-    # Close prices: MultiIndex → simple ticker→Series mapping
-    if isinstance(raw.columns, pd.MultiIndex):
-        close = raw["Close"]
-    else:
-        close = raw[["Close"]].rename(columns={"Close": ALL_TICKERS[0]})
+    # Parallel fetch all 5 timeframes
+    tf_perfs: dict[str, dict[str, float]] = {}
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        futures = {pool.submit(_fetch_one_timeframe, tf): tf for tf in _TIMEFRAMES_ST}
+        for fut in as_completed(futures):
+            try:
+                tf, data = fut.result()
+                tf_perfs[tf] = data
+            except Exception as e:
+                print(f"    WARNING: {e}")
 
-    # ── Per-ETF performance ───────────────────────────────────────────────────
-    etf_rows = {}
-    for meta in THEMATIC_ETFS:
-        tk = meta["ticker"]
-        if tk not in close.columns:
-            continue
-        s = close[tk].dropna()
-        if len(s) < 5:
-            continue
-        perfs = {
-            "1D":  _pct(s, _PERIOD_DAYS["1D"]),
-            "1W":  _pct(s, _PERIOD_DAYS["1W"]),
-            "1M":  _pct(s, _PERIOD_DAYS["1M"]),
-            "3M":  _pct(s, _PERIOD_DAYS["3M"]),
-            "YTD": _ytd_pct(s),
-        }
-        etf_rows[tk] = {
-            "name":     meta["name"],
-            "theme":    meta["theme"],
-            "priority": meta["priority"],
-            "perfs":    perfs,
+    # Build per-node perf records
+    subnodes = {}
+    for node_key, label in NODE_LABELS.items():
+        perfs = {tf: tf_perfs.get(tf, {}).get(node_key) for tf in ["1D", "1W", "1M", "3M", "YTD"]}
+        subnodes[node_key] = {
+            "label": label,
+            "theme": NODE_TO_THEME.get(node_key, "Other"),
+            "perfs": perfs,
         }
 
-    # ── Score: rank across ALL ETFs, same formula as industries ──────────────
-    # Score = rank_1M*0.70 + rank_1W*0.20 + rank_3M*0.10  (lower = better)
+    # Score sub-nodes (rank_1M×70% + rank_1W×20% + rank_3M×10%, lower = better)
     def rank_col(field):
-        vals = {tk: row["perfs"][field] for tk, row in etf_rows.items()
+        vals = {k: row["perfs"][field] for k, row in subnodes.items()
                 if row["perfs"].get(field) is not None}
-        sorted_tks = sorted(vals, key=lambda t: vals[t], reverse=True)
-        return {tk: (i + 1) for i, tk in enumerate(sorted_tks)}
+        sorted_keys = sorted(vals, key=lambda k: vals[k], reverse=True)
+        return {k: (i + 1) for i, k in enumerate(sorted_keys)}
 
     ranks_1m = rank_col("1M")
     ranks_1w = rank_col("1W")
     ranks_3m = rank_col("3M")
-    n = len(etf_rows)
+    n = len(subnodes)
 
-    for tk, row in etf_rows.items():
-        r1m = ranks_1m.get(tk, n)
-        r1w = ranks_1w.get(tk, n)
-        r3m = ranks_3m.get(tk, n)
-        score = r1m * 0.70 + r1w * 0.20 + r3m * 0.10
-        row["score"] = round(score, 2)
-        row["ranks"] = {"1M": r1m, "1W": r1w, "3M": r3m}
+    for node_key, row in subnodes.items():
+        r1m = ranks_1m.get(node_key, n)
+        r1w = ranks_1w.get(node_key, n)
+        r3m = ranks_3m.get(node_key, n)
+        row["score"] = round(r1m * 0.70 + r1w * 0.20 + r3m * 0.10, 2)
 
-    # ── Theme aggregation (Priority-1 ETFs only) ──────────────────────────────
+    # Aggregate to top-level themes (average of all sub-nodes)
     themes_out = {}
-    for theme in ALL_THEMES:
-        p1 = [tk for tk, row in etf_rows.items()
-              if row["theme"] == theme and row["priority"] == 1]
-        all_in_theme = [tk for tk, row in etf_rows.items() if row["theme"] == theme]
-        if not p1:
+    for theme_label in THEME_LABELS.values():
+        nodes = [k for k, row in subnodes.items() if row["theme"] == theme_label]
+        if not nodes:
             continue
 
-        # Average performance of P1 ETFs
         def avg_perf(field):
-            vals = [etf_rows[tk]["perfs"].get(field)
-                    for tk in p1 if etf_rows[tk]["perfs"].get(field) is not None]
-            if not vals:
-                return None
-            return round(sum(vals) / len(vals), 2)
+            vals = [subnodes[k]["perfs"].get(field) for k in nodes
+                    if subnodes[k]["perfs"].get(field) is not None]
+            return round(sum(vals) / len(vals), 2) if vals else None
 
-        avg_score = sum(etf_rows[tk]["score"] for tk in p1) / len(p1)
+        avg_score = sum(subnodes[k]["score"] for k in nodes) / len(nodes)
+        # Top-3 sub-nodes by 1M perf for the chips column
+        top3 = sorted(nodes, key=lambda k: (subnodes[k]["perfs"].get("1M") or -999), reverse=True)[:3]
 
-        themes_out[theme] = {
-            "perfs": {tf: avg_perf(tf) for tf in ["1D", "1W", "1M", "3M", "YTD"]},
-            "score": round(avg_score, 2),
-            "etfs_p1": p1,
-            "etfs_all": all_in_theme,
-            "count": len(all_in_theme),
+        themes_out[theme_label] = {
+            "perfs":    {tf: avg_perf(tf) for tf in ["1D", "1W", "1M", "3M", "YTD"]},
+            "score":    round(avg_score, 2),
+            "subnodes": nodes,
+            "top3":     top3,
+            "count":    len(nodes),
         }
 
-    # ── Theme-level score rank ────────────────────────────────────────────────
-    theme_scores = {th: v["score"] for th, v in themes_out.items()}
-    sorted_themes = sorted(theme_scores, key=theme_scores.get)
-    for rank, th in enumerate(sorted_themes, 1):
-        themes_out[th]["rank"] = rank
+    # Theme-level rank (score ascending = rank 1 = best)
+    sorted_themes = sorted(themes_out, key=lambda t: themes_out[t]["score"])
+    for rank, theme in enumerate(sorted_themes, 1):
+        themes_out[theme]["rank"] = rank
 
+    print(f"    {len(themes_out)} themes, {len(subnodes)} sub-nodes")
     return {
-        "etfs":       etf_rows,
         "themes":     themes_out,
+        "subnodes":   subnodes,
         "fetched_at": datetime.now(timezone.utc).isoformat(),
     }

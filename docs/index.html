@@ -116,7 +116,7 @@
         </div>
         <div class="view-toggle">
           <button class="etf-view-btn active" data-etfview="themes" data-i18n="etfViewThemes">Themes</button>
-          <button class="etf-view-btn" data-etfview="etfs" data-i18n="etfViewEtfs">Einzelne ETFs</button>
+          <button class="etf-view-btn" data-etfview="etfs" data-i18n="etfViewEtfs">Sub-Themes</button>
         </div>
       </div>
       <div id="etf-loading" class="loading hidden" data-i18n="loading">Daten werden geladen…</div>
@@ -136,7 +136,7 @@
                 <th data-etfcol="3M">3M</th>
                 <th data-etfcol="YTD">YTD</th>
                 <th data-etfcol="score" data-i18n="colScore">Score ▲</th>
-                <th data-i18n="etfColEtfs">ETFs</th>
+                <th data-i18n="etfColEtfs">Top Sub-Themes</th>
               </tr>
             </thead>
             <tbody id="etf-themes-body"></tbody>
@@ -151,8 +151,7 @@
             <thead>
               <tr>
                 <th>#</th>
-                <th data-etflistcol="ticker">Ticker</th>
-                <th data-etflistcol="name" style="text-align:left">Name</th>
+                <th data-etflistcol="label" style="text-align:left">Sub-Theme</th>
                 <th data-etflistcol="theme">Theme</th>
                 <th data-etflistcol="1D">1D</th>
                 <th data-etflistcol="1W">1W</th>
