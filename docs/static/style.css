@@ -37,8 +37,10 @@ header h1 { font-size: 18px; font-weight: 600; color: var(--accent); }
   padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;
   transition: background 0.15s;
 }
+.btn-refresh { padding: 6px 10px; font-size: 16px; line-height: 1; }
 .btn-refresh:hover, .btn-lang:hover { background: var(--accent); color: #000; }
 .btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-refresh:disabled:hover { background: var(--bg3); color: var(--text); }
 
 /* Tab nav */
 .tab-nav {

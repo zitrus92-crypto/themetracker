@@ -823,15 +823,24 @@ initEtfViewToggle();
 initEtfSortHeaders();
 
 // --- Load data ---
-(async () => {
+async function loadData() {
   const loading = document.getElementById("loading");
   const errorEl = document.getElementById("error-msg");
+  const refreshBtn = document.getElementById("refresh-btn");
+
+  // Show loading state
+  loading.classList.remove("hidden");
+  errorEl.classList.add("hidden");
+  if (refreshBtn) { refreshBtn.disabled = true; refreshBtn.textContent = "…"; }
+
+  // Cache-bust so the browser always fetches fresh JSON
+  const bust = `?t=${Date.now()}`;
+
   try {
-    // Load all data sources in parallel
     const [dataRes, histRes, etfRes] = await Promise.all([
-      fetch("data.json"),
-      fetch("history.json"),
-      fetch("etf_data.json"),
+      fetch("data.json" + bust),
+      fetch("history.json" + bust),
+      fetch("etf_data.json" + bust),
     ]);
 
     if (!dataRes.ok) throw new Error(`data.json: HTTP ${dataRes.status}`);
@@ -849,7 +858,6 @@ initEtfSortHeaders();
       _etfData = await etfRes.json();
       renderEtfTab();
     } else {
-      // Show placeholder in ETF tab
       document.getElementById("etf-loading").classList.add("hidden");
       document.getElementById("etf-error").textContent = t("etfNoData");
       document.getElementById("etf-error").classList.remove("hidden");
@@ -858,5 +866,11 @@ initEtfSortHeaders();
     loading.classList.add("hidden");
     errorEl.textContent = "Fehler beim Laden der Daten: " + err.message;
     errorEl.classList.remove("hidden");
+  } finally {
+    if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.textContent = "⟳"; }
   }
-})();
+}
+
+document.getElementById("refresh-btn")?.addEventListener("click", loadData);
+
+loadData();
