@@ -425,14 +425,14 @@ _TIMEFRAMES_ST = {"1D": "d1", "1W": "w1", "1M": "w4", "3M": "w13", "YTD": "ytd"}
 # These overrides correct cases where Finviz uses a longer/different internal name,
 # or where no screener filter exists (empty string → skip ticker fetch).
 _THEME_SLUG_OVERRIDES: dict[str, str] = {
-    "Commodities — Agri":      "commoditiesagriculture",  # not "commoditiesagri"
-    "Education Tech":          "educationtechnology",      # not "educationtech"
-    # The following 5 themes have no matching Finviz screener theme filter:
-    "Agriculture & Food":      "",
-    "Clean Energy":            "",
-    "Environmental":           "",
-    "Aging Population":        "",
-    "VR & Augmented Reality":  "",
+    # Finviz internal name differs from our display name
+    "Commodities — Agri":      "commoditiesagriculture",   # Finviz: "Commodities - Agriculture"
+    "Education Tech":          "educationtechnology",       # Finviz: "Education Technology"
+    "Agriculture & Food":      "agriculturefoodtech",       # Finviz: "Agriculture & FoodTech"
+    "Clean Energy":            "energyrenewable",           # Finviz: "Energy - Renewable"
+    "Environmental":           "environmentalsustainability", # Finviz: "Environmental Sustainability"
+    "Aging Population":        "agingpopulationlongevity", # Finviz: "Aging Population & Longevity"
+    "VR & Augmented Reality":  "virtualaugmentedreality",  # Finviz: "Virtual & Augmented Reality"
 }
 
 
