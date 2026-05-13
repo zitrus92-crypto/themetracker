@@ -706,15 +706,25 @@ function renderEtfThemes(data) {
     }).join(" ");
 
     const hasTickers = row.tickers && row.tickers.length > 0;
+    const tickerCount = hasTickers ? row.tickers.length : 0;
+    const tickerTooltip = _lang === "de"
+      ? `${tickerCount} Aktien in diesem Theme (Quelle: Finviz Screener)`
+      : `${tickerCount} stocks in this theme (source: Finviz Screener)`;
+    const noTickerTooltip = _lang === "de"
+      ? "Kein Finviz-Screener-Filter für dieses Theme verfügbar"
+      : "No Finviz screener filter available for this theme";
     const copyBtn = hasTickers
-      ? `<button class="ticker-copy-btn" data-theme="${theme.replace(/"/g, '&quot;')}" title="Ticker kopieren (${row.tickers.length} Stocks)">📋</button>`
+      ? `<button class="ticker-copy-btn" data-theme="${theme.replace(/"/g, '&quot;')}" title="${_lang === 'de' ? 'Ticker in Zwischenablage kopieren' : 'Copy tickers to clipboard'}">📋</button>`
       : '';
+    const tickerBadge = hasTickers
+      ? `<span class="theme-stock-count" title="${tickerTooltip}">${tickerCount}</span>`
+      : `<span class="theme-stock-count theme-stock-count--na" title="${noTickerTooltip}">—</span>`;
 
     return `<tr>
       <td>${idx + 1}</td>
       <td style="text-align:left">
         ${themeBadge(theme)}
-        <span style="color:var(--text-dim);font-size:11px;margin-left:6px">${row.count}</span>
+        ${tickerBadge}
         ${copyBtn}
       </td>
       ${perfCells}
