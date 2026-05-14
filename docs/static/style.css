@@ -311,6 +311,7 @@ a.etf-theme-badge:hover { filter: brightness(1.25); }
   color: var(--accent); text-decoration: none;
 }
 .etf-ticker-chip:hover { background: var(--accent); color: #000; }
+.etf-ticker-chip--link { cursor: pointer; }
 
 .etf-prio-dot {
   display: inline-block; width: 7px; height: 7px; border-radius: 50%;

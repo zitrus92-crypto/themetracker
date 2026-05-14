@@ -729,11 +729,12 @@ function renderEtfThemes(data) {
       `<td class="${perfClass(row.perfs[tf])}">${fmtPct(row.perfs[tf])}</td>`
     ).join("");
 
-    // Top-3 sub-nodes by 1M as small chips
+    // Top-3 sub-nodes by 1M as small chips (clickable → Finviz screener)
     const chips = (row.top3 || []).map(nodeKey => {
       const sub = data.subnodes?.[nodeKey];
       const label = sub ? sub.label : nodeKey;
-      return `<span class="etf-ticker-chip">${label}</span>`;
+      const url = `https://finviz.com/screener.ashx?v=211&f=theme_${nodeKey}&o=-perf13w`;
+      return `<a class="etf-ticker-chip etf-ticker-chip--link" href="${url}" target="_blank" rel="noopener" title="${label} → Finviz Screener">${label}</a>`;
     }).join(" ");
 
     const hasTickers = row.tickers && row.tickers.length > 0;
