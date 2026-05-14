@@ -138,6 +138,7 @@ function applyTranslations() {
   initSectionHints();
   if (_lastPayload) renderAll(_lastPayload);
   if (_lastHistory) renderMovers(_lastHistory, _activePeriodDays);
+  if (_etfData) renderEtfTab();
 }
 
 // --- INST helper ---
