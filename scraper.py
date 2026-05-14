@@ -446,15 +446,16 @@ def _theme_slug_for_screener(display_name: str) -> str:
     return re.sub(r'[^a-z0-9]', '', display_name.lower())
 
 
-def _fetch_tickers_for_slug(slug: str) -> list[str]:
+def _fetch_tickers_for_slug(slug: str, filter_prefix: str = "theme") -> list[str]:
     """
-    Fetch all stock tickers for a Finviz theme via the bubble-chart view (v=410).
-    This view is server-rendered HTML and returns all tickers in one request via
+    Fetch all stock tickers for a Finviz theme or sub-theme via the bubble-chart
+    view (v=410). Server-rendered HTML, all tickers in one request via
     data-boxover-ticker attributes — no JS rendering required, no pagination.
+    filter_prefix: "theme" for top-level themes, "subtheme" for sub-themes.
     Returns list of plain ticker symbols (e.g. ['NVDA', 'AMD', 'ASML', ...]).
     """
     MAX_RETRIES = 3
-    url = f"https://finviz.com/screener.ashx?v=410&f=theme_{slug}&r=1"
+    url = f"https://finviz.com/screener.ashx?v=410&f={filter_prefix}_{slug}&r=1"
 
     for attempt in range(MAX_RETRIES):
         try:
@@ -589,7 +590,25 @@ def fetch_themes_data() -> dict:
             time.sleep(1.2)  # polite gap between themes
 
     total_tickers = sum(len(themes_out[t]["tickers"]) for t in themes_out)
-    print(f"    {len(themes_out)} themes, {len(subnodes)} sub-nodes, {total_tickers} tickers total")
+    print(f"    Theme tickers: {total_tickers} across {len(themes_out)} themes")
+
+    # ── Fetch ticker lists for each sub-theme sequentially ─────────────────────
+    print(f"    Fetching ticker lists for {len(subnodes)} sub-themes…")
+    time.sleep(2)  # pause between theme and sub-theme fetches
+    subnode_list = list(subnodes.keys())
+    for idx, key in enumerate(subnode_list):
+        try:
+            tickers = _fetch_tickers_for_slug(key, filter_prefix="subtheme")
+            subnodes[key]["tickers"] = tickers
+            print(f"      [{idx+1}/{len(subnode_list)}] {key}: {len(tickers)} tickers")
+        except Exception as e:
+            subnodes[key]["tickers"] = []
+            print(f"      WARNING: ticker fetch failed for sub-theme {key}: {e}")
+        if idx < len(subnode_list) - 1:
+            time.sleep(1.0)  # polite gap between sub-themes
+
+    sub_total = sum(len(subnodes[k]["tickers"]) for k in subnodes)
+    print(f"    Sub-theme tickers: {sub_total} across {len(subnodes)} sub-themes")
     return {
         "themes":     themes_out,
         "subnodes":   subnodes,

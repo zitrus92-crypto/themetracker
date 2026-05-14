@@ -843,9 +843,29 @@ function renderEtfList(data) {
     const accel = subAccel[key] ?? 0;
     const accelSign = accel > 0 ? "+" : "";
     const accelClass = accel >= 20 ? "accel-fresh" : accel <= -20 ? "accel-extended" : accel >= 8 ? "accel-fresh-mild" : "accel-neutral";
+
+    const hasTickers = row.tickers && row.tickers.length > 0;
+    const tickerCount = hasTickers ? row.tickers.length : 0;
+    const tickerTooltip = _lang === "de"
+      ? `${tickerCount} Aktien in diesem Sub-Theme (Quelle: Finviz Screener)`
+      : `${tickerCount} stocks in this sub-theme (source: Finviz Screener)`;
+    const noTickerTooltip = _lang === "de"
+      ? "Kein Finviz-Screener-Filter für dieses Sub-Theme verfügbar"
+      : "No Finviz screener filter available for this sub-theme";
+    const tickerBadge = hasTickers
+      ? `<span class="theme-stock-count" title="${tickerTooltip}">${tickerCount}</span>`
+      : `<span class="theme-stock-count theme-stock-count--na" title="${noTickerTooltip}">—</span>`;
+    const copyBtn = hasTickers
+      ? `<button class="ticker-copy-btn" data-subkey="${key}" title="${_lang === 'de' ? 'Ticker in Zwischenablage kopieren' : 'Copy tickers to clipboard'}">📋</button>`
+      : '';
+
     return `<tr>
       <td>${idx + 1}</td>
-      <td style="text-align:left;font-weight:600"><a href="${subUrl}" target="_blank" rel="noopener" class="sub-theme-link">${row.label}</a></td>
+      <td style="text-align:left;font-weight:600">
+        <a href="${subUrl}" target="_blank" rel="noopener" class="sub-theme-link">${row.label}</a>
+        ${tickerBadge}
+        ${copyBtn}
+      </td>
       <td style="text-align:left">${themeBadge(row.theme)}</td>
       ${perfCells}
       <td>${row.score.toFixed(1)}</td>
@@ -854,6 +874,24 @@ function renderEtfList(data) {
   });
 
   tbody.innerHTML = rows.join("") || `<tr><td colspan="10" class="empty-msg">${t("etfNoData")}</td></tr>`;
+
+  // Attach copy-button handlers
+  tbody.querySelectorAll(".ticker-copy-btn[data-subkey]").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const key = btn.dataset.subkey;
+      const tickers = _etfData?.subnodes?.[key]?.tickers;
+      if (!tickers || !tickers.length) return;
+      navigator.clipboard.writeText(tickers.join(",")).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = "✓";
+        btn.classList.add("ticker-copy-btn--done");
+        setTimeout(() => { btn.textContent = orig; btn.classList.remove("ticker-copy-btn--done"); }, 2000);
+        const msg = _lang === "de" ? "Tickerliste kopiert!" : "Ticker list copied!";
+        showToast(msg);
+      });
+    });
+  });
 }
 
 function renderEtfTab() {
