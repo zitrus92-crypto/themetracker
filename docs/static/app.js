@@ -660,7 +660,7 @@ const THEME_COLORS = {
 
 function themeScreenerUrl(theme) {
   const slug = theme.toLowerCase().replace(/[^a-z0-9]/g, "");
-  return `https://finviz.com/screener.ashx?v=141&f=theme_${slug}`;
+  return `https://finviz.com/screener.ashx?v=211&f=theme_${slug}&o=-perf13w`;
 }
 
 function themeBadge(theme) {
