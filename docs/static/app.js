@@ -733,7 +733,7 @@ function renderEtfThemes(data) {
     const chips = (row.top3 || []).map(nodeKey => {
       const sub = data.subnodes?.[nodeKey];
       const label = sub ? sub.label : nodeKey;
-      const url = `https://finviz.com/screener.ashx?v=211&f=theme_${nodeKey}&o=-perf13w`;
+      const url = `https://finviz.com/screener.ashx?v=211&f=subtheme_${nodeKey}&o=-perf13w`;
       return `<a class="etf-ticker-chip etf-ticker-chip--link" href="${url}" target="_blank" rel="noopener" title="${label} → Finviz Screener">${label}</a>`;
     }).join(" ");
 
@@ -822,7 +822,7 @@ function renderEtfList(data) {
     const perfCells = ETF_TIMEFRAMES.map(tf =>
       `<td class="${perfClass(row.perfs[tf])}">${fmtPct(row.perfs[tf])}</td>`
     ).join("");
-    const subUrl = `https://finviz.com/screener.ashx?v=211&f=theme_${key}&o=-perf13w`;
+    const subUrl = `https://finviz.com/screener.ashx?v=211&f=subtheme_${key}&o=-perf13w`;
     return `<tr>
       <td>${idx + 1}</td>
       <td style="text-align:left;font-weight:600"><a href="${subUrl}" target="_blank" rel="noopener" class="sub-theme-link">${row.label}</a></td>
