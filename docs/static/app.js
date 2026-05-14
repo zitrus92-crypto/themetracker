@@ -54,6 +54,7 @@ const I18N = {
     etfNoData:    "Theme-Daten werden geladen oder sind noch nicht verfügbar.",
     hintEtfs:     "Finviz Thematic Map — 40 Themes, 268 Sub-Themes (direkte Stock-Daten, keine ETFs).\nThemes-Ansicht: Aggregierter Durchschnitt aller Sub-Nodes je Theme. Score = gewichteter Rank (1M×70%+1W×20%+3M×10%).\nSub-Themes: 268 granulare Segmente sortierbar nach beliebigem Zeitraum.\nNutzung: Themes mit starkem 1M UND 3M Score = institutionell bestätigtes Momentum (wie Ariel-Kriterium).",
     hintThemeAccel: "Accel = Differenz zwischen 3M-Rang und 1M-Rang aller Themes.\n\n🟢 Hoher positiver Wert (+10 bis +30): Theme war vor 3 Monaten noch schwach, hat aber im letzten Monat stark aufgeholt → frisches Momentum, ideale First-Flag-Zone. Noch Fleisch am Knochen!\n\n⚪ Nahe null (-5 bis +5): Theme läuft gleichmäßig — weder fresh noch extended.\n\n🔴 Negativer Wert: Theme lief schon vor 3 Monaten stark und ist seitdem abgeflacht → möglicherweise extended oder dreht bereits.",
+    hintSubAccel:   "Accel = Differenz zwischen 3M-Rang und 1M-Rang aller 268 Sub-Themes.\n\n🟢 Stark positiv: Sub-Theme war vor 3M noch schwach, zieht jetzt an → frisches Momentum innerhalb des übergeordneten Themes. Ideal für First-Flag-Suche.\n\n⚪ Nahe null: gleichmäßige Bewegung.\n\n🔴 Negativ: Sub-Theme lief 3M schon stark, flacht ab → möglicherweise extended.\n\nTipp: Absteigend sortieren → die heißesten Sub-Theme-Pockets finden.",
   },
   en: {
     notLoaded:    "— not yet loaded —",
@@ -105,6 +106,7 @@ const I18N = {
     etfNoData:    "Theme data loading or not yet available.",
     hintEtfs:     "Finviz Thematic Map — 40 themes, 268 sub-themes (direct stock data, no ETFs).\nThemes view: averaged across all sub-nodes per theme. Score = weighted rank (1M×70%+1W×20%+3M×10%).\nSub-Themes: 268 granular segments sortable by any timeframe.\nUsage: themes with strong 1M AND 3M score = institutionally confirmed momentum (Ariel criterion).",
     hintThemeAccel: "Accel = difference between 3M rank and 1M rank across all themes.\n\n🟢 High positive (+10 to +30): theme was weak 3 months ago but surged in the last month → fresh momentum, ideal First Flag zone. Plenty of room to run!\n\n⚪ Near zero (-5 to +5): theme is moving steadily — neither fresh nor extended.\n\n🔴 Negative: theme was already strong 3 months ago and has since slowed → possibly extended or beginning to rotate out.",
+    hintSubAccel:   "Accel = difference between 3M rank and 1M rank across all 268 sub-themes.\n\n🟢 High positive: sub-theme was weak 3M ago, now accelerating → fresh momentum within the parent theme. Ideal for First Flag search.\n\n⚪ Near zero: steady movement.\n\n🔴 Negative: sub-theme was already strong 3M ago, now slowing → possibly extended.\n\nTip: Sort descending → find the hottest sub-theme pockets.",
   },
 };
 
@@ -806,33 +808,51 @@ function renderEtfList(data) {
     th.classList.toggle("sort-active", isActive);
     const arrow = isActive ? (_etfListSort.dir === 1 ? " ▲" : " ▼") : "";
     if (col === "score") th.innerHTML = t("colScore") + arrow;
+    else if (col === "accel") th.innerHTML = t("colAccel") + arrow;
     else th.textContent = th.textContent.replace(/ [▲▼]$/, "") + arrow;
   });
 
-  let entries = Object.entries(data.subnodes);
+  const allEntries = Object.entries(data.subnodes);
+
+  // Compute Accel = rank_3M - rank_1M across all sub-themes
+  const sorted1M = [...allEntries].sort(([,a],[,b]) => (b.perfs["1M"] ?? -999) - (a.perfs["1M"] ?? -999));
+  const sorted3M = [...allEntries].sort(([,a],[,b]) => (b.perfs["3M"] ?? -999) - (a.perfs["3M"] ?? -999));
+  const rank1M = {}, rank3M = {};
+  sorted1M.forEach(([k], i) => rank1M[k] = i + 1);
+  sorted3M.forEach(([k], i) => rank3M[k] = i + 1);
+  const subAccel = {};
+  allEntries.forEach(([k]) => { subAccel[k] = (rank3M[k] ?? allEntries.length) - (rank1M[k] ?? allEntries.length); });
+
   const { col, dir } = _etfListSort;
+  let entries = [...allEntries];
   entries.sort(([ka, a], [kb, b]) => {
     if (col === "label") return dir * a.label.localeCompare(b.label);
     if (col === "theme") return dir * a.theme.localeCompare(b.theme);
     if (col === "score") return dir * (a.score - b.score);
+    if (col === "accel") return dir * (subAccel[ka] - subAccel[kb]);
     return dir * ((a.perfs[col] ?? -Infinity) - (b.perfs[col] ?? -Infinity));
   });
 
+  const accelTooltip = t("hintSubAccel");
   const rows = entries.map(([key, row], idx) => {
     const perfCells = ETF_TIMEFRAMES.map(tf =>
       `<td class="${perfClass(row.perfs[tf])}">${fmtPct(row.perfs[tf])}</td>`
     ).join("");
     const subUrl = `https://finviz.com/screener.ashx?v=211&f=subtheme_${key}&o=-perf13w`;
+    const accel = subAccel[key] ?? 0;
+    const accelSign = accel > 0 ? "+" : "";
+    const accelClass = accel >= 20 ? "accel-fresh" : accel <= -20 ? "accel-extended" : accel >= 8 ? "accel-fresh-mild" : "accel-neutral";
     return `<tr>
       <td>${idx + 1}</td>
       <td style="text-align:left;font-weight:600"><a href="${subUrl}" target="_blank" rel="noopener" class="sub-theme-link">${row.label}</a></td>
       <td style="text-align:left">${themeBadge(row.theme)}</td>
       ${perfCells}
       <td>${row.score.toFixed(1)}</td>
+      <td class="${accelClass}" title="${accelTooltip}" style="cursor:help;font-weight:700">${accelSign}${accel}</td>
     </tr>`;
   });
 
-  tbody.innerHTML = rows.join("") || `<tr><td colspan="9" class="empty-msg">${t("etfNoData")}</td></tr>`;
+  tbody.innerHTML = rows.join("") || `<tr><td colspan="10" class="empty-msg">${t("etfNoData")}</td></tr>`;
 }
 
 function renderEtfTab() {
