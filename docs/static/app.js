@@ -945,6 +945,115 @@ function renderEtfList(data) {
   });
 }
 
+function renderBubbleChart(data, themeAccel) {
+  const container = document.getElementById("etf-bubble-view");
+  const entries = Object.entries(data.themes)
+    .filter(([,r]) => r.perfs["3M"] !== null && r.perfs["1M"] !== null);
+
+  const all3M = entries.map(([,r]) => r.perfs["3M"]);
+  const all1M = entries.map(([,r]) => r.perfs["1M"]);
+  const med3M = [...all3M].sort((a,b)=>a-b)[Math.floor(all3M.length/2)];
+  const med1M = [...all1M].sort((a,b)=>a-b)[Math.floor(all1M.length/2)];
+  const min3M = Math.min(...all3M), max3M = Math.max(...all3M);
+  const min1M = Math.min(...all1M), max1M = Math.max(...all1M);
+  // Add 10% padding to axis ranges
+  const pad3M = (max3M - min3M) * 0.1, pad1M = (max1M - min1M) * 0.1;
+  const lo3M = min3M - pad3M, hi3M = max3M + pad3M;
+  const lo1M = min1M - pad1M, hi1M = max1M + pad1M;
+
+  const maxTickers = Math.max(...entries.map(([,r]) => (r.tickers || []).length)) || 1;
+
+  const W = 640, H = 420;
+  const PAD = { top: 24, right: 24, bottom: 44, left: 54 };
+  const plotW = W - PAD.left - PAD.right;
+  const plotH = H - PAD.top - PAD.bottom;
+
+  const toX = v => PAD.left + ((v - lo3M) / (hi3M - lo3M)) * plotW;
+  const toY = v => H - PAD.bottom - ((v - lo1M) / (hi1M - lo1M)) * plotH;
+  const toR = n => Math.max(6, Math.min(22, 6 + (n / maxTickers) * 16));
+  const toColor = a => a >= 10 ? "#4ade80" : a <= -10 ? "#f87171" : a >= 5 ? "#86efac" : "#6b7280";
+
+  const medX = toX(med3M).toFixed(1);
+  const medY = toY(med1M).toFixed(1);
+
+  // Quadrant label positions
+  const qLabels = [
+    { x: PAD.left + 4,      y: PAD.top + 14,       text: "🚀 First Flag",  fill: "#4ade80" },
+    { x: W - PAD.right - 4, y: PAD.top + 14,        text: "Extended ⚠️",    fill: "#f87171", anchor: "end" },
+    { x: PAD.left + 4,      y: H - PAD.bottom - 6,  text: "💀 Dead",        fill: "#6b7280" },
+    { x: W - PAD.right - 4, y: H - PAD.bottom - 6,  text: "🔻 Fading",      fill: "#f87171", anchor: "end" },
+  ].map(q => `<text x="${q.x}" y="${q.y}" font-size="10" fill="${q.fill}"
+    text-anchor="${q.anchor || "start"}" style="pointer-events:none">${q.text}</text>`).join("");
+
+  // Axis tick lines + labels (5 ticks each axis)
+  function axisTicks(axis) {
+    const isX = axis === "x";
+    const lo = isX ? lo3M : lo1M, hi = isX ? hi3M : hi1M;
+    return Array.from({length: 5}, (_, i) => {
+      const v = lo + (i / 4) * (hi - lo);
+      const coord = isX ? toX(v).toFixed(1) : toY(v).toFixed(1);
+      const lbl = `${v > 0 ? "+" : ""}${v.toFixed(1)}%`;
+      return isX
+        ? `<line x1="${coord}" y1="${H - PAD.bottom}" x2="${coord}" y2="${H - PAD.bottom + 4}" stroke="#4b5563" stroke-width="1"/>
+           <text x="${coord}" y="${H - PAD.bottom + 15}" text-anchor="middle" font-size="9" fill="#6b7280">${lbl}</text>`
+        : `<line x1="${PAD.left - 4}" y1="${coord}" x2="${PAD.left}" y2="${coord}" stroke="#4b5563" stroke-width="1"/>
+           <text x="${PAD.left - 6}" y="${parseFloat(coord) + 3}" text-anchor="end" font-size="9" fill="#6b7280">${lbl}</text>`;
+    }).join("");
+  }
+
+  const circles = entries.map(([theme, row]) => {
+    const x = toX(row.perfs["3M"]).toFixed(1);
+    const y = toY(row.perfs["1M"]).toFixed(1);
+    const r = toR((row.tickers || []).length).toFixed(1);
+    const accel = themeAccel[theme] ?? 0;
+    const color = toColor(accel);
+    const accelSign = accel > 0 ? "+" : "";
+    const p3 = row.perfs["3M"] > 0 ? "+" : "";
+    const p1 = row.perfs["1M"] > 0 ? "+" : "";
+    const tip = `${theme}\n3M: ${p3}${row.perfs["3M"]?.toFixed(1)}%  1M: ${p1}${row.perfs["1M"]?.toFixed(1)}%\nAccel: ${accelSign}${accel}  |  ${(row.tickers||[]).length} Aktien`;
+    const url = themeScreenerUrl(theme);
+    const shortLabel = theme.length > 11 ? theme.slice(0, 9) + "…" : theme;
+    return `<a href="${url}" target="_blank" rel="noopener">
+      <circle cx="${x}" cy="${y}" r="${r}" fill="${color}" fill-opacity="0.72"
+        stroke="${color}" stroke-width="0.8"><title>${tip}</title></circle>
+      <text x="${x}" y="${(parseFloat(y) - parseFloat(r) - 3).toFixed(1)}"
+        text-anchor="middle" font-size="8" fill="${color}" style="pointer-events:none">${shortLabel}</text>
+    </a>`;
+  }).join("");
+
+  container.innerHTML = `
+    <div class="bubble-chart-wrap">
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="max-width:100%">
+        <!-- Grid background -->
+        <rect x="${PAD.left}" y="${PAD.top}" width="${plotW}" height="${plotH}"
+          fill="#0d1117" rx="4"/>
+        <!-- Quadrant divider lines -->
+        <line x1="${medX}" y1="${PAD.top}" x2="${medX}" y2="${H - PAD.bottom}"
+          stroke="#374151" stroke-width="1" stroke-dasharray="5,4"/>
+        <line x1="${PAD.left}" y1="${medY}" x2="${W - PAD.right}" y2="${medY}"
+          stroke="#374151" stroke-width="1" stroke-dasharray="5,4"/>
+        <!-- Axis ticks -->
+        ${axisTicks("x")}${axisTicks("y")}
+        <!-- Axis labels -->
+        <text x="${PAD.left + plotW / 2}" y="${H - 4}" text-anchor="middle"
+          font-size="11" fill="#9ca3af">3M Performance →</text>
+        <text x="12" y="${PAD.top + plotH / 2}" text-anchor="middle" font-size="11"
+          fill="#9ca3af" transform="rotate(-90,12,${PAD.top + plotH / 2})">1M Performance ↑</text>
+        <!-- Quadrant labels -->
+        ${qLabels}
+        <!-- Bubbles -->
+        ${circles}
+      </svg>
+      <div class="bubble-legend">
+        <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#4ade80" fill-opacity="0.8"/></svg> Accel ≥ +10 (First Flag)</span>
+        <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#86efac" fill-opacity="0.8"/></svg> Accel +5…+9</span>
+        <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#6b7280" fill-opacity="0.8"/></svg> Neutral</span>
+        <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#f87171" fill-opacity="0.8"/></svg> Accel ≤ −10 (Extended/Fading)</span>
+        <span class="bubble-legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#9ca3af" fill-opacity="0.5"/></svg> Größe = Aktienanzahl</span>
+      </div>
+    </div>`;
+}
+
 function renderEtfTab() {
   if (!_etfData) return;
   if (_etfView === "themes") {
