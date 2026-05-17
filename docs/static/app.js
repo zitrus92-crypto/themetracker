@@ -749,7 +749,8 @@ function renderSparkline(perfs, accel) {
     vals[i] !== null ? `${tf}: ${vals[i] > 0 ? "+" : ""}${vals[i].toFixed(1)}%` : `${tf}: —`
   ).join("  ");
 
-  return `<svg width="72" height="26" style="display:block;cursor:help" title="${tooltipParts}">
+  return `<svg width="72" height="26" style="display:block;cursor:help">
+    <title>${tooltipParts}</title>
     <polyline points="${polyPts}" fill="none" stroke="${color}" stroke-width="1.8"
       stroke-linejoin="round" stroke-linecap="round"/>
     <circle cx="${last[0]}" cy="${last[1]}" r="2.2" fill="${color}"/>
