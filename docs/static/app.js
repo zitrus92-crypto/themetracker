@@ -155,6 +155,9 @@ function applyTranslations() {
       el.textContent = t(key);
     }
   });
+  // Viz-toggle buttons are not handled via data-i18n (buttons reset textContent unreliably)
+  const vizTableBtn = document.querySelector(".viz-btn[data-vizview='table']");
+  if (vizTableBtn) vizTableBtn.textContent = _lang === "de" ? "📋 Tabelle" : "📋 Table";
   document.documentElement.lang = _lang;
   document.getElementById("lang-btn").textContent = _lang === "de" ? "EN" : "DE";
   initSectionHints();
