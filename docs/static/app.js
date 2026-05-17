@@ -63,6 +63,9 @@ const I18N = {
     matrixFadingSub:"3M stark → 1M schwach",
     matrixDead:     "💀 Dead",
     matrixDeadSub:  "beide schwach",
+    vizTable:       "📋 Tabelle",
+    vizBubble:      "🔵 Bubble",
+    vizMatrix:      "⊞ Matrix",
   },
   en: {
     notLoaded:    "— not yet loaded —",
@@ -123,6 +126,9 @@ const I18N = {
     matrixFadingSub:"3M strong → 1M weak",
     matrixDead:     "💀 Dead",
     matrixDeadSub:  "both weak",
+    vizTable:       "📋 Table",
+    vizBubble:      "🔵 Bubble",
+    vizMatrix:      "⊞ Matrix",
   },
 };
 
