@@ -1036,8 +1036,8 @@ function renderBubbleChart(data, themeAccel) {
 
   const maxTickers = Math.max(...entries.map(([,r]) => (r.tickers || []).length)) || 1;
 
-  const W = 640, H = 420;
-  const PAD = { top: 24, right: 24, bottom: 44, left: 54 };
+  const W = 1100, H = 520;
+  const PAD = { top: 28, right: 32, bottom: 48, left: 58 };
   const plotW = W - PAD.left - PAD.right;
   const plotH = H - PAD.top - PAD.bottom;
 
@@ -1096,7 +1096,7 @@ function renderBubbleChart(data, themeAccel) {
 
   container.innerHTML = `
     <div class="bubble-chart-wrap">
-      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="max-width:100%">
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block">
         <!-- Grid background -->
         <rect x="${PAD.left}" y="${PAD.top}" width="${plotW}" height="${plotH}"
           fill="#0d1117" rx="4"/>
