@@ -620,6 +620,7 @@ let _etfData       = null;
 let _etfView       = "themes";   // "themes" | "etfs"
 let _etfThemeSort  = { col: "score", dir: 1 };
 let _etfListSort   = { col: "score", dir: 1 };
+let _themeVizView  = "table"; // "table" | "bubble" | "matrix"
 
 // Theme badge colours for all 40 Finviz themes
 const THEME_COLORS = {
@@ -747,6 +748,21 @@ function renderEtfThemes(data) {
     return;
   }
 
+  // Must be computed before view-switch so bubble/matrix can use it
+  let entries = Object.entries(data.themes);
+  const themeAccel = computeAccel(entries);
+
+  // Show/hide the three view containers
+  const tableScroll = document.querySelector("#etf-themes-view .table-scroll");
+  if (tableScroll) tableScroll.classList.toggle("hidden", _themeVizView !== "table");
+  document.getElementById("etf-bubble-view").classList.toggle("hidden", _themeVizView !== "bubble");
+  document.getElementById("etf-matrix-view").classList.toggle("hidden", _themeVizView !== "matrix");
+
+  if (_themeVizView === "bubble") { renderBubbleChart(data, themeAccel); return; }
+  if (_themeVizView === "matrix") { renderMomentumMatrix(data, themeAccel); return; }
+
+  // --- table view continues below ---
+
   document.querySelectorAll("#etf-themes-table thead th[data-etfcol]").forEach(th => {
     const col = th.dataset.etfcol;
     const isActive = col === _etfThemeSort.col;
@@ -756,10 +772,6 @@ function renderEtfThemes(data) {
     else if (col === "accel") th.innerHTML = t("etfColAccel") + arrow;
     else th.textContent = (col === "theme" ? "Theme" : col) + arrow;
   });
-
-  let entries = Object.entries(data.themes);
-
-  const themeAccel = computeAccel(entries);
 
   const { col, dir } = _etfThemeSort;
   entries.sort(([na, a], [nb, b]) => {
@@ -957,6 +969,17 @@ function initEtfViewToggle() {
   });
 }
 
+function initThemeVizToggle() {
+  document.querySelectorAll(".viz-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".viz-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      _themeVizView = btn.dataset.vizview;
+      renderEtfThemes(_etfData);
+    });
+  });
+}
+
 function initEtfSortHeaders() {
   // Theme table sort
   document.querySelectorAll("#etf-themes-table thead th[data-etfcol]").forEach(th => {
@@ -997,6 +1020,7 @@ initPeriodSelector();
 initViewToggle();
 initEtfViewToggle();
 initEtfSortHeaders();
+initThemeVizToggle();
 
 // --- Load data ---
 async function loadData() {

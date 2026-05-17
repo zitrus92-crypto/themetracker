@@ -124,6 +124,14 @@
 
       <!-- Themes view -->
       <div id="etf-themes-view">
+        <!-- Viz toggle: only visible in Themes tab -->
+        <div class="viz-toggle" id="theme-viz-toggle">
+          <button class="viz-btn active" data-vizview="table">📋 Tabelle</button>
+          <button class="viz-btn" data-vizview="bubble">🔵 Bubble</button>
+          <button class="viz-btn" data-vizview="matrix">⊞ Matrix</button>
+        </div>
+        <div id="etf-bubble-view" class="hidden"></div>
+        <div id="etf-matrix-view" class="hidden"></div>
         <div class="table-scroll">
           <table id="etf-themes-table">
             <thead>
