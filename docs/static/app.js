@@ -743,7 +743,7 @@ function renderSparkline(perfs, accel) {
 function renderEtfThemes(data) {
   const tbody = document.getElementById("etf-themes-body");
   if (!data || !data.themes) {
-    tbody.innerHTML = `<tr><td colspan="10" class="empty-msg">${t("etfNoData")}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="empty-msg">${t("etfNoData")}</td></tr>`;
     return;
   }
 
@@ -814,10 +814,11 @@ function renderEtfThemes(data) {
       <td>${row.score.toFixed(1)}</td>
       <td class="${accelClass}" title="${accelTooltip}" style="cursor:help;font-weight:700">${accelSign}${accel}</td>
       <td style="text-align:left">${chips}</td>
+      <td>${renderSparkline(row.perfs, themeAccel[theme] ?? 0)}</td>
     </tr>`;
   });
 
-  tbody.innerHTML = rows.join("") || `<tr><td colspan="10" class="empty-msg">${t("etfNoData")}</td></tr>`;
+  tbody.innerHTML = rows.join("") || `<tr><td colspan="11" class="empty-msg">${t("etfNoData")}</td></tr>`;
 
   // Attach copy-button handlers
   tbody.querySelectorAll(".ticker-copy-btn").forEach(btn => {
