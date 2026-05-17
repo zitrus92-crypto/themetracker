@@ -341,3 +341,28 @@ a.etf-theme-badge:hover { filter: brightness(1.25); }
   margin-top: 8px; padding: 0 8px; font-size: 11px; color: var(--text-dim);
 }
 .bubble-legend-item { display: flex; align-items: center; gap: 5px; }
+
+/* Momentum Matrix */
+.momentum-matrix {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  margin-bottom: 8px;
+}
+.matrix-cell {
+  border-radius: 8px; border: 1px solid var(--border);
+  padding: 12px; min-height: 120px;
+}
+.matrix-fresh   { background: #0a1f12; border-color: #4ade80; }
+.matrix-trending{ background: #1f1200; border-color: #f97316; }
+.matrix-dead    { background: #111; border-color: #374151; }
+.matrix-fading  { background: #1f0a0a; border-color: #f87171; }
+.matrix-cell-hdr {
+  font-size: 11px; font-weight: 700; margin-bottom: 8px;
+  display: flex; align-items: baseline; gap: 6px;
+}
+.matrix-fresh    .matrix-cell-hdr { color: #4ade80; }
+.matrix-trending .matrix-cell-hdr { color: #f97316; }
+.matrix-dead     .matrix-cell-hdr { color: #6b7280; }
+.matrix-fading   .matrix-cell-hdr { color: #f87171; }
+.matrix-sub { font-size: 9px; font-weight: 400; opacity: 0.7; }
+.matrix-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.matrix-chip { font-size: 11px !important; }

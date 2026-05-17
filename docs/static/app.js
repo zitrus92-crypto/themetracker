@@ -55,6 +55,14 @@ const I18N = {
     hintEtfs:     "Finviz Thematic Map — 40 Themes, 268 Sub-Themes (direkte Stock-Daten).\nThemes-Ansicht: Aggregierter Durchschnitt aller Sub-Nodes je Theme. Score = gewichteter Rank (1M×70%+1W×20%+3M×10%).\nSub-Themes: 268 granulare Segmente sortierbar nach beliebigem Zeitraum.\nNutzung: Themes mit starkem 1M UND 3M Score = institutionell bestätigtes Momentum (wie Ariel-Kriterium).",
     hintThemeAccel: "Accel = Differenz zwischen 3M-Rang und 1M-Rang aller Themes.\n\n🟢 Hoher positiver Wert (+10 bis +30): Theme war vor 3 Monaten noch schwach, hat aber im letzten Monat stark aufgeholt → frisches Momentum, ideale First-Flag-Zone. Noch Fleisch am Knochen!\n\n⚪ Nahe null (-5 bis +5): Theme läuft gleichmäßig — weder fresh noch extended.\n\n🔴 Negativer Wert: Theme lief schon vor 3 Monaten stark und ist seitdem abgeflacht → möglicherweise extended oder dreht bereits.",
     hintSubAccel:   "Accel = Differenz zwischen 3M-Rang und 1M-Rang aller 268 Sub-Themes.\n\n🟢 Stark positiv: Sub-Theme war vor 3M noch schwach, zieht jetzt an → frisches Momentum innerhalb des übergeordneten Themes. Ideal für First-Flag-Suche.\n\n⚪ Nahe null: gleichmäßige Bewegung.\n\n🔴 Negativ: Sub-Theme lief 3M schon stark, flacht ab → möglicherweise extended.\n\nTipp: Absteigend sortieren → die heißesten Sub-Theme-Pockets finden.",
+    matrixFresh:    "🚀 First Flag Zone",
+    matrixFreshSub: "3M schwach → 1M stark",
+    matrixTrend:    "⚡ Trending (Extended)",
+    matrixTrendSub: "3M stark → 1M stark",
+    matrixFading:   "🔻 Fading",
+    matrixFadingSub:"3M stark → 1M schwach",
+    matrixDead:     "💀 Dead",
+    matrixDeadSub:  "beide schwach",
   },
   en: {
     notLoaded:    "— not yet loaded —",
@@ -107,6 +115,14 @@ const I18N = {
     hintEtfs:     "Finviz Thematic Map — 40 themes, 268 sub-themes (direct stock data).\nThemes view: averaged across all sub-nodes per theme. Score = weighted rank (1M×70%+1W×20%+3M×10%).\nSub-Themes: 268 granular segments sortable by any timeframe.\nUsage: themes with strong 1M AND 3M score = institutionally confirmed momentum (Ariel criterion).",
     hintThemeAccel: "Accel = difference between 3M rank and 1M rank across all themes.\n\n🟢 High positive (+10 to +30): theme was weak 3 months ago but surged in the last month → fresh momentum, ideal First Flag zone. Plenty of room to run!\n\n⚪ Near zero (-5 to +5): theme is moving steadily — neither fresh nor extended.\n\n🔴 Negative: theme was already strong 3 months ago and has since slowed → possibly extended or beginning to rotate out.",
     hintSubAccel:   "Accel = difference between 3M rank and 1M rank across all 268 sub-themes.\n\n🟢 High positive: sub-theme was weak 3M ago, now accelerating → fresh momentum within the parent theme. Ideal for First Flag search.\n\n⚪ Near zero: steady movement.\n\n🔴 Negative: sub-theme was already strong 3M ago, now slowing → possibly extended.\n\nTip: Sort descending → find the hottest sub-theme pockets.",
+    matrixFresh:    "🚀 First Flag Zone",
+    matrixFreshSub: "3M weak → 1M strong",
+    matrixTrend:    "⚡ Trending (Extended)",
+    matrixTrendSub: "3M strong → 1M strong",
+    matrixFading:   "🔻 Fading",
+    matrixFadingSub:"3M strong → 1M weak",
+    matrixDead:     "💀 Dead",
+    matrixDeadSub:  "both weak",
   },
 };
 
@@ -945,10 +961,66 @@ function renderEtfList(data) {
   });
 }
 
+function renderMomentumMatrix(data, themeAccel) {
+  const container = document.getElementById("etf-matrix-view");
+  const entries = Object.entries(data.themes);
+
+  const all3M = entries.map(([,r]) => r.perfs["3M"]).filter(v => v !== null);
+  const all1M = entries.map(([,r]) => r.perfs["1M"]).filter(v => v !== null);
+  const med3M = [...all3M].sort((a,b)=>a-b)[Math.floor(all3M.length/2)];
+  const med1M = [...all1M].sort((a,b)=>a-b)[Math.floor(all1M.length/2)];
+
+  const q = { fresh: [], trending: [], fading: [], dead: [] };
+  entries.forEach(([theme, row]) => {
+    const p3 = row.perfs["3M"] ?? 0;
+    const p1 = row.perfs["1M"] ?? 0;
+    if      (p3 < med3M && p1 >= med1M) q.fresh.push(theme);
+    else if (p3 >= med3M && p1 >= med1M) q.trending.push(theme);
+    else if (p3 >= med3M && p1 < med1M)  q.fading.push(theme);
+    else                                  q.dead.push(theme);
+  });
+
+  const chips = (themes) => themes.map(theme => {
+    const c = THEME_COLORS[theme] || { bg: "#1a1a2a", fg: "#8b949e" };
+    const accel = themeAccel[theme] ?? 0;
+    const accelSign = accel > 0 ? "+" : "";
+    const tip = `Accel: ${accelSign}${accel}`;
+    return `<a href="${themeScreenerUrl(theme)}" target="_blank" rel="noopener"
+      class="etf-theme-badge matrix-chip" title="${tip}"
+      style="background:${c.bg};color:${c.fg};text-decoration:none">${theme}</a>`;
+  }).join(" ");
+
+  container.innerHTML = `
+    <div class="momentum-matrix">
+      <div class="matrix-cell matrix-fresh">
+        <div class="matrix-cell-hdr">${t("matrixFresh")}<span class="matrix-sub">${t("matrixFreshSub")}</span></div>
+        <div class="matrix-chips">${chips(q.fresh)}</div>
+      </div>
+      <div class="matrix-cell matrix-trending">
+        <div class="matrix-cell-hdr">${t("matrixTrend")}<span class="matrix-sub">${t("matrixTrendSub")}</span></div>
+        <div class="matrix-chips">${chips(q.trending)}</div>
+      </div>
+      <div class="matrix-cell matrix-dead">
+        <div class="matrix-cell-hdr">${t("matrixDead")}<span class="matrix-sub">${t("matrixDeadSub")}</span></div>
+        <div class="matrix-chips">${chips(q.dead)}</div>
+      </div>
+      <div class="matrix-cell matrix-fading">
+        <div class="matrix-cell-hdr">${t("matrixFading")}<span class="matrix-sub">${t("matrixFadingSub")}</span></div>
+        <div class="matrix-chips">${chips(q.fading)}</div>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--text-dim);margin-top:8px;padding:0 4px">
+      ${_lang === "de"
+        ? `Einteilung nach Median 3M (${med3M > 0 ? "+" : ""}${med3M.toFixed(1)}%) und Median 1M (${med1M > 0 ? "+" : ""}${med1M.toFixed(1)}%). Klick auf Theme öffnet Finviz.`
+        : `Divided at median 3M (${med3M > 0 ? "+" : ""}${med3M.toFixed(1)}%) and median 1M (${med1M > 0 ? "+" : ""}${med1M.toFixed(1)}%). Click any theme to open Finviz.`}
+    </p>`;
+}
+
 function renderBubbleChart(data, themeAccel) {
   const container = document.getElementById("etf-bubble-view");
   const entries = Object.entries(data.themes)
     .filter(([,r]) => r.perfs["3M"] !== null && r.perfs["1M"] !== null);
+  if (!entries.length) { container.innerHTML = '<p style="color:#6b7280;padding:16px">No data</p>'; return; }
 
   const all3M = entries.map(([,r]) => r.perfs["3M"]);
   const all1M = entries.map(([,r]) => r.perfs["1M"]);
