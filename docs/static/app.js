@@ -1096,7 +1096,7 @@ function renderBubbleChart(data, themeAccel) {
 
   container.innerHTML = `
     <div class="bubble-chart-wrap">
-      <svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block">
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;max-height:480px;display:block">
         <!-- Grid background -->
         <rect x="${PAD.left}" y="${PAD.top}" width="${plotW}" height="${plotH}"
           fill="#0d1117" rx="4"/>
