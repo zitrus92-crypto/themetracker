@@ -844,7 +844,7 @@ function renderEtfThemes(data) {
 function renderEtfList(data) {
   const tbody = document.getElementById("etf-list-body");
   if (!data || !data.subnodes) {
-    tbody.innerHTML = `<tr><td colspan="9" class="empty-msg">${t("etfNoData")}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" class="empty-msg">${t("etfNoData")}</td></tr>`;
     return;
   }
 
@@ -908,10 +908,11 @@ function renderEtfList(data) {
       ${perfCells}
       <td>${row.score.toFixed(1)}</td>
       <td class="${accelClass}" title="${accelTooltip}" style="cursor:help;font-weight:700">${accelSign}${accel}</td>
+      <td>${renderSparkline(row.perfs, subAccel[key] ?? 0)}</td>
     </tr>`;
   });
 
-  tbody.innerHTML = rows.join("") || `<tr><td colspan="10" class="empty-msg">${t("etfNoData")}</td></tr>`;
+  tbody.innerHTML = rows.join("") || `<tr><td colspan="11" class="empty-msg">${t("etfNoData")}</td></tr>`;
 
   // Attach copy-button handlers
   tbody.querySelectorAll(".ticker-copy-btn[data-subkey]").forEach(btn => {
