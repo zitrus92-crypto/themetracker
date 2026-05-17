@@ -688,6 +688,57 @@ function showToast(msg) {
   toast._hideTimer = setTimeout(() => toast.classList.remove("copy-toast--visible"), 2000);
 }
 
+// Compute Accel = rank_3M - rank_1M for a themes or subnodes map.
+// Returns { [key]: number } — positive = fresh momentum.
+function computeAccel(entries) {
+  const sorted1M = [...entries].sort(([,a],[,b]) => (b.perfs["1M"] ?? -999) - (a.perfs["1M"] ?? -999));
+  const sorted3M = [...entries].sort(([,a],[,b]) => (b.perfs["3M"] ?? -999) - (a.perfs["3M"] ?? -999));
+  const rank1M = {}, rank3M = {};
+  sorted1M.forEach(([k], i) => rank1M[k] = i + 1);
+  sorted3M.forEach(([k], i) => rank3M[k] = i + 1);
+  const accel = {};
+  entries.forEach(([k]) => { accel[k] = (rank3M[k] ?? entries.length) - (rank1M[k] ?? entries.length); });
+  return accel;
+}
+
+// Render a 4-point sparkline SVG (YTD→3M→1M→1W) colored by accel value.
+function renderSparkline(perfs, accel) {
+  const TFS = ["YTD", "3M", "1M", "1W"];
+  const vals = TFS.map(tf => perfs[tf] ?? null);
+  const defined = vals.filter(v => v !== null);
+  if (defined.length < 2) return `<svg width="72" height="26" style="display:block"></svg>`;
+
+  const min = Math.min(...defined);
+  const max = Math.max(...defined);
+  const range = max - min || 1;
+  const W = 72, H = 26, PX = 5, PY = 4;
+
+  const pts = vals.map((v, i) => {
+    if (v === null) return null;
+    const x = PX + (i / (TFS.length - 1)) * (W - 2 * PX);
+    const y = H - PY - ((v - min) / range) * (H - 2 * PY);
+    return [x.toFixed(1), y.toFixed(1)];
+  });
+
+  const polyPts = pts.filter(Boolean).map(p => p.join(",")).join(" ");
+  const last = pts.filter(Boolean).pop();
+
+  const color = accel >= 10 ? "#4ade80"
+              : accel <= -10 ? "#f87171"
+              : accel >= 5   ? "#86efac"
+              : "#6b7280";
+
+  const tooltipParts = TFS.map((tf, i) =>
+    vals[i] !== null ? `${tf}: ${vals[i] > 0 ? "+" : ""}${vals[i].toFixed(1)}%` : `${tf}: —`
+  ).join("  ");
+
+  return `<svg width="72" height="26" style="display:block;cursor:help" title="${tooltipParts}">
+    <polyline points="${polyPts}" fill="none" stroke="${color}" stroke-width="1.8"
+      stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${last[0]}" cy="${last[1]}" r="2.2" fill="${color}"/>
+  </svg>`;
+}
+
 // --- Themes table (40 Finviz top-level themes) ---
 function renderEtfThemes(data) {
   const tbody = document.getElementById("etf-themes-body");
@@ -708,14 +759,7 @@ function renderEtfThemes(data) {
 
   let entries = Object.entries(data.themes);
 
-  // Compute theme accel = rank_3M - rank_1M (positive = fresh momentum)
-  const sorted1M = [...entries].sort(([,a],[,b]) => (b.perfs["1M"] ?? -999) - (a.perfs["1M"] ?? -999));
-  const sorted3M = [...entries].sort(([,a],[,b]) => (b.perfs["3M"] ?? -999) - (a.perfs["3M"] ?? -999));
-  const rank1M = {}, rank3M = {};
-  sorted1M.forEach(([th], i) => rank1M[th] = i + 1);
-  sorted3M.forEach(([th], i) => rank3M[th] = i + 1);
-  const themeAccel = {};
-  entries.forEach(([th]) => { themeAccel[th] = (rank3M[th] ?? entries.length) - (rank1M[th] ?? entries.length); });
+  const themeAccel = computeAccel(entries);
 
   const { col, dir } = _etfThemeSort;
   entries.sort(([na, a], [nb, b]) => {
@@ -815,14 +859,7 @@ function renderEtfList(data) {
 
   const allEntries = Object.entries(data.subnodes);
 
-  // Compute Accel = rank_3M - rank_1M across all sub-themes
-  const sorted1M = [...allEntries].sort(([,a],[,b]) => (b.perfs["1M"] ?? -999) - (a.perfs["1M"] ?? -999));
-  const sorted3M = [...allEntries].sort(([,a],[,b]) => (b.perfs["3M"] ?? -999) - (a.perfs["3M"] ?? -999));
-  const rank1M = {}, rank3M = {};
-  sorted1M.forEach(([k], i) => rank1M[k] = i + 1);
-  sorted3M.forEach(([k], i) => rank3M[k] = i + 1);
-  const subAccel = {};
-  allEntries.forEach(([k]) => { subAccel[k] = (rank3M[k] ?? allEntries.length) - (rank1M[k] ?? allEntries.length); });
+  const subAccel = computeAccel(allEntries);
 
   const { col, dir } = _etfListSort;
   let entries = [...allEntries];
