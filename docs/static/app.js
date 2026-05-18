@@ -691,8 +691,19 @@ const THEME_COLORS = {
   "Healthy Food & Nutrition":   { bg: "#001a10", fg: "#6ee7b7" },
 };
 
+// Finviz internal slugs that differ from auto-derived form (kept in sync with scraper.py)
+const THEME_SLUG_OVERRIDES = {
+  "Commodities — Agri":      "commoditiesagriculture",
+  "Education Tech":          "educationtechnology",
+  "Agriculture & Food":      "agriculturefoodtech",
+  "Clean Energy":            "energyrenewable",
+  "Environmental":           "environmentalsustainability",
+  "Aging Population":        "agingpopulationlongevity",
+  "VR & Augmented Reality":  "virtualaugmentedreality",
+};
+
 function themeScreenerUrl(theme) {
-  const slug = theme.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const slug = THEME_SLUG_OVERRIDES[theme] ?? theme.toLowerCase().replace(/[^a-z0-9]/g, "");
   return `https://finviz.com/screener.ashx?v=211&f=theme_${slug}&o=-perf13w`;
 }
 
