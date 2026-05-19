@@ -67,6 +67,11 @@ const I18N = {
     vizTable:       "📋 Tabelle",
     vizBubble:      "🔵 Bubble",
     vizMatrix:      "⊞ Matrix",
+    topEtfs:          "📊 ETFs",
+    etfPerfTitle:     "ETF Performance",
+    etfPerfColEtf:    "ETF",
+    etfPerfNoData:    "ETF-Daten werden geladen oder sind noch nicht verfügbar.",
+    hintEtfPerf:      "32 ETFs in 4 Kategorien: Broad Market, US Sectors, Commodities, Crypto.\nScore = gewichteter Rang (1M×70%+1W×20%+3M×10%). Accel = 3M-Rang minus 1M-Rang.\nKlick auf Ticker öffnet Finviz-Chart.",
   },
   en: {
     notLoaded:    "— not yet loaded —",
@@ -131,6 +136,11 @@ const I18N = {
     vizTable:       "📋 Table",
     vizBubble:      "🔵 Bubble",
     vizMatrix:      "⊞ Matrix",
+    topEtfs:          "📊 ETFs",
+    etfPerfTitle:     "ETF Performance",
+    etfPerfColEtf:    "ETF",
+    etfPerfNoData:    "ETF data is loading or not yet available.",
+    hintEtfPerf:      "32 ETFs in 4 categories: Broad Market, US Sectors, Commodities, Crypto.\nScore = weighted rank (1M×70%+1W×20%+3M×10%). Accel = 3M rank minus 1M rank.\nClick any ticker to open Finviz chart.",
   },
 };
 
@@ -166,6 +176,7 @@ function applyTranslations() {
   if (_lastPayload) renderAll(_lastPayload);
   if (_lastHistory) renderMovers(_lastHistory, _activePeriodDays);
   if (_etfData) renderEtfTab();
+  if (_etfPerfData) renderEtfPerfTab(_etfPerfData);
 }
 
 // --- INST helper ---
@@ -647,10 +658,14 @@ function initTabs() {
         subNav.classList.remove("hidden");
         const activeSubBtn = document.querySelector(".sub-btn.active");
         showPanel(activeSubBtn ? activeSubBtn.dataset.tab : "heatmap");
-      } else {
+      } else if (btn.dataset.top === "themes") {
         subNav.classList.add("hidden");
         showPanel("etfs");
         if (_etfData) renderEtfTab();
+      } else if (btn.dataset.top === "etfperf") {
+        subNav.classList.add("hidden");
+        showPanel("etfperf");
+        if (_etfPerfData) renderEtfPerfTab(_etfPerfData);
       }
     });
   });
@@ -665,6 +680,112 @@ function initTabs() {
   });
 }
 
+// ── ETF Perf Tab ──────────────────────────────────────────────────────────────
+
+// Score = rank_1M×70% + rank_1W×20% + rank_3M×10% (lower = better, rank 1 = strongest)
+function computeEtfPerfScore(entries) {
+  const n = entries.length;
+  const sorted1M = [...entries].sort(([,a],[,b]) => (b.perfs["1M"] ?? -999) - (a.perfs["1M"] ?? -999));
+  const sorted1W = [...entries].sort(([,a],[,b]) => (b.perfs["1W"] ?? -999) - (a.perfs["1W"] ?? -999));
+  const sorted3M = [...entries].sort(([,a],[,b]) => (b.perfs["3M"] ?? -999) - (a.perfs["3M"] ?? -999));
+  const rank1M = {}, rank1W = {}, rank3M = {};
+  sorted1M.forEach(([k], i) => rank1M[k] = i + 1);
+  sorted1W.forEach(([k], i) => rank1W[k] = i + 1);
+  sorted3M.forEach(([k], i) => rank3M[k] = i + 1);
+  const scores = {};
+  entries.forEach(([k]) => {
+    scores[k] = +(( (rank1M[k] ?? n) * 0.70 + (rank1W[k] ?? n) * 0.20 + (rank3M[k] ?? n) * 0.10 ).toFixed(2));
+  });
+  return scores;
+}
+
+function renderEtfPerfTab(data) {
+  if (!data || !data.etfs) return;
+  const tbody = document.getElementById("etfperf-body");
+  if (!tbody) return;
+
+  const entries = Object.entries(data.etfs);
+  if (!entries.length) {
+    // Note: spec says colspan="11" but that is a spec error — the table has 10 columns
+    tbody.innerHTML = `<tr><td colspan="10" class="empty-msg">${t("etfPerfNoData")}</td></tr>`;
+    return;
+  }
+
+  const accelMap = computeAccel(entries);
+  const scoreMap = computeEtfPerfScore(entries);
+
+  // Sort rows
+  const { col, dir } = _etfPerfSort;
+  const sorted = [...entries].sort(([ka, a], [kb, b]) => {
+    if (col === "etf")   return dir * ka.localeCompare(kb);
+    if (col === "score") return dir * (scoreMap[ka] - scoreMap[kb]);
+    if (col === "accel") return dir * (accelMap[ka] - accelMap[kb]);
+    const va = a.perfs[col] ?? -Infinity;
+    const vb = b.perfs[col] ?? -Infinity;
+    return dir * (va - vb);
+  });
+
+  const rows = sorted.map(([ticker, row], idx) => {
+    const accel     = accelMap[ticker] ?? 0;
+    const score     = scoreMap[ticker] ?? 0;
+    const accelSign = accel > 0 ? "+" : "";
+    const accelClass = accel >= 10 ? "accel-fresh"
+                     : accel <= -10 ? "accel-fading"
+                     : "accel-neutral";
+    const accelTooltip = t("hintThemeAccel");
+
+    const catColors = ETF_CATEGORY_COLORS[row.category] || { bg: "#1a1a2a", fg: "#8b949e" };
+    const catBadge  = `<span class="etf-cat-badge" style="background:${catColors.bg};color:${catColors.fg}">${row.category}</span>`;
+    const tickerUrl = `https://finviz.com/quote.ashx?t=${ticker}`;
+    const tickerLink = `<a href="${tickerUrl}" target="_blank" rel="noopener" class="etf-ticker-link">${ticker}</a>`;
+    const etfCell   = `${tickerLink}${catBadge}<span class="etf-cell-name">${row.name}</span>`;
+
+    const perfCells = ["1D","1W","1M","3M","YTD"].map(tf => {
+      const v = row.perfs[tf] ?? null;
+      return `<td class="${perfClass(v)}">${fmtPct(v)}</td>`;
+    }).join("");
+
+    return `<tr>
+      <td class="rank-num">${idx + 1}</td>
+      <td style="min-width:220px;text-align:left">${etfCell}</td>
+      ${perfCells}
+      <td>${score.toFixed(1)}</td>
+      <td class="${accelClass}" title="${accelTooltip}" style="cursor:help;font-weight:700">${accelSign}${accel}</td>
+      <td>${renderSparkline(row.perfs, accel)}</td>
+    </tr>`;
+  });
+
+  tbody.innerHTML = rows.join("");
+
+  // Update sort arrows on column headers
+  document.querySelectorAll("#etfperf-table th[data-etfperfcol]").forEach(th => {
+    const c = th.dataset.etfperfcol;
+    const isActive = _etfPerfSort.col === c;
+    const arrow = isActive ? (_etfPerfSort.dir === 1 ? " ▲" : " ▼") : "";
+    if (c === "score") th.innerHTML = t("colScore") + arrow;
+    else if (c === "accel") th.innerHTML = t("colAccel") + arrow;
+    else if (c === "etf") th.textContent = t("etfPerfColEtf");
+    else th.textContent = c + arrow;
+  });
+}
+
+function initEtfPerfSortHeaders() {
+  document.querySelectorAll("#etfperf-table th[data-etfperfcol]").forEach(th => {
+    th.style.cursor = "pointer";
+    th.addEventListener("click", () => {
+      const c = th.dataset.etfperfcol;
+      if (_etfPerfSort.col === c) {
+        _etfPerfSort.dir = -_etfPerfSort.dir;
+      } else {
+        _etfPerfSort.col = c;
+        // score and etf: ascending by default; timeframes and accel: descending
+        _etfPerfSort.dir = (c === "score" || c === "etf") ? 1 : -1;
+      }
+      if (_etfPerfData) renderEtfPerfTab(_etfPerfData);
+    });
+  });
+}
+
 // ── ETF Themes Tab ────────────────────────────────────────────────────────────
 
 let _etfData       = null;
@@ -672,6 +793,18 @@ let _etfView       = "themes";   // "themes" | "etfs"
 let _etfThemeSort  = { col: "score", dir: 1 };
 let _etfListSort   = { col: "score", dir: 1 };
 let _themeVizView  = "table"; // "table" | "bubble" | "matrix"
+
+// ── ETF Perf Tab ──────────────────────────────────────────────────────────────
+let _etfPerfData = null;
+let _etfPerfSort = { col: "score", dir: 1 };
+
+// ETF Perf tab — category badge colors
+const ETF_CATEGORY_COLORS = {
+  "Broad Market": { bg: "#0d1f3a", fg: "#60a5fa" },  // blue
+  "US Sectors":   { bg: "#1a1f0d", fg: "#a3e635" },  // lime
+  "Commodities":  { bg: "#2d1a00", fg: "#fb923c" },  // orange
+  "Crypto":       { bg: "#1a0d2d", fg: "#c084fc" },  // purple
+};
 
 // Theme badge colours for all 40 Finviz themes
 const THEME_COLORS = {
@@ -1249,6 +1382,7 @@ initViewToggle();
 initEtfViewToggle();
 initEtfSortHeaders();
 initThemeVizToggle();
+initEtfPerfSortHeaders();
 
 // --- Load data ---
 async function loadData() {
@@ -1265,10 +1399,11 @@ async function loadData() {
   const bust = `?t=${Date.now()}`;
 
   try {
-    const [dataRes, histRes, etfRes] = await Promise.all([
+    const [dataRes, histRes, etfRes, etfPerfRes] = await Promise.all([
       fetch("data.json" + bust),
       fetch("history.json" + bust),
       fetch("etf_data.json" + bust),
+      fetch("etf_perf.json" + bust),
     ]);
 
     if (!dataRes.ok) throw new Error(`data.json: HTTP ${dataRes.status}`);
@@ -1289,6 +1424,20 @@ async function loadData() {
       document.getElementById("etf-loading").classList.add("hidden");
       document.getElementById("etf-error").textContent = t("etfNoData");
       document.getElementById("etf-error").classList.remove("hidden");
+    }
+
+    if (etfPerfRes.ok) {
+      _etfPerfData = await etfPerfRes.json();
+      // Render only if the ETFs tab is currently active
+      if (document.querySelector(".top-btn[data-top='etfperf']")?.classList.contains("active")) {
+        renderEtfPerfTab(_etfPerfData);
+      }
+    } else {
+      const errEl = document.getElementById("etfperf-error");
+      if (errEl) {
+        errEl.textContent = t("etfPerfNoData");
+        errEl.classList.remove("hidden");
+      }
     }
   } catch (err) {
     loading.classList.add("hidden");
