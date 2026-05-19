@@ -19,6 +19,7 @@
   <nav class="top-nav">
     <button class="top-btn active" data-top="industry" data-i18n="topIndustry">Industry</button>
     <button class="top-btn" data-top="themes" data-i18n="tabEtfs">&#128200; Themes</button>
+    <button class="top-btn" data-top="etfperf" data-i18n="topEtfs">&#128202; ETFs</button>
   </nav>
   <nav class="sub-nav" id="industry-subnav">
     <button class="sub-btn active" data-tab="heatmap" data-i18n="tabHeatmap">Heatmap</button>
@@ -179,6 +180,36 @@
             <tbody id="etf-list-body"></tbody>
           </table>
         </div>
+      </div>
+    </section>
+
+    <!-- ETF Perf tab -->
+    <section class="section-etfperf tab-panel hidden" data-panel="etfperf">
+      <div class="etf-header">
+        <div class="heading-group">
+          <h2 data-i18n="etfPerfTitle">ETF Performance</h2>
+          <span class="section-hint" data-hint-key="hintEtfPerf">i</span>
+        </div>
+      </div>
+      <div id="etfperf-error" class="error hidden"></div>
+      <div class="table-scroll">
+        <table id="etfperf-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th data-etfperfcol="etf" data-i18n="etfPerfColEtf" style="text-align:left">ETF</th>
+              <th data-etfperfcol="1D">1D</th>
+              <th data-etfperfcol="1W">1W</th>
+              <th data-etfperfcol="1M">1M</th>
+              <th data-etfperfcol="3M">3M</th>
+              <th data-etfperfcol="YTD">YTD</th>
+              <th data-etfperfcol="score" data-i18n="colScore">Score ▲</th>
+              <th data-etfperfcol="accel" data-i18n="colAccel">Accel</th>
+              <th data-i18n="colTrend">Trend</th>
+            </tr>
+          </thead>
+          <tbody id="etfperf-body"></tbody>
+        </table>
       </div>
     </section>
   </main>
