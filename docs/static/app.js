@@ -214,6 +214,10 @@ function fmtPct(v) {
   return (v >= 0 ? "+" : "") + v.toFixed(2) + "%";
 }
 
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 // --- Sparkline ---
 function buildSparkline(ranks, maxRank) {
   const W = 80, H = 28, pad = 4;
@@ -681,6 +685,16 @@ function initTabs() {
 }
 
 // ── ETF Perf Tab ──────────────────────────────────────────────────────────────
+let _etfPerfData = null;
+let _etfPerfSort = { col: "score", dir: 1 };
+
+// ETF Perf tab — category badge colors
+const ETF_CATEGORY_COLORS = {
+  "Broad Market": { bg: "#0d1f3a", fg: "#60a5fa" },  // blue
+  "US Sectors":   { bg: "#1a1f0d", fg: "#a3e635" },  // lime
+  "Commodities":  { bg: "#2d1a00", fg: "#fb923c" },  // orange
+  "Crypto":       { bg: "#1a0d2d", fg: "#c084fc" },  // purple
+};
 
 // Score = rank_1M×70% + rank_1W×20% + rank_3M×10% (lower = better, rank 1 = strongest)
 function computeEtfPerfScore(entries) {
@@ -735,10 +749,10 @@ function renderEtfPerfTab(data) {
     const accelTooltip = t("hintThemeAccel");
 
     const catColors = ETF_CATEGORY_COLORS[row.category] || { bg: "#1a1a2a", fg: "#8b949e" };
-    const catBadge  = `<span class="etf-cat-badge" style="background:${catColors.bg};color:${catColors.fg}">${row.category}</span>`;
+    const catBadge  = `<span class="etf-cat-badge" style="background:${catColors.bg};color:${catColors.fg}">${esc(row.category)}</span>`;
     const tickerUrl = `https://finviz.com/quote.ashx?t=${ticker}`;
-    const tickerLink = `<a href="${tickerUrl}" target="_blank" rel="noopener" class="etf-ticker-link">${ticker}</a>`;
-    const etfCell   = `${tickerLink}${catBadge}<span class="etf-cell-name">${row.name}</span>`;
+    const tickerLink = `<a href="${tickerUrl}" target="_blank" rel="noopener" class="etf-ticker-link">${esc(ticker)}</a>`;
+    const etfCell   = `${tickerLink}${catBadge}<span class="etf-cell-name">${esc(row.name)}</span>`;
 
     const perfCells = ["1D","1W","1M","3M","YTD"].map(tf => {
       const v = row.perfs[tf] ?? null;
@@ -793,18 +807,6 @@ let _etfView       = "themes";   // "themes" | "etfs"
 let _etfThemeSort  = { col: "score", dir: 1 };
 let _etfListSort   = { col: "score", dir: 1 };
 let _themeVizView  = "table"; // "table" | "bubble" | "matrix"
-
-// ── ETF Perf Tab ──────────────────────────────────────────────────────────────
-let _etfPerfData = null;
-let _etfPerfSort = { col: "score", dir: 1 };
-
-// ETF Perf tab — category badge colors
-const ETF_CATEGORY_COLORS = {
-  "Broad Market": { bg: "#0d1f3a", fg: "#60a5fa" },  // blue
-  "US Sectors":   { bg: "#1a1f0d", fg: "#a3e635" },  // lime
-  "Commodities":  { bg: "#2d1a00", fg: "#fb923c" },  // orange
-  "Crypto":       { bg: "#1a0d2d", fg: "#c084fc" },  // purple
-};
 
 // Theme badge colours for all 40 Finviz themes
 const THEME_COLORS = {
