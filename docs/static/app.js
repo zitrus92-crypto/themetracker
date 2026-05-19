@@ -744,7 +744,7 @@ function renderEtfPerfTab(data) {
     const score     = scoreMap[ticker] ?? 0;
     const accelSign = accel > 0 ? "+" : "";
     const accelClass = accel >= 10 ? "accel-fresh"
-                     : accel <= -10 ? "accel-fading"
+                     : accel <= -10 ? "accel-extended"
                      : "accel-neutral";
     const accelTooltip = t("hintThemeAccel");
 
