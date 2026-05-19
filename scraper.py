@@ -614,3 +614,94 @@ def fetch_themes_data() -> dict:
         "subnodes":   subnodes,
         "fetched_at": datetime.now(timezone.utc).isoformat(),
     }
+
+
+# ── ETF Performance Tab ───────────────────────────────────────────────────────
+
+ETF_UNIVERSE = [
+    # Broad Market (5)
+    {"ticker": "SPY",  "name": "SPDR S&P 500 ETF",              "category": "Broad Market"},
+    {"ticker": "QQQ",  "name": "Invesco Nasdaq 100 ETF",         "category": "Broad Market"},
+    {"ticker": "IWM",  "name": "iShares Russell 2000 ETF",       "category": "Broad Market"},
+    {"ticker": "RSP",  "name": "Invesco S&P 500 Equal Weight",   "category": "Broad Market"},
+    {"ticker": "QQQE", "name": "Direxion Nasdaq 100 Equal Wt",   "category": "Broad Market"},
+    # US Sectors — SPDR Select Sector ETFs (11)
+    {"ticker": "XLK",  "name": "Technology Select Sector",       "category": "US Sectors"},
+    {"ticker": "XLV",  "name": "Health Care Select Sector",      "category": "US Sectors"},
+    {"ticker": "XLF",  "name": "Financial Select Sector",        "category": "US Sectors"},
+    {"ticker": "XLI",  "name": "Industrial Select Sector",       "category": "US Sectors"},
+    {"ticker": "XLY",  "name": "Consumer Discret Select Sector", "category": "US Sectors"},
+    {"ticker": "XLP",  "name": "Consumer Staples Select Sector", "category": "US Sectors"},
+    {"ticker": "XLE",  "name": "Energy Select Sector",           "category": "US Sectors"},
+    {"ticker": "XLU",  "name": "Utilities Select Sector",        "category": "US Sectors"},
+    {"ticker": "XLB",  "name": "Materials Select Sector",        "category": "US Sectors"},
+    {"ticker": "XLC",  "name": "Communication Svcs Select Sect", "category": "US Sectors"},
+    {"ticker": "XLRE", "name": "Real Estate Select Sector",      "category": "US Sectors"},
+    # Commodities (9)
+    {"ticker": "GLD",  "name": "SPDR Gold Shares",               "category": "Commodities"},
+    {"ticker": "SLV",  "name": "iShares Silver Trust",           "category": "Commodities"},
+    {"ticker": "GDX",  "name": "VanEck Gold Miners ETF",         "category": "Commodities"},
+    {"ticker": "GDXJ", "name": "VanEck Junior Gold Miners",      "category": "Commodities"},
+    {"ticker": "USO",  "name": "United States Oil Fund",         "category": "Commodities"},
+    {"ticker": "UNG",  "name": "United States Natural Gas Fund", "category": "Commodities"},
+    {"ticker": "PDBC", "name": "Invesco Optimum Yield Cmdty",    "category": "Commodities"},
+    {"ticker": "DBA",  "name": "Invesco DB Agriculture Fund",    "category": "Commodities"},
+    {"ticker": "CPER", "name": "United States Copper Index Fund","category": "Commodities"},
+    # Crypto (7)
+    {"ticker": "IBIT", "name": "iShares Bitcoin Trust",          "category": "Crypto"},
+    {"ticker": "FBTC", "name": "Fidelity Wise Origin Bitcoin",   "category": "Crypto"},
+    {"ticker": "GBTC", "name": "Grayscale Bitcoin Trust",        "category": "Crypto"},
+    {"ticker": "ARKB", "name": "ARK 21Shares Bitcoin ETF",       "category": "Crypto"},
+    {"ticker": "BITB", "name": "Bitwise Bitcoin ETF",            "category": "Crypto"},
+    {"ticker": "ETHA", "name": "iShares Ethereum Trust",         "category": "Crypto"},
+    {"ticker": "BITO", "name": "ProShares Bitcoin Strategy ETF", "category": "Crypto"},
+]
+
+ETF_TF_MAP = {"1D": "d1", "1W": "w1", "1M": "w4", "3M": "w13", "YTD": "ytd"}
+KNOWN_TICKERS = {e["ticker"] for e in ETF_UNIVERSE}
+
+
+def _fetch_etf_perf() -> dict:
+    """Fetch ETF performance across 5 timeframes from Finviz map.ashx.
+
+    URL pattern:  https://finviz.com/map.ashx?t=etf&st={d1,w1,w4,w13,ytd}
+    Data pattern: FinvizInitCanvas(..., initialPerf: {"nodes": {"SPY": 3.41, ...}}, ...)
+    Note: the "nodes" wrapper is unique to ETF maps (themes map has flat initialPerf).
+    """
+    perfs_by_ticker: dict[str, dict] = {e["ticker"]: {} for e in ETF_UNIVERSE}
+
+    for tf_label, st_param in ETF_TF_MAP.items():
+        url = f"https://finviz.com/map.ashx?t=etf&st={st_param}"
+        try:
+            resp = requests.get(url, headers=HEADERS, timeout=15)
+            resp.raise_for_status()
+        except Exception as e:
+            print(f"  WARNING: ETF fetch failed for tf={tf_label}: {e}")
+            continue
+
+        canvas_match = re.search(r"FinvizInitCanvas\((.*?)\);", resp.text, re.DOTALL)
+        if not canvas_match:
+            print(f"  WARNING: FinvizInitCanvas not found for ETF tf={tf_label}")
+            continue
+        args = canvas_match.group(1)
+        # Key difference from themes: wrapped in {"nodes": {...}}
+        perf_match = re.search(r'initialPerf\s*:\s*\{"nodes":\{([^}]+)\}', args)
+        if not perf_match:
+            print(f"  WARNING: initialPerf nodes not found for ETF tf={tf_label}")
+            continue
+        nodes = json.loads("{" + perf_match.group(1) + "}")
+        for ticker in KNOWN_TICKERS:
+            val = nodes.get(ticker)
+            if val is not None:
+                perfs_by_ticker[ticker][tf_label] = round(float(val), 2)
+        time.sleep(0.5)
+
+    result = {}
+    for etf in ETF_UNIVERSE:
+        t = etf["ticker"]
+        result[t] = {
+            "name":     etf["name"],
+            "category": etf["category"],
+            "perfs":    perfs_by_ticker.get(t, {}),
+        }
+    return result
