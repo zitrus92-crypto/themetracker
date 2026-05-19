@@ -3,6 +3,7 @@ Daily scrape script — run by GitHub Actions.
 Fetches Finviz industry data AND Finviz thematic map data in parallel, writes:
   docs/data.json     — industry snapshot (Heatmap, Picks, Top 10 tabs)
   docs/etf_data.json — thematic map snapshot (ETF Themes tab)
+  docs/etf_perf.json — ETF performance snapshot (ETFs tab)
   docs/history.json  — compact daily history (Movers tab)
 """
 import json
