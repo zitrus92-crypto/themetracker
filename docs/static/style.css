@@ -42,19 +42,33 @@ header h1 { font-size: 18px; font-weight: 600; color: var(--accent); }
 .btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-refresh:disabled:hover { background: var(--bg3); color: var(--text); }
 
-/* Tab nav */
-.tab-nav {
+/* Top-level nav (Industry | Themes) */
+.top-nav {
   display: flex; gap: 0; border-bottom: 2px solid var(--border);
+  background: var(--bg); padding: 0 24px;
+}
+.top-btn {
+  background: none; border: none; color: var(--text-dim); cursor: pointer;
+  padding: 14px 24px; font-size: 15px; font-weight: 700;
+  border-bottom: 2px solid transparent; margin-bottom: -2px;
+  transition: color 0.15s; letter-spacing: 0.01em;
+}
+.top-btn:hover { color: var(--text); }
+.top-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Sub-nav (Heatmap | Setup Picks | Top 10) */
+.sub-nav {
+  display: flex; gap: 0; border-bottom: 1px solid var(--border);
   background: var(--bg2); padding: 0 24px;
 }
-.tab-btn {
+.sub-btn {
   background: none; border: none; color: var(--text-dim); cursor: pointer;
-  padding: 12px 20px; font-size: 14px; font-weight: 600;
-  border-bottom: 2px solid transparent; margin-bottom: -2px;
+  padding: 10px 18px; font-size: 13px; font-weight: 600;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
   transition: color 0.15s;
 }
-.tab-btn:hover { color: var(--text); }
-.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.sub-btn:hover { color: var(--text); }
+.sub-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 
 main { padding: 24px; display: flex; flex-direction: column; gap: 40px; }
 

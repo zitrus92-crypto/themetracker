@@ -9,6 +9,7 @@ const I18N = {
     updated:      "Stand: ",
     loading:      "Daten werden geladen…",
     noData:       "Keine Daten.",
+    topIndustry:  "Industry",
     tabHeatmap:   "Heatmap",
     tabPicks:     "★ Setup Picks",
     tabTop10:     "Top 10",
@@ -72,6 +73,7 @@ const I18N = {
     updated:      "Updated: ",
     loading:      "Loading data…",
     noData:       "No data.",
+    topIndustry:  "Industry",
     tabHeatmap:   "Heatmap",
     tabPicks:     "★ Setup Picks",
     tabTop10:     "Top 10",
@@ -627,14 +629,38 @@ document.getElementById("lang-btn").addEventListener("click", () => {
   applyTranslations();
 });
 
-// --- Tab navigation ---
+// --- Two-level navigation ---
+function showPanel(panelId) {
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
+  document.querySelector(`[data-panel="${panelId}"]`)?.classList.remove("hidden");
+}
+
 function initTabs() {
-  document.querySelectorAll(".tab-btn").forEach(btn => {
+  const subNav = document.getElementById("industry-subnav");
+
+  // Top-level: Industry | Themes
+  document.querySelectorAll(".top-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-      document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
+      document.querySelectorAll(".top-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-      document.querySelector(`[data-panel="${btn.dataset.tab}"]`).classList.remove("hidden");
+      if (btn.dataset.top === "industry") {
+        subNav.classList.remove("hidden");
+        const activeSubBtn = document.querySelector(".sub-btn.active");
+        showPanel(activeSubBtn ? activeSubBtn.dataset.tab : "heatmap");
+      } else {
+        subNav.classList.add("hidden");
+        showPanel("etfs");
+        if (_etfData) renderEtfTab();
+      }
+    });
+  });
+
+  // Sub-level: Heatmap | Setup Picks | Top 10
+  document.querySelectorAll(".sub-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".sub-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      showPanel(btn.dataset.tab);
     });
   });
 }
