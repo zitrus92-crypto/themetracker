@@ -646,7 +646,7 @@ ETF_UNIVERSE = [
     {"ticker": "UNG",  "name": "United States Natural Gas Fund", "category": "Commodities"},
     {"ticker": "PDBC", "name": "Invesco Optimum Yield Cmdty",    "category": "Commodities"},
     {"ticker": "DBA",  "name": "Invesco DB Agriculture Fund",    "category": "Commodities"},
-    {"ticker": "CPER", "name": "United States Copper Index Fund","category": "Commodities"},
+    {"ticker": "CPER", "name": "United States Copper Index Fund", "category": "Commodities"},
     # Crypto (7)
     {"ticker": "IBIT", "name": "iShares Bitcoin Trust",          "category": "Crypto"},
     {"ticker": "FBTC", "name": "Fidelity Wise Origin Bitcoin",   "category": "Crypto"},
@@ -689,7 +689,11 @@ def _fetch_etf_perf() -> dict:
         if not perf_match:
             print(f"  WARNING: initialPerf nodes not found for ETF tf={tf_label}")
             continue
-        nodes = json.loads("{" + perf_match.group(1) + "}")
+        try:
+            nodes = json.loads("{" + perf_match.group(1) + "}")
+        except json.JSONDecodeError as e:
+            print(f"  WARNING: Failed to parse initialPerf nodes for ETF tf={tf_label}: {e}")
+            continue
         for ticker in KNOWN_TICKERS:
             val = nodes.get(ticker)
             if val is not None:
