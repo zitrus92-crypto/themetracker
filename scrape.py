@@ -29,6 +29,13 @@ def fetch_themes():
     return scraper.fetch_themes_data()
 
 
+def fetch_etf_perf():
+    print("Fetching Finviz ETF performance data...")
+    result = scraper._fetch_etf_perf()
+    print(f"  {len(result)} ETFs fetched.")
+    return result
+
+
 def main():
     DOCS.mkdir(exist_ok=True)
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -36,23 +43,29 @@ def main():
     # ── Parallel fetch ────────────────────────────────────────────────────────
     scored = None
     etf_payload = None
+    etf_perf_payload = None
 
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        fut_ind = pool.submit(fetch_industries)
-        fut_etf = pool.submit(fetch_themes)
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        fut_ind      = pool.submit(fetch_industries)
+        fut_etf      = pool.submit(fetch_themes)
+        fut_etf_perf = pool.submit(fetch_etf_perf)
 
-        for fut in as_completed([fut_ind, fut_etf]):
+        for fut in as_completed([fut_ind, fut_etf, fut_etf_perf]):
             try:
                 result = fut.result()
                 if fut is fut_ind:
                     scored = result
-                else:
+                elif fut is fut_etf:
                     etf_payload = result
+                else:
+                    etf_perf_payload = result
             except Exception as e:
                 if fut is fut_ind:
                     print(f"  ERROR: Industry fetch failed: {e}")
+                elif fut is fut_etf:
+                    print(f"  WARNING: ETF themes fetch failed: {e}")
                 else:
-                    print(f"  WARNING: ETF fetch failed: {e}")
+                    print(f"  WARNING: ETF perf fetch failed: {e}")
 
     # ── Write data.json ───────────────────────────────────────────────────────
     if scored:
@@ -75,6 +88,19 @@ def main():
         print(f"  Saved etf_data.json ({len(etf_payload['themes'])} themes, {len(etf_payload['subnodes'])} sub-nodes)")
     else:
         print("  SKIPPED etf_data.json (fetch failed)")
+
+    # ── Write etf_perf.json ───────────────────────────────────────────────────
+    if etf_perf_payload:
+        payload_out = {
+            "fetched_at": datetime.now(timezone.utc).isoformat(),
+            "etfs": etf_perf_payload,
+        }
+        (DOCS / "etf_perf.json").write_text(
+            json.dumps(payload_out, ensure_ascii=False, separators=(",", ":"))
+        )
+        print(f"  Saved etf_perf.json ({len(etf_perf_payload)} ETFs)")
+    else:
+        print("  SKIPPED etf_perf.json (fetch failed)")
 
     # ── Append to history.json ────────────────────────────────────────────────
     if scored:
