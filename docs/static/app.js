@@ -938,11 +938,28 @@ function renderSparkline(perfs, accel) {
   </svg>`;
 }
 
+// ── Multi-select: Themes ──────────────────────────────────────────────────
+function updateThemeSelectionBar() {
+  const bar    = document.getElementById("theme-selection-bar");
+  const checks = [...document.querySelectorAll("#etf-themes-body .row-check:checked")];
+  if (!checks.length) { bar.classList.add("hidden"); return; }
+
+  const allTickers = checks.flatMap(cb => _etfData?.themes?.[cb.dataset.key]?.tickers ?? []);
+  const deduped    = [...new Set(allTickers)];
+  bar.__deduped = deduped;
+
+  const n = checks.length;
+  bar.querySelector(".selection-bar__info").textContent = _lang === "de"
+    ? `${n} Theme${n > 1 ? "s" : ""} ausgewählt · ${deduped.length} Ticker (dedupliziert)`
+    : `${n} theme${n > 1 ? "s" : ""} selected · ${deduped.length} tickers (deduplicated)`;
+  bar.classList.remove("hidden");
+}
+
 // --- Themes table (40 Finviz top-level themes) ---
 function renderEtfThemes(data) {
   const tbody = document.getElementById("etf-themes-body");
   if (!data || !data.themes) {
-    tbody.innerHTML = `<tr><td colspan="11" class="empty-msg">${t("etfNoData")}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" class="empty-msg">${t("etfNoData")}</td></tr>`;
     return;
   }
 
@@ -1002,9 +1019,6 @@ function renderEtfThemes(data) {
     const noTickerTooltip = _lang === "de"
       ? "Kein Finviz-Screener-Filter für dieses Theme verfügbar"
       : "No Finviz screener filter available for this theme";
-    const copyBtn = hasTickers
-      ? `<button class="ticker-copy-btn" data-theme="${theme.replace(/"/g, '&quot;')}" title="${_lang === 'de' ? 'Ticker in Zwischenablage kopieren' : 'Copy tickers to clipboard'}">📋</button>`
-      : '';
     const tickerBadge = hasTickers
       ? `<span class="theme-stock-count" title="${tickerTooltip}">${tickerCount}</span>`
       : `<span class="theme-stock-count theme-stock-count--na" title="${noTickerTooltip}">—</span>`;
@@ -1014,11 +1028,11 @@ function renderEtfThemes(data) {
     const accelClass = accel >= 10 ? "accel-fresh" : accel <= -10 ? "accel-extended" : accel >= 5 ? "accel-fresh-mild" : "accel-neutral";
 
     return `<tr>
+      <td class="col-check"><input type="checkbox" class="row-check"${hasTickers ? '' : ' disabled'} data-key="${esc(theme)}"></td>
       <td>${idx + 1}</td>
       <td style="text-align:left">
         ${themeBadge(theme)}
         ${tickerBadge}
-        ${copyBtn}
       </td>
       ${perfCells}
       <td>${row.score.toFixed(1)}</td>
@@ -1028,26 +1042,43 @@ function renderEtfThemes(data) {
     </tr>`;
   });
 
-  tbody.innerHTML = rows.join("") || `<tr><td colspan="11" class="empty-msg">${t("etfNoData")}</td></tr>`;
+  tbody.innerHTML = rows.join("") || `<tr><td colspan="12" class="empty-msg">${t("etfNoData")}</td></tr>`;
 
-  // Attach copy-button handlers
-  tbody.querySelectorAll(".ticker-copy-btn").forEach(btn => {
-    btn.addEventListener("click", e => {
-      e.stopPropagation();
-      const theme = btn.dataset.theme;
-      const tickers = _etfData?.themes?.[theme]?.tickers;
-      if (!tickers || !tickers.length) return;
-      navigator.clipboard.writeText(tickers.join(",")).then(() => {
-        const orig = btn.textContent;
-        btn.textContent = "✓";
-        btn.classList.add("ticker-copy-btn--done");
-        setTimeout(() => { btn.textContent = orig; btn.classList.remove("ticker-copy-btn--done"); }, 2000);
-        // Toast message
-        const msg = _lang === "de" ? "Tickerliste kopiert!" : "Ticker list copied!";
-        showToast(msg);
-      });
-    });
+  // ── Multi-select wiring ───────────────────────────────────────────────────
+  const themeHeaderCheck = document.getElementById("theme-select-all");
+  const themeRowChecks   = [...tbody.querySelectorAll(".row-check:not([disabled])")];
+
+  function syncThemeHeader() {
+    const n = themeRowChecks.filter(c => c.checked).length;
+    themeHeaderCheck.indeterminate = n > 0 && n < themeRowChecks.length;
+    themeHeaderCheck.checked = n > 0 && n === themeRowChecks.length;
+  }
+
+  themeRowChecks.forEach(cb => cb.addEventListener("change", () => {
+    syncThemeHeader();
+    updateThemeSelectionBar();
+  }));
+
+  themeHeaderCheck.addEventListener("change", () => {
+    themeRowChecks.forEach(cb => cb.checked = themeHeaderCheck.checked);
+    themeHeaderCheck.indeterminate = false;
+    updateThemeSelectionBar();
   });
+
+  const themeBar = document.getElementById("theme-selection-bar");
+  themeBar.querySelector(".selection-bar__copy-btn").onclick = () => {
+    const deduped = themeBar.__deduped;
+    if (!deduped || !deduped.length) return;
+    navigator.clipboard.writeText(deduped.join(",")).then(() => {
+      showToast(_lang === "de" ? `${deduped.length} Ticker kopiert!` : `${deduped.length} tickers copied!`);
+    });
+  };
+  themeBar.querySelector(".selection-bar__clear-btn").onclick = () => {
+    themeRowChecks.forEach(cb => cb.checked = false);
+    themeHeaderCheck.checked = false;
+    themeHeaderCheck.indeterminate = false;
+    updateThemeSelectionBar();
+  };
 }
 
 // --- Sub-Themes table (268 Finviz sub-nodes) ---
