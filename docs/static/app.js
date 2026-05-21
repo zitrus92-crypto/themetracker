@@ -1081,11 +1081,28 @@ function renderEtfThemes(data) {
   };
 }
 
+// ── Multi-select: Sub-Themes ──────────────────────────────────────────────
+function updateSubSelectionBar() {
+  const bar    = document.getElementById("sub-selection-bar");
+  const checks = [...document.querySelectorAll("#etf-list-body .row-check:checked")];
+  if (!checks.length) { bar.classList.add("hidden"); return; }
+
+  const allTickers = checks.flatMap(cb => _etfData?.subnodes?.[cb.dataset.key]?.tickers ?? []);
+  const deduped    = [...new Set(allTickers)];
+  bar.__deduped = deduped;
+
+  const n = checks.length;
+  bar.querySelector(".selection-bar__info").textContent = _lang === "de"
+    ? `${n} Sub-Theme${n > 1 ? "s" : ""} ausgewählt · ${deduped.length} Ticker (dedupliziert)`
+    : `${n} sub-theme${n > 1 ? "s" : ""} selected · ${deduped.length} tickers (deduplicated)`;
+  bar.classList.remove("hidden");
+}
+
 // --- Sub-Themes table (268 Finviz sub-nodes) ---
 function renderEtfList(data) {
   const tbody = document.getElementById("etf-list-body");
   if (!data || !data.subnodes) {
-    tbody.innerHTML = `<tr><td colspan="10" class="empty-msg">${t("etfNoData")}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="empty-msg">${t("etfNoData")}</td></tr>`;
     return;
   }
 
@@ -1134,16 +1151,12 @@ function renderEtfList(data) {
     const tickerBadge = hasTickers
       ? `<span class="theme-stock-count" title="${tickerTooltip}">${tickerCount}</span>`
       : `<span class="theme-stock-count theme-stock-count--na" title="${noTickerTooltip}">—</span>`;
-    const copyBtn = hasTickers
-      ? `<button class="ticker-copy-btn" data-subkey="${key}" title="${_lang === 'de' ? 'Ticker in Zwischenablage kopieren' : 'Copy tickers to clipboard'}">📋</button>`
-      : '';
-
     return `<tr>
+      <td class="col-check"><input type="checkbox" class="row-check"${hasTickers ? '' : ' disabled'} data-key="${esc(key)}"></td>
       <td>${idx + 1}</td>
       <td style="text-align:left;font-weight:600">
         <a href="${subUrl}" target="_blank" rel="noopener" class="sub-theme-link">${row.label}</a>
         ${tickerBadge}
-        ${copyBtn}
       </td>
       <td style="text-align:left">${themeBadge(row.theme)}</td>
       ${perfCells}
@@ -1153,25 +1166,43 @@ function renderEtfList(data) {
     </tr>`;
   });
 
-  tbody.innerHTML = rows.join("") || `<tr><td colspan="11" class="empty-msg">${t("etfNoData")}</td></tr>`;
+  tbody.innerHTML = rows.join("") || `<tr><td colspan="12" class="empty-msg">${t("etfNoData")}</td></tr>`;
 
-  // Attach copy-button handlers
-  tbody.querySelectorAll(".ticker-copy-btn[data-subkey]").forEach(btn => {
-    btn.addEventListener("click", e => {
-      e.stopPropagation();
-      const key = btn.dataset.subkey;
-      const tickers = _etfData?.subnodes?.[key]?.tickers;
-      if (!tickers || !tickers.length) return;
-      navigator.clipboard.writeText(tickers.join(",")).then(() => {
-        const orig = btn.textContent;
-        btn.textContent = "✓";
-        btn.classList.add("ticker-copy-btn--done");
-        setTimeout(() => { btn.textContent = orig; btn.classList.remove("ticker-copy-btn--done"); }, 2000);
-        const msg = _lang === "de" ? "Tickerliste kopiert!" : "Ticker list copied!";
-        showToast(msg);
-      });
+  // ── Multi-select wiring ───────────────────────────────────────────────────
+  const subHeaderCheck = document.getElementById("sub-select-all");
+  const subRowChecks   = [...tbody.querySelectorAll(".row-check:not([disabled])")];
+
+  function syncSubHeader() {
+    const n = subRowChecks.filter(c => c.checked).length;
+    subHeaderCheck.indeterminate = n > 0 && n < subRowChecks.length;
+    subHeaderCheck.checked = n > 0 && n === subRowChecks.length;
+  }
+
+  subRowChecks.forEach(cb => cb.addEventListener("change", () => {
+    syncSubHeader();
+    updateSubSelectionBar();
+  }));
+
+  subHeaderCheck.onchange = () => {
+    subRowChecks.forEach(cb => cb.checked = subHeaderCheck.checked);
+    subHeaderCheck.indeterminate = false;
+    updateSubSelectionBar();
+  };
+
+  const subBar = document.getElementById("sub-selection-bar");
+  subBar.querySelector(".selection-bar__copy-btn").onclick = () => {
+    const deduped = subBar.__deduped;
+    if (!deduped || !deduped.length) return;
+    navigator.clipboard.writeText(deduped.join(",")).then(() => {
+      showToast(_lang === "de" ? `${deduped.length} Ticker kopiert!` : `${deduped.length} tickers copied!`);
     });
-  });
+  };
+  subBar.querySelector(".selection-bar__clear-btn").onclick = () => {
+    subRowChecks.forEach(cb => cb.checked = false);
+    subHeaderCheck.checked = false;
+    subHeaderCheck.indeterminate = false;
+    updateSubSelectionBar();
+  };
 }
 
 function renderMomentumMatrix(data, themeAccel) {
