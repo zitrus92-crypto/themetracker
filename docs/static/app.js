@@ -170,6 +170,10 @@ function applyTranslations() {
   // Viz-toggle buttons are not handled via data-i18n (buttons reset textContent unreliably)
   const vizTableBtn = document.querySelector(".viz-btn[data-vizview='table']");
   if (vizTableBtn) vizTableBtn.textContent = _lang === "de" ? "📋 Tabelle" : "📋 Table";
+  // Selection-bar copy buttons are hardcoded in HTML — update on language switch
+  document.querySelectorAll(".selection-bar__copy-btn").forEach(btn => {
+    btn.textContent = _lang === "de" ? "📋 Kopieren" : "📋 Copy";
+  });
   document.documentElement.lang = _lang;
   document.getElementById("lang-btn").textContent = _lang === "de" ? "EN" : "DE";
   initSectionHints();
