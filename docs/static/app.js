@@ -1059,11 +1059,11 @@ function renderEtfThemes(data) {
     updateThemeSelectionBar();
   }));
 
-  themeHeaderCheck.addEventListener("change", () => {
+  themeHeaderCheck.onchange = () => {
     themeRowChecks.forEach(cb => cb.checked = themeHeaderCheck.checked);
     themeHeaderCheck.indeterminate = false;
     updateThemeSelectionBar();
-  });
+  };
 
   const themeBar = document.getElementById("theme-selection-bar");
   themeBar.querySelector(".selection-bar__copy-btn").onclick = () => {
