@@ -40,7 +40,7 @@ const I18N = {
     viewCards:    "📊 Karten",
     viewBars:     "📈 Balken",
     tagInst:      "INST",
-    infoScore:    "Gewichteter Rang-Score: 1M×70% + 1W×20% + 3M×10%. Niedriger = besser (Rang 1 = stärkste Industry).",
+    infoScore:    "Gewichteter Rang-Score: 1M×70% + 1W×20% + 3M×10%. Niedriger = besser (Rang 1 = stärkstes).",
     infoAccel:    "Accel = 3M-Rang minus 1W-Rang. Hoch positiv = war vor 3M noch schwach, jetzt stark = erster Leg, nicht extended. Ideal fuer First-Flag-Setups.",
     hintHeatmap:  "Score sortieren: Marktüberblick — welche Industries aktuell führen.\nAccel sortieren: First Flag Suche — frisches Momentum (3M schwach + 1W stark = erster Leg, nicht extended).\nINST-Filter: zeigt nur institutionell bestätigte Industries (Top 40 in 1M und 3M).\nKlick auf Spaltenkopf = sortieren, nochmal klicken = umkehren.",
     hintPicks:    "Vorgefilterter First-Flag-Kandidatenliste: Score Top 40 + positiver Accel + 1W > 1% + 1M > 0%.\nSortierung: 60% Accel-Gewicht + 40% Score — frischeste Bewegungen zuerst.\nINST-Badge = institutionelles Kapital bestätigt die Industry = höchste Konfluenz.\nKlick auf Industry-Name öffnet Finviz-Screener mit passenden Filtern.",
@@ -109,7 +109,7 @@ const I18N = {
     viewCards:    "📊 Cards",
     viewBars:     "📈 Bar Chart",
     tagInst:      "INST",
-    infoScore:    "Weighted rank score: 1M×70% + 1W×20% + 3M×10%. Lower = better (rank 1 = strongest industry).",
+    infoScore:    "Weighted rank score: 1M×70% + 1W×20% + 3M×10%. Lower = better (rank 1 = strongest).",
     infoAccel:    "Accel = 3M rank minus 1W rank. High positive = was weak 3M ago, now strong = first leg, not extended. Ideal for First Flag setups.",
     hintHeatmap:  "Sort by Score: market overview — which industries are currently leading.\nSort by Accel: First Flag search — fresh momentum (weak 3M + strong 1W = first leg, not extended).\nINST filter: shows only institutionally confirmed industries (Top 40 in 1M and 3M).\nClick any column header to sort, click again to reverse.",
     hintPicks:    "Pre-filtered First Flag candidate list: Score Top 40 + positive Accel + 1W > 1% + 1M > 0%.\nSorted by: 60% Accel weight + 40% Score — freshest moves first.\nINST badge = institutional capital confirms the industry = highest confluence.\nClick any industry name to open Finviz screener with matching filters.",
@@ -780,7 +780,7 @@ function renderEtfPerfTab(data) {
     const c = th.dataset.etfperfcol;
     const isActive = _etfPerfSort.col === c;
     const arrow = isActive ? (_etfPerfSort.dir === 1 ? " ▲" : " ▼") : "";
-    if (c === "score") th.innerHTML = t("colScore") + arrow;
+    if (c === "score") th.innerHTML = t("colScore") + arrow + ` <span class="col-info" title="${t('infoScore')}">i</span>`;
     else if (c === "accel") th.innerHTML = t("colAccel") + arrow;
     else if (c === "etf") th.textContent = t("etfPerfColEtf");
     else th.textContent = c + arrow;
@@ -987,7 +987,7 @@ function renderEtfThemes(data) {
     const isActive = col === _etfThemeSort.col;
     th.classList.toggle("sort-active", isActive);
     const arrow = isActive ? (_etfThemeSort.dir === 1 ? " ▲" : " ▼") : "";
-    if (col === "score") th.innerHTML = t("colScore") + arrow;
+    if (col === "score") th.innerHTML = t("colScore") + arrow + ` <span class="col-info" title="${t('infoScore')}">i</span>`;
     else if (col === "accel") th.innerHTML = t("etfColAccel") + arrow;
     else th.textContent = (col === "theme" ? "Theme" : col) + arrow;
   });
@@ -1115,7 +1115,7 @@ function renderEtfList(data) {
     const isActive = col === _etfListSort.col;
     th.classList.toggle("sort-active", isActive);
     const arrow = isActive ? (_etfListSort.dir === 1 ? " ▲" : " ▼") : "";
-    if (col === "score") th.innerHTML = t("colScore") + arrow;
+    if (col === "score") th.innerHTML = t("colScore") + arrow + ` <span class="col-info" title="${t('infoScore')}">i</span>`;
     else if (col === "accel") th.innerHTML = t("colAccel") + arrow;
     else th.textContent = th.textContent.replace(/ [▲▼]$/, "") + arrow;
   });
