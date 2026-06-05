@@ -792,6 +792,11 @@ def _check_glb(ticker: str, today: date) -> bool:
         if former_high <= 0:
             return False
 
+        # Verify today's bar actually sets a new 52W high (defensive — Finviz should pre-filter)
+        current_high = float(highs.iloc[-1])
+        if current_high <= former_high:
+            return False
+
         # Last date where price was at or within 0.1% of the former high
         touched = past_highs[past_highs >= former_high * _GLB_TOLERANCE]
         if touched.empty:
