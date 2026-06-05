@@ -715,53 +715,40 @@ def _fetch_etf_perf() -> dict:
 # ── GLB 52W Breakout Screener ─────────────────────────────────────────────
 
 _GLB_SCREENER_URL = (
-    "https://finviz.com/screener.ashx?v=111"
-    "&f=sh_price_o1,ta_highlow52w_nh&ft=4&o=-volume&r={r}"
+    "https://finviz.com/screener.ashx?v=410"
+    "&f=ind_stocksonly,sh_price_o1,ta_highlow52w_nh&o=-volume&r=1"
 )
 
 def _fetch_glb_candidates() -> list[str]:
-    """Fetch tickers with new 52W high today from Finviz screener (paginated).
+    """Fetch tickers with new 52W high today from Finviz screener.
 
-    Uses the standard screener view (v=111) with filters:
-      sh_price_o1    — price above $1
+    Uses the bubble-chart view (v=410) with filters:
+      ind_stocksonly   — exclude ETFs / funds (ft=4 alone does NOT exclude them)
+      sh_price_o1      — price above $1
       ta_highlow52w_nh — new 52-week high today
-    ft=4 restricts to stocks (excludes ETFs on Finviz side).
-    Tickers are extracted from quote.ashx links in the HTML.
+    The v=410 view renders every match in a single server-rendered response via
+    data-boxover-ticker attributes — no pagination and no JS rendering required
+    (same proven pattern as _fetch_tickers_for_slug).
     """
-    tickers = []
-    seen = set()
-    r = 1
-    while True:
-        url = _GLB_SCREENER_URL.format(r=r)
+    MAX_RETRIES = 3
+    for attempt in range(MAX_RETRIES):
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=15)
+            resp = requests.get(_GLB_SCREENER_URL, headers=HEADERS, timeout=20)
             if resp.status_code == 429:
-                print(f"  GLB: 429 rate-limit at r={r}, waiting 10s")
-                time.sleep(10)
+                wait = 8 * (attempt + 1)
+                print(f"  GLB: 429 rate-limit, retrying in {wait}s…")
+                time.sleep(wait)
                 continue
             resp.raise_for_status()
+            tickers = re.findall(r'data-boxover-ticker="([A-Z]{1,6})"', resp.text)
+            return list(dict.fromkeys(tickers))  # deduplicate, preserve order
         except Exception as e:
-            print(f"  WARNING: GLB screener fetch failed at r={r}: {e}")
-            break
+            if attempt == MAX_RETRIES - 1:
+                print(f"  WARNING: GLB screener fetch failed: {e}")
+            else:
+                time.sleep(4)
 
-        # Tickers appear in anchors: href="quote.ashx?t=TICKER&..." or "quote.ashx?t=TICKER"
-        # Use lookahead for & or " to handle both cases
-        found = re.findall(r'quote\.ashx\?t=([A-Z]{1,6})(?=&|")', resp.text)
-        # Deduplicate and filter obvious non-stock tickers
-        new_on_page = []
-        for t in found:
-            if t not in seen and "." not in t and len(t) <= 5:
-                seen.add(t)
-                new_on_page.append(t)
-        tickers.extend(new_on_page)
-
-        # Stop when last page (< 20 new) or safety guard reached
-        if len(new_on_page) < 20 or r > 500:
-            break
-        r += 20
-        time.sleep(0.5)
-
-    return tickers
+    return []
 
 
 _GLB_MIN_DAYS = 90       # Former high must be untouched for at least this many calendar days
