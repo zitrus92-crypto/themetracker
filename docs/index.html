@@ -20,6 +20,7 @@
     <button class="top-btn active" data-top="industry" data-i18n="topIndustry">Industry</button>
     <button class="top-btn" data-top="themes" data-i18n="tabEtfs">&#128200; Themes</button>
     <button class="top-btn" data-top="etfperf" data-i18n="topEtfs">&#128202; ETFs</button>
+    <button class="top-btn" data-top="glb" data-i18n="topGlb">🟢 52WH</button>
   </nav>
   <nav class="sub-nav" id="industry-subnav">
     <button class="sub-btn active" data-tab="heatmap" data-i18n="tabHeatmap">Heatmap</button>
@@ -225,6 +226,31 @@
             </tr>
           </thead>
           <tbody id="etfperf-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- GLB 52W Screener tab -->
+    <section class="section-glb tab-panel hidden" data-panel="glb">
+      <div class="glb-header">
+        <div class="heading-group">
+          <h2 data-i18n="glbTitle">🟢 52W Breakout Screener</h2>
+          <span class="section-hint" data-hint-key="hintGlb">i</span>
+        </div>
+      </div>
+      <div id="glb-error" class="error hidden"></div>
+      <div id="glb-chart" class="glb-chart"></div>
+      <div class="table-scroll">
+        <table id="glb-table">
+          <thead>
+            <tr>
+              <th data-i18n="glbColDate">Datum</th>
+              <th data-i18n="glbColCount" style="text-align:center">Signale</th>
+              <th data-i18n="glbColTickers" style="text-align:left">Ticker</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="glb-body"></tbody>
         </table>
       </div>
     </section>
