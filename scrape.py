@@ -1,10 +1,11 @@
 """
 Daily scrape script — run by GitHub Actions.
 Fetches Finviz industry data AND Finviz thematic map data in parallel, writes:
-  docs/data.json     — industry snapshot (Heatmap, Picks, Top 10 tabs)
-  docs/etf_data.json — thematic map snapshot (ETF Themes tab)
-  docs/etf_perf.json — ETF performance snapshot (ETFs tab)
-  docs/history.json  — compact daily history (Movers tab)
+  docs/data.json        — industry snapshot (Heatmap, Picks, Top 10 tabs)
+  docs/etf_data.json    — thematic map snapshot (ETF Themes tab)
+  docs/etf_perf.json    — ETF performance snapshot (ETFs tab)
+  docs/history.json     — compact daily history (Movers tab)
+  docs/glb_history.json — 52W GLB signal history (52WH tab)
 """
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -37,6 +38,11 @@ def fetch_etf_perf():
     return result
 
 
+def fetch_glb():
+    print("Fetching GLB signals (52W Green-Line Breakout)...")
+    return scraper._fetch_glb_signals()
+
+
 def main():
     DOCS.mkdir(exist_ok=True)
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -45,28 +51,34 @@ def main():
     scored = None
     etf_payload = None
     etf_perf_payload = None
+    glb_payload = None
 
-    with ThreadPoolExecutor(max_workers=3) as pool:
+    with ThreadPoolExecutor(max_workers=4) as pool:
         fut_ind      = pool.submit(fetch_industries)
         fut_etf      = pool.submit(fetch_themes)
         fut_etf_perf = pool.submit(fetch_etf_perf)
+        fut_glb      = pool.submit(fetch_glb)
 
-        for fut in as_completed([fut_ind, fut_etf, fut_etf_perf]):
+        for fut in as_completed([fut_ind, fut_etf, fut_etf_perf, fut_glb]):
             try:
                 result = fut.result()
                 if fut is fut_ind:
                     scored = result
                 elif fut is fut_etf:
                     etf_payload = result
-                else:
+                elif fut is fut_etf_perf:
                     etf_perf_payload = result
+                else:
+                    glb_payload = result
             except Exception as e:
                 if fut is fut_ind:
                     print(f"  ERROR: Industry fetch failed: {e}")
                 elif fut is fut_etf:
                     print(f"  WARNING: ETF themes fetch failed: {e}")
-                else:
+                elif fut is fut_etf_perf:
                     print(f"  WARNING: ETF perf fetch failed: {e}")
+                else:
+                    print(f"  WARNING: GLB fetch failed: {e}")
 
     # ── Write data.json ───────────────────────────────────────────────────────
     if scored:
@@ -128,6 +140,28 @@ def main():
             json.dumps(history, ensure_ascii=False, separators=(",", ":"))
         )
         print(f"  Saved history.json ({len(history)} entries)")
+
+    # ── Write glb_history.json ────────────────────────────────────────────────────
+    if glb_payload is not None:  # empty list [] is valid (zero signals today)
+        glb_path = DOCS / "glb_history.json"
+        glb_history = json.loads(glb_path.read_text()) if glb_path.exists() else []
+
+        # Remove any existing entry for today (idempotent re-runs)
+        glb_history = [e for e in glb_history if e["date"] != today]
+
+        glb_history.append({
+            "date": today,
+            "count": len(glb_payload),
+            "tickers": glb_payload,
+        })
+
+        glb_history = glb_history[-MAX_HISTORY:]
+        glb_path.write_text(
+            json.dumps(glb_history, ensure_ascii=False, separators=(",", ":"))
+        )
+        print(f"  Saved glb_history.json ({len(glb_history)} entries, {len(glb_payload)} signals today)")
+    else:
+        print("  SKIPPED glb_history.json (fetch failed)")
 
 
 if __name__ == "__main__":
