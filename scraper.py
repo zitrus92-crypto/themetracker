@@ -3,7 +3,8 @@ import re
 import time
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
+import yfinance as yf
 
 HEADERS = {
     "User-Agent": (
@@ -709,3 +710,117 @@ def _fetch_etf_perf() -> dict:
             "perfs":    perfs_by_ticker.get(t, {}),
         }
     return result
+
+
+# ── GLB 52W Breakout Screener ─────────────────────────────────────────────
+
+_GLB_SCREENER_URL = (
+    "https://finviz.com/screener.ashx?v=111"
+    "&f=sh_price_o1,ta_highlow52w_nh&ft=4&o=-volume&r={r}"
+)
+
+def _fetch_glb_candidates() -> list[str]:
+    """Fetch tickers with new 52W high today from Finviz screener (paginated).
+
+    Uses the standard screener view (v=111) with filters:
+      sh_price_o1    — price above $1
+      ta_highlow52w_nh — new 52-week high today
+    ft=4 restricts to stocks (excludes ETFs on Finviz side).
+    Tickers are extracted from quote.ashx links in the HTML.
+    """
+    tickers = []
+    seen = set()
+    r = 1
+    while True:
+        url = _GLB_SCREENER_URL.format(r=r)
+        try:
+            resp = requests.get(url, headers=HEADERS, timeout=15)
+            if resp.status_code == 429:
+                print(f"  GLB: 429 rate-limit at r={r}, waiting 10s")
+                time.sleep(10)
+                continue
+            resp.raise_for_status()
+        except Exception as e:
+            print(f"  WARNING: GLB screener fetch failed at r={r}: {e}")
+            break
+
+        # Tickers appear in anchors: href="quote.ashx?t=TICKER&..." or "quote.ashx?t=TICKER"
+        # Use lookahead for & or " to handle both cases
+        found = re.findall(r'quote\.ashx\?t=([A-Z]{1,6})(?=&|")', resp.text)
+        # Deduplicate and filter obvious non-stock tickers
+        new_on_page = []
+        for t in found:
+            if t not in seen and "." not in t and len(t) <= 5:
+                seen.add(t)
+                new_on_page.append(t)
+        tickers.extend(new_on_page)
+
+        # Stop when last page (< 20 new) or safety guard reached
+        if len(new_on_page) < 20 or r > 500:
+            break
+        r += 20
+        time.sleep(0.5)
+
+    return tickers
+
+
+_GLB_MIN_DAYS = 90       # Former high must be untouched for at least this many calendar days
+_GLB_TOLERANCE = 0.999   # Price within 0.1% of former_high counts as "touching" it
+
+
+def _check_glb(ticker: str, today: date) -> bool:
+    """Return True if ticker satisfies the 52W GLB condition.
+
+    Condition: today is a new 52W high AND the former 52W high was last
+    touched (within 0.1% tolerance) at least 90 calendar days ago.
+
+    Uses yf.Ticker.history() which returns a timezone-aware DatetimeIndex.
+    .date() on a timezone-aware Timestamp correctly strips tz and returns date.
+    """
+    try:
+        hist = yf.Ticker(ticker).history(period="1y")
+        if hist.empty or len(hist) < 20:
+            return False
+
+        highs = hist["High"].dropna()
+        if len(highs) < 2:
+            return False
+
+        # All days except the last bar (today's intraday)
+        past_highs = highs.iloc[:-1]
+        former_high = float(past_highs.max())
+        if former_high <= 0:
+            return False
+
+        # Last date where price was at or within 0.1% of the former high
+        touched = past_highs[past_highs >= former_high * _GLB_TOLERANCE]
+        if touched.empty:
+            return False
+
+        # .date() works on both tz-aware and tz-naive pandas Timestamps
+        last_touch_date = touched.index[-1].date()
+        days_since = (today - last_touch_date).days
+        return days_since >= _GLB_MIN_DAYS
+
+    except Exception as e:
+        print(f"  WARNING: GLB check failed for {ticker}: {e}")
+        return False
+
+
+def _fetch_glb_signals() -> list[str]:
+    """Fetch all tickers meeting the 52W GLB condition today.
+
+    Returns a (possibly empty) list of qualifying ticker symbols.
+    """
+    today = date.today()
+    candidates = _fetch_glb_candidates()
+    print(f"  GLB candidates from Finviz: {len(candidates)}")
+
+    signals = []
+    for ticker in candidates:
+        if _check_glb(ticker, today):
+            signals.append(ticker)
+        time.sleep(0.1)  # Gentle rate-limit for yfinance
+
+    print(f"  GLB signals after {_GLB_MIN_DAYS}-day filter: {len(signals)}")
+    return signals
