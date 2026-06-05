@@ -420,3 +420,45 @@ a.etf-theme-badge:hover { filter: brightness(1.25); }
 /* Checkbox column */
 .col-check { width: 36px; text-align: center !important; padding: 4px !important; }
 .col-check input[type="checkbox"] { accent-color: #3b82f6; cursor: pointer; }
+
+/* ── GLB 52W Breakout Screener ───────────────────────────────────────────── */
+.glb-header { margin-bottom: 12px; }
+.glb-chart  { margin: 4px 0 20px; position: relative; }
+.glb-chart svg { width: 100%; height: 110px; display: block; overflow: visible; }
+
+.glb-bar       { fill: #1a3a1a; cursor: pointer; transition: fill 0.1s; }
+.glb-bar:hover { fill: #22c55e; }
+.glb-bar--today    { fill: #16a34a; }
+.glb-bar--selected { fill: #4ade80; }
+.glb-bar--zero  { fill: #111; cursor: default; }
+
+.glb-chart-tooltip {
+  position: absolute; pointer-events: none;
+  background: #1e2a1e; border: 1px solid #22c55e;
+  color: #4ade80; font-size: 0.78rem; padding: 4px 8px;
+  border-radius: 4px; white-space: nowrap; display: none;
+}
+
+.glb-ticker-chip {
+  display: inline-block; background: #0d2a0d; color: #4ade80;
+  padding: 2px 7px; border-radius: 4px; font-size: 0.8rem;
+  font-weight: 600; margin: 1px 2px; text-decoration: none;
+  transition: background 0.1s;
+}
+.glb-ticker-chip:hover { background: #14532d; }
+.glb-ticker-more {
+  display: inline-block; color: var(--text-dim);
+  font-size: 0.78rem; padding: 2px 4px;
+}
+
+.glb-copy-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-dim); border-radius: 4px;
+  padding: 3px 8px; font-size: 0.8rem; cursor: pointer;
+}
+.glb-copy-btn:hover  { color: var(--text); border-color: #8b949e; }
+.glb-copy-btn--done  { color: #4ade80; border-color: #4ade80; }
+.glb-copy-btn--empty { opacity: 0.3; cursor: default; }
+
+.glb-row--selected { background: #0a1f0a !important; }
+.glb-row--today td:first-child { color: #4ade80; font-weight: 700; }
