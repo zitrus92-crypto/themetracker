@@ -816,3 +816,37 @@ def _fetch_glb_signals() -> list[str]:
 
     print(f"  GLB signals after {_GLB_MIN_DAYS}-day filter: {len(signals)}")
     return signals
+
+
+# ── Industry ticker lists ─────────────────────────────────────────────────
+
+def fetch_industry_tickers(scored: dict) -> dict:
+    """Attach a `tickers` list to each scored industry via the Finviz ind_ filter.
+
+    scored: output of compute_scores() — {industry_name: {..., "ticker": slug}}.
+    Fetches in parallel (same proven path as themes). On failure for an industry,
+    that industry gets tickers: [] and the run continues.
+    Returns the same dict, each entry gaining a "tickers": [...] key.
+    """
+    names = list(scored.keys())
+    print(f"    Fetching ticker lists for {len(names)} industries…")
+
+    def _one(name: str) -> tuple[str, list[str]]:
+        slug = scored[name].get("ticker", "")
+        if not slug:
+            return name, []
+        try:
+            return name, _fetch_tickers_for_slug(slug, filter_prefix="ind")
+        except Exception as e:
+            print(f"      WARNING: ticker fetch failed for industry {name}: {e}")
+            return name, []
+
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        futures = {pool.submit(_one, n): n for n in names}
+        for fut in as_completed(futures):
+            name, tickers = fut.result()
+            scored[name]["tickers"] = tickers
+
+    total = sum(len(scored[n].get("tickers", [])) for n in names)
+    print(f"    Industry tickers: {total} across {len(names)} industries")
+    return scored
