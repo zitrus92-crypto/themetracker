@@ -23,7 +23,9 @@ def fetch_industries():
     print("Fetching Finviz industry data...")
     raw = scraper.fetch_all()
     print(f"  {len(raw)} industries fetched.")
-    return compute_scores(raw)
+    scored = compute_scores(raw)
+    scraper.fetch_industry_tickers(scored)  # attaches "tickers" per industry (in-place)
+    return scored
 
 
 def fetch_themes():
