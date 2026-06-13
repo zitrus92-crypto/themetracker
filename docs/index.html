@@ -39,10 +39,18 @@
       </div>
       <div id="loading" class="loading" data-i18n="loading">Daten werden geladen…</div>
       <div id="error-msg" class="error hidden"></div>
+      <div id="ind-selection-bar" class="selection-bar hidden">
+        <span class="selection-bar__info"></span>
+        <div class="selection-bar__actions">
+          <button class="selection-bar__copy-btn">📋 Kopieren</button>
+          <button class="selection-bar__clear-btn">✕</button>
+        </div>
+      </div>
       <div class="table-scroll">
         <table id="heatmap-table">
           <thead>
             <tr>
+              <th class="col-check"><input type="checkbox" id="ind-select-all" title="Alle auswählen"></th>
               <th>#</th>
               <th data-col="industry" data-label="Industry" data-i18n="colIndustry">Industry</th>
               <th data-col="1D" data-label="1D">1D</th>
