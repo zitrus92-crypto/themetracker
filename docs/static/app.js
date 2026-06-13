@@ -635,6 +635,26 @@ function pickPriority(row, accelRankMap, compRankMap, name) {
   return 0.6 * (accelRankMap[name] ?? 999) + 0.4 * (compRankMap[name] ?? 999);
 }
 
+// Wire all .ind-copy-btn inside a container to copy that industry's tickers.
+function wireIndCopyButtons(container) {
+  container.querySelectorAll(".ind-copy-btn:not([disabled])").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      e.preventDefault();
+      const name = btn.dataset.key;
+      const tickers = _lastIndustries?.[name]?.tickers;
+      if (!tickers || !tickers.length) return;
+      navigator.clipboard.writeText(tickers.join(",")).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = "✓";
+        btn.classList.add("ind-copy-btn--done");
+        setTimeout(() => { btn.textContent = orig; btn.classList.remove("ind-copy-btn--done"); }, 2000);
+        showToast(_lang === "de" ? `${tickers.length} Ticker kopiert!` : `${tickers.length} tickers copied!`);
+      });
+    });
+  });
+}
+
 function renderPicks(industries) {
   const container = document.getElementById("picks-container");
   const entries = Object.entries(industries);
@@ -682,9 +702,13 @@ function renderPicks(industries) {
     const nameEl = url
       ? `<a class="pick-name pick-link" href="${url}" target="_blank" rel="noopener">${name} ↗</a>`
       : `<div class="pick-name">${name}</div>`;
+    const hasTk = row.tickers && row.tickers.length > 0;
+    const copyBtn = hasTk
+      ? `<button class="ind-copy-btn" data-key="${esc(name)}" title="${_lang === 'de' ? 'Ticker dieser Industry kopieren' : "Copy this industry's tickers"}">📋</button>`
+      : '';
 
     return `<div class="pick-card">
-      ${nameEl}
+      ${nameEl}${copyBtn}
       ${stat("1D")}${stat("1W")}${stat("1M")}${stat("3M")}
       <div class="pick-stat ${accelCls}"><span>${t("colAccel")}</span>${accelStr}</div>
       <div class="pick-reason">${buildReason(p, acc)}</div>
@@ -692,6 +716,7 @@ function renderPicks(industries) {
   }).join("");
 
   container.innerHTML = `<div class="picks-grid">${header}${cards}</div>`;
+  wireIndCopyButtons(container);
 }
 
 // --- Render ---
@@ -706,6 +731,7 @@ function updateTimestamp(iso) {
 function renderAll(payload) {
   if (!payload || !payload.industries || Object.keys(payload.industries).length === 0) return;
   _lastPayload = payload;
+  _lastIndustries = payload.industries;
   renderHeatmap(payload.industries);
   renderTop10(payload.industries);
   renderPicks(payload.industries);
