@@ -418,15 +418,20 @@ function renderCards(industries) {
         ? `<a class="card-name pick-link" href="${url}" target="_blank" rel="noopener" title="${name}">${name}</a>`
         : `<span class="card-name" title="${name}">${name}</span>`;
       const instMark = isInst(row) ? " " + instTag() : "";
+      const hasTk = row.tickers && row.tickers.length > 0;
+      const copyBtn = hasTk
+        ? `<button class="ind-copy-btn ind-copy-btn--inline" data-key="${esc(name)}" title="${_lang === 'de' ? 'Ticker dieser Industry kopieren' : "Copy this industry's tickers"}">📋</button>`
+        : '';
       return `<div class="card-row">
         <span class="card-rank">${i + 1}</span>
-        ${nameEl}${instMark}
+        ${nameEl}${instMark}${copyBtn}
         <span class="badge ${v >= 0 ? "badge-pos" : "badge-neg"}">${fmtPct(v)}</span>
       </div>`;
     }).join("");
     return `<div class="card"><div class="card-header">${tf}</div>${rows}</div>`;
   });
   container.innerHTML = cards.join("");
+  wireIndCopyButtons(container);
 }
 
 // --- Bar Chart View ---
@@ -453,8 +458,12 @@ function renderBarChart(industries) {
         ? `<a class="pick-link bar-label" href="${url}" target="_blank" rel="noopener">${name}</a>`
         : `<span class="bar-label">${name}</span>`;
       const instMark = isInst(row) ? " " + instTag() : "";
+      const hasTk = row.tickers && row.tickers.length > 0;
+      const copyBtn = hasTk
+        ? `<button class="ind-copy-btn ind-copy-btn--inline" data-key="${esc(name)}" title="${_lang === 'de' ? 'Ticker dieser Industry kopieren' : "Copy this industry's tickers"}">📋</button>`
+        : '';
       return `<div class="bar-row">
-        <span class="bar-name-wrap">${nameEl}${instMark}</span>
+        <span class="bar-name-wrap">${nameEl}${instMark}${copyBtn}</span>
         <div class="bar-track"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div>
         <span class="bar-value ${v >= 0 ? "accel-pos" : "accel-neg"}">${fmtPct(v)}</span>
       </div>`;
@@ -468,6 +477,7 @@ function renderBarChart(industries) {
   });
 
   container.innerHTML = panels.join("");
+  wireIndCopyButtons(container);
 }
 
 function renderTop10(industries) {
