@@ -277,6 +277,23 @@ function sortedEntries(industries) {
   });
 }
 
+// ── Industry heatmap multi-select ─────────────────────────────────────────
+function updateIndSelectionBar() {
+  const bar    = document.getElementById("ind-selection-bar");
+  const checks = [...document.querySelectorAll("#heatmap-body .row-check:checked")];
+  if (!checks.length) { bar.classList.add("hidden"); return; }
+
+  const allTickers = checks.flatMap(cb => _lastIndustries?.[cb.dataset.key]?.tickers ?? []);
+  const deduped    = [...new Set(allTickers)];
+  bar.__deduped = deduped;
+
+  const n = checks.length;
+  bar.querySelector(".selection-bar__info").textContent = _lang === "de"
+    ? `${n} Industr${n === 1 ? "y" : "ies"} ausgewählt · ${deduped.length} Ticker (dedupliziert)`
+    : `${n} industr${n === 1 ? "y" : "ies"} selected · ${deduped.length} tickers (deduplicated)`;
+  bar.classList.remove("hidden");
+}
+
 function renderHeatmap(industries) {
   _lastIndustries = industries; // always full dataset (Movers needs it)
   const tbody = document.getElementById("heatmap-body");
@@ -309,7 +326,9 @@ function renderHeatmap(industries) {
       ? `<a class="pick-link" href="${url}" target="_blank" rel="noopener">${name} ↗</a>`
       : name;
     const instMark = isInst(row) ? " " + instTag() : "";
+    const hasTickers = row.tickers && row.tickers.length > 0;
     return `<tr>
+      <td class="col-check"><input type="checkbox" class="row-check"${hasTickers ? '' : ' disabled'} data-key="${esc(name)}"></td>
       <td>${idx + 1}</td>
       <td title="${name}">${nameCell}${instMark}</td>
       ${perfCells}
@@ -319,7 +338,43 @@ function renderHeatmap(industries) {
     </tr>`;
   });
 
-  tbody.innerHTML = rows.join("") || `<tr><td colspan="10" class="empty-msg">${t("noData")}</td></tr>`;
+  tbody.innerHTML = rows.join("") || `<tr><td colspan="11" class="empty-msg">${t("noData")}</td></tr>`;
+
+  // ── Multi-select wiring ───────────────────────────────────────────────────
+  const indHeaderCheck = document.getElementById("ind-select-all");
+  const indRowChecks   = [...tbody.querySelectorAll(".row-check:not([disabled])")];
+
+  function syncIndHeader() {
+    const c = indRowChecks.filter(x => x.checked).length;
+    indHeaderCheck.indeterminate = c > 0 && c < indRowChecks.length;
+    indHeaderCheck.checked = c > 0 && c === indRowChecks.length;
+  }
+
+  indRowChecks.forEach(cb => cb.addEventListener("change", () => {
+    syncIndHeader();
+    updateIndSelectionBar();
+  }));
+
+  indHeaderCheck.onchange = () => {
+    indRowChecks.forEach(cb => cb.checked = indHeaderCheck.checked);
+    indHeaderCheck.indeterminate = false;
+    updateIndSelectionBar();
+  };
+
+  const indBar = document.getElementById("ind-selection-bar");
+  indBar.querySelector(".selection-bar__copy-btn").onclick = () => {
+    const deduped = indBar.__deduped;
+    if (!deduped || !deduped.length) return;
+    navigator.clipboard.writeText(deduped.join(",")).then(() => {
+      showToast(_lang === "de" ? `${deduped.length} Ticker kopiert!` : `${deduped.length} tickers copied!`);
+    });
+  };
+  indBar.querySelector(".selection-bar__clear-btn").onclick = () => {
+    indRowChecks.forEach(cb => cb.checked = false);
+    indHeaderCheck.checked = false;
+    indHeaderCheck.indeterminate = false;
+    updateIndSelectionBar();
+  };
 }
 
 function initInstToggle() {
