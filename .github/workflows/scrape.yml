@@ -1,26 +1,27 @@
 name: Finviz Scrape (twice daily, NY time)
 
-# Runs twice per US trading day at New York local time:
-#   1) 15:30 ET — 30 min before the close (intraday snapshot)
-#   2) 17:00 ET — 1 h after the close (settled end-of-day data)
+# Refreshes all data around the US close on weekdays.
 #
 # GitHub Actions cron is UTC-only and does NOT observe daylight saving time,
-# while New York switches between EDT (UTC-4) and EST (UTC-5). We therefore
-# schedule BOTH possible UTC slots for each target and gate the job on the
-# actual New York local time, so exactly two runs land per day year-round.
+# and scheduled runs are "best effort" (often delayed 15 min to a few hours).
+# We therefore schedule four UTC slots covering both 15:30 and 17:00 New York
+# time in summer (EDT) and winter (EST), and run every time WITHOUT a wall-clock
+# gate — GitHub's delays make exact-time gating unreliable. The data writes are
+# idempotent per date, so extra runs simply overwrite the day's entry with
+# fresher data.
 #
-#   19:30 UTC → 15:30 EDT (summer)  | 14:30 EST (winter, gated out)
-#   20:30 UTC → 16:30 EDT (gated)   | 15:30 EST (winter)
-#   21:00 UTC → 17:00 EDT (summer)  | 16:00 EST (winter, gated out)
-#   22:00 UTC → 18:00 EDT (gated)   | 17:00 EST (winter)
+#   19:30 UTC → 15:30 EDT (summer) / 14:30 EST (winter)
+#   20:30 UTC → 16:30 EDT          / 15:30 EST
+#   21:00 UTC → 17:00 EDT          / 16:00 EST
+#   22:00 UTC → 18:00 EDT          / 17:00 EST
 
 on:
   schedule:
-    - cron: '30 19 * * 1-5'   # 15:30 ET (EDT)
-    - cron: '30 20 * * 1-5'   # 15:30 ET (EST)
-    - cron: '0 21 * * 1-5'    # 17:00 ET (EDT)
-    - cron: '0 22 * * 1-5'    # 17:00 ET (EST)
-  workflow_dispatch:  # Manual trigger via GitHub UI — always runs immediately
+    - cron: '30 19 * * 1-5'
+    - cron: '30 20 * * 1-5'
+    - cron: '0 21 * * 1-5'
+    - cron: '0 22 * * 1-5'
+  workflow_dispatch:  # Manual trigger via GitHub UI
 
 jobs:
   scrape:
@@ -29,49 +30,24 @@ jobs:
       contents: write
 
     steps:
-      - name: Gate on New York time window
-        id: gate
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "Manual trigger — proceeding."
-            echo "proceed=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          NOW=$(TZ="America/New_York" date +%H%M)
-          NOW=$((10#$NOW))
-          echo "New York time now: $(TZ="America/New_York" date '+%Y-%m-%d %H:%M %Z') (HHMM=$NOW)"
-          # Accept 15:25–15:45 and 16:55–17:15 (tolerance for cron delay)
-          if { [ "$NOW" -ge 1525 ] && [ "$NOW" -le 1545 ]; } || { [ "$NOW" -ge 1655 ] && [ "$NOW" -le 1715 ]; }; then
-            echo "Within target window — proceeding."
-            echo "proceed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "Outside target window — skipping this run."
-            echo "proceed=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Checkout repository
-        if: steps.gate.outputs.proceed == 'true'
         uses: actions/checkout@v4
 
       - name: Set up Python
-        if: steps.gate.outputs.proceed == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install dependencies
-        if: steps.gate.outputs.proceed == 'true'
         run: pip install -r requirements.txt
 
       - name: Run scraper
-        if: steps.gate.outputs.proceed == 'true'
         run: python scrape.py
 
       - name: Commit updated data
-        if: steps.gate.outputs.proceed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/data.json docs/etf_data.json docs/etf_perf.json docs/history.json docs/glb_history.json
+          git add docs/data.json docs/etf_data.json docs/etf_perf.json docs/history.json
           git diff --staged --quiet || git commit -m "data: update $(TZ='America/New_York' date '+%Y-%m-%d %H:%M %Z')"
           git push

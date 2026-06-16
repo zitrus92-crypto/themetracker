@@ -72,13 +72,6 @@ const I18N = {
     etfPerfColEtf:    "ETF",
     etfPerfNoData:    "ETF-Daten werden geladen oder sind noch nicht verfügbar.",
     hintEtfPerf:      "32 ETFs in 4 Kategorien: Broad Market, US Sectors, Commodities, Crypto.\nScore = gewichteter Rang (1M×70%+1W×20%+3M×10%). Accel = 3M-Rang minus 1M-Rang.\nKlick auf Ticker öffnet Finviz-Chart.",
-    topGlb:       "🟢 52WH",
-    glbTitle:     "52W Breakout Screener",
-    glbColDate:   "Datum",
-    glbColCount:  "Signale",
-    glbColTickers:"Ticker",
-    glbNoData:    "GLB-Daten werden geladen oder sind noch nicht verfügbar.",
-    hintGlb:      "52W Green-Line Breakout: Aktie macht heute neues 52-Wochen-Hoch, nachdem das vorherige Hoch mindestens 90 Tage lang nicht erreicht wurde.\nUniverse: Finviz (Preis > $1, kein ETF).\nKlick auf Balken = Tages-Detail · 📋 = Tickerliste für TradingView.",
   },
   en: {
     notLoaded:    "— not yet loaded —",
@@ -148,13 +141,6 @@ const I18N = {
     etfPerfColEtf:    "ETF",
     etfPerfNoData:    "ETF data is loading or not yet available.",
     hintEtfPerf:      "32 ETFs in 4 categories: Broad Market, US Sectors, Commodities, Crypto.\nScore = weighted rank (1M×70%+1W×20%+3M×10%). Accel = 3M rank minus 1M rank.\nClick any ticker to open Finviz chart.",
-    topGlb:       "🟢 52WH",
-    glbTitle:     "52W Breakout Screener",
-    glbColDate:   "Date",
-    glbColCount:  "Signals",
-    glbColTickers:"Tickers",
-    glbNoData:    "GLB data is loading or not yet available.",
-    hintGlb:      "52W Green-Line Breakout: stock makes a new 52-week high today after the former high was untouched for at least 90 days.\nUniverse: Finviz (price > $1, no ETFs).\nClick a bar = day detail · 📋 = ticker list for TradingView.",
   },
 };
 
@@ -195,7 +181,6 @@ function applyTranslations() {
   if (_lastHistory) renderMovers(_lastHistory, _activePeriodDays);
   if (_etfData) renderEtfTab();
   if (_etfPerfData) renderEtfPerfTab(_etfPerfData);
-  if (_glbData) renderGlbTab(_glbData);
 }
 
 // --- INST helper ---
@@ -780,10 +765,6 @@ function initTabs() {
         subNav.classList.add("hidden");
         showPanel("etfperf");
         if (_etfPerfData) renderEtfPerfTab(_etfPerfData);
-      } else if (btn.dataset.top === "glb") {
-        subNav.classList.add("hidden");
-        showPanel("glb");
-        if (_glbData) renderGlbTab(_glbData);
       }
     });
   });
@@ -801,8 +782,6 @@ function initTabs() {
 // ── ETF Perf Tab ──────────────────────────────────────────────────────────────
 let _etfPerfData = null;
 let _etfPerfSort = { col: "score", dir: 1 };
-let _glbData         = null;   // Array of {date, count, tickers} from glb_history.json
-let _glbSelectedDate = null;   // Date string of bar/row the user clicked
 
 // ETF Perf tab — category badge colors
 const ETF_CATEGORY_COLORS = {
@@ -829,160 +808,6 @@ function computeEtfPerfScore(entries) {
   return scores;
 }
 
-// ── GLB 52W Screener ─────────────────────────────────────────────────────
-
-function renderGlbChart(data) {
-  const container = document.getElementById("glb-chart");
-  if (!container) return;
-  if (!data || !data.length) {
-    container.innerHTML = `<p class="empty-msg">${t("glbNoData")}</p>`;
-    return;
-  }
-
-  const W = 800, H = 90, PAD_L = 4, PAD_R = 4, PAD_TOP = 8;
-  const n = data.length;
-  const maxCount = Math.max(...data.map(d => d.count), 1);
-  const barW = Math.max(1, Math.floor((W - PAD_L - PAD_R) / n) - 1);
-  const gap  = Math.max(1, Math.floor((W - PAD_L - PAD_R - barW * n) / Math.max(n - 1, 1)));
-
-  let bars = "";
-  data.forEach((entry, i) => {
-    const x = PAD_L + i * (barW + gap);
-    const barH = entry.count > 0 ? Math.max(2, Math.round((entry.count / maxCount) * (H - PAD_TOP))) : 1;
-    const y = H - barH;
-    const today = new Date().toISOString().slice(0, 10);
-    const cls = entry.count === 0 ? "glb-bar glb-bar--zero"
-              : entry.date === today ? "glb-bar glb-bar--today"
-              : entry.date === _glbSelectedDate ? "glb-bar glb-bar--selected"
-              : "glb-bar";
-    bars += `<rect class="${cls}" x="${x}" y="${y}" width="${barW}" height="${barH}"
-      data-date="${entry.date}" data-count="${entry.count}"/>`;
-  });
-
-  // Month label lines
-  let labels = "";
-  let lastMonth = "";
-  data.forEach((entry, i) => {
-    const month = entry.date.slice(0, 7); // "YYYY-MM"
-    if (month !== lastMonth) {
-      lastMonth = month;
-      const x = PAD_L + i * (barW + gap);
-      const label = new Date(entry.date + "T12:00:00Z")
-        .toLocaleString(_lang === "de" ? "de-DE" : "en-US", { month: "short" });
-      labels += `<text x="${x}" y="${H + 14}" font-size="9" fill="#8b949e">${label}</text>`;
-    }
-  });
-
-  container.innerHTML = `
-    <div class="glb-chart-tooltip" id="glb-tooltip"></div>
-    <svg viewBox="0 0 ${W} ${H + 18}" preserveAspectRatio="none">
-      <line x1="0" y1="${H}" x2="${W}" y2="${H}" stroke="#30363d" stroke-width="1"/>
-      ${bars}
-      ${labels}
-    </svg>`;
-
-  // Bar interaction
-  const tooltip = document.getElementById("glb-tooltip");
-  container.querySelectorAll(".glb-bar").forEach(rect => {
-    rect.addEventListener("click", () => {
-      _glbSelectedDate = rect.dataset.date;
-      renderGlbChart(data);
-      renderGlbTable(data);
-      // Scroll selected row into view
-      const sel = document.querySelector(".glb-row--selected");
-      if (sel) sel.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    });
-    rect.addEventListener("mouseenter", e => {
-      const count = rect.dataset.count;
-      const label = _lang === "de"
-        ? `${rect.dataset.date}: ${count} Signal${count != 1 ? "e" : ""}`
-        : `${rect.dataset.date}: ${count} signal${count != 1 ? "s" : ""}`;
-      tooltip.textContent = label;
-      tooltip.style.display = "block";
-    });
-    rect.addEventListener("mousemove", e => {
-      const r = container.getBoundingClientRect();
-      tooltip.style.left = (e.clientX - r.left + 8) + "px";
-      tooltip.style.top  = (e.clientY - r.top  - 28) + "px";
-    });
-    rect.addEventListener("mouseleave", () => {
-      tooltip.style.display = "none";
-    });
-  });
-}
-
-function renderGlbTable(data) {
-  const tbody = document.getElementById("glb-body");
-  if (!tbody) return;
-  if (!data || !data.length) {
-    tbody.innerHTML = `<tr><td colspan="4" class="empty-msg">${t("glbNoData")}</td></tr>`;
-    return;
-  }
-
-  const today = new Date().toISOString().slice(0, 10);
-  // Sort descending by date
-  const sorted = [...data].sort((a, b) => b.date.localeCompare(a.date));
-
-  const rows = sorted.map(entry => {
-    const isToday    = entry.date === today;
-    const isSelected = entry.date === _glbSelectedDate;
-    const rowCls = [
-      isSelected ? "glb-row--selected" : "",
-      isToday    ? "glb-row--today"    : "",
-    ].filter(Boolean).join(" ");
-
-    // Ticker chips — show first 5, then "+N"
-    let tickerHtml = "—";
-    if (entry.tickers && entry.tickers.length > 0) {
-      const MAX_SHOW = 5;
-      const shown = entry.tickers.slice(0, MAX_SHOW);
-      const rest  = entry.tickers.length - MAX_SHOW;
-      tickerHtml = shown.map(tk =>
-        `<a class="glb-ticker-chip" href="https://finviz.com/quote.ashx?t=${esc(tk)}" target="_blank" rel="noopener">${esc(tk)}</a>`
-      ).join("") + (rest > 0 ? `<span class="glb-ticker-more">+${rest}</span>` : "");
-    }
-
-    const hasTickrs = entry.tickers && entry.tickers.length > 0;
-    const copyBtnCls = "glb-copy-btn" + (hasTickrs ? "" : " glb-copy-btn--empty");
-    const copyTitle = _lang === "de" ? "Tickerliste in Zwischenablage kopieren" : "Copy ticker list to clipboard";
-
-    return `<tr class="${rowCls}" data-date="${esc(entry.date)}">
-      <td>${esc(entry.date)}</td>
-      <td style="text-align:center;font-weight:${entry.count > 0 ? "700" : "400"};color:${entry.count > 0 ? "#4ade80" : "var(--text-dim)"}">${entry.count}</td>
-      <td style="text-align:left">${tickerHtml}</td>
-      <td style="text-align:center"><button class="${copyBtnCls}" data-date="${esc(entry.date)}" title="${copyTitle}"${hasTickrs ? "" : " disabled"}>📋</button></td>
-    </tr>`;
-  });
-
-  tbody.innerHTML = rows.join("");
-
-  // Copy button handlers
-  tbody.querySelectorAll(".glb-copy-btn:not([disabled])").forEach(btn => {
-    btn.addEventListener("click", e => {
-      e.stopPropagation();
-      const entryDate = btn.dataset.date;
-      const entry = data.find(d => d.date === entryDate);
-      if (!entry || !entry.tickers.length) return;
-      navigator.clipboard.writeText(entry.tickers.join(",")).then(() => {
-        btn.textContent = "✓";
-        btn.classList.add("glb-copy-btn--done");
-        setTimeout(() => { btn.textContent = "📋"; btn.classList.remove("glb-copy-btn--done"); }, 2000);
-        showToast(_lang === "de" ? `${entry.tickers.length} Ticker kopiert!` : `${entry.tickers.length} tickers copied!`);
-      });
-    });
-  });
-}
-
-function renderGlbTab(data) {
-  const errEl = document.getElementById("glb-error");
-  if (!data || !data.length) {
-    if (errEl) { errEl.textContent = t("glbNoData"); errEl.classList.remove("hidden"); }
-    return;
-  }
-  if (errEl) errEl.classList.add("hidden");
-  renderGlbChart(data);
-  renderGlbTable(data);
-}
 
 function renderEtfPerfTab(data) {
   if (!data || !data.etfs) return;
@@ -1734,12 +1559,11 @@ async function loadData() {
   const bust = `?t=${Date.now()}`;
 
   try {
-    const [dataRes, histRes, etfRes, etfPerfRes, glbRes] = await Promise.all([
+    const [dataRes, histRes, etfRes, etfPerfRes] = await Promise.all([
       fetch("data.json" + bust),        // → dataRes    (index 0)
       fetch("history.json" + bust),     // → histRes    (index 1)
       fetch("etf_data.json" + bust),    // → etfRes     (index 2)
       fetch("etf_perf.json" + bust),    // → etfPerfRes (index 3)
-      fetch("glb_history.json" + bust), // → glbRes     (index 4) ← new
     ]);
 
     if (!dataRes.ok) throw new Error(`data.json: HTTP ${dataRes.status}`);
@@ -1774,16 +1598,6 @@ async function loadData() {
         errEl.textContent = t("etfPerfNoData");
         errEl.classList.remove("hidden");
       }
-    }
-
-    if (glbRes.ok) {
-      _glbData = await glbRes.json();
-      if (document.querySelector(".top-btn[data-top='glb']")?.classList.contains("active")) {
-        renderGlbTab(_glbData);
-      }
-    } else {
-      const errEl = document.getElementById("glb-error");
-      if (errEl) { errEl.textContent = t("glbNoData"); errEl.classList.remove("hidden"); }
     }
   } catch (err) {
     loading.classList.add("hidden");
