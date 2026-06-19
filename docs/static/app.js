@@ -192,9 +192,11 @@ function instTag() {
 }
 
 // --- Finviz link ---
+// Same filter + sort as the Themes links (f=theme_<slug>&o=-perf13w),
+// just with the industry group filter instead of the theme filter.
 function finvizUrl(ticker) {
   if (!ticker) return "";
-  return `https://finviz.com/screener.ashx?v=211&f=cap_smallover%2Cind_${ticker}%2Csh_avgvol_o500%2Csh_price_o7%2Cta_highlow52w_a70h%2Cta_sma50_pa&ft=4&o=-low52w`;
+  return `https://finviz.com/screener.ashx?v=211&f=ind_${ticker}&o=-perf13w`;
 }
 
 // --- Color helpers ---
