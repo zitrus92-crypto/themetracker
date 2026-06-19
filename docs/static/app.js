@@ -192,11 +192,12 @@ function instTag() {
 }
 
 // --- Finviz link ---
-// Same filter + sort as the Themes links (f=theme_<slug>&o=-perf13w),
+// Same filter + sort as the Themes links (f=theme_<slug>,ta_volatility_mo6&o=-perf13w),
 // just with the industry group filter instead of the theme filter.
+// ta_volatility_mo6 = Volatility (1 Month) > 6%.
 function finvizUrl(ticker) {
   if (!ticker) return "";
-  return `https://finviz.com/screener.ashx?v=211&f=ind_${ticker}&o=-perf13w`;
+  return `https://finviz.com/screener.ashx?v=211&f=ind_${ticker}%2Cta_volatility_mo6&o=-perf13w`;
 }
 
 // --- Color helpers ---
@@ -963,7 +964,7 @@ const THEME_SLUG_OVERRIDES = {
 
 function themeScreenerUrl(theme) {
   const slug = THEME_SLUG_OVERRIDES[theme] ?? theme.toLowerCase().replace(/[^a-z0-9]/g, "");
-  return `https://finviz.com/screener.ashx?v=211&f=theme_${slug}&o=-perf13w`;
+  return `https://finviz.com/screener.ashx?v=211&f=theme_${slug}%2Cta_volatility_mo6&o=-perf13w`;
 }
 
 function themeBadge(theme) {
@@ -1105,7 +1106,7 @@ function renderEtfThemes(data) {
     const chips = (row.top3 || []).map(nodeKey => {
       const sub = data.subnodes?.[nodeKey];
       const label = sub ? sub.label : nodeKey;
-      const url = `https://finviz.com/screener.ashx?v=211&f=subtheme_${nodeKey}&o=-perf13w`;
+      const url = `https://finviz.com/screener.ashx?v=211&f=subtheme_${nodeKey}%2Cta_volatility_mo6&o=-perf13w`;
       return `<a class="etf-ticker-chip etf-ticker-chip--link" href="${url}" target="_blank" rel="noopener" title="${label} → Finviz Screener">${label}</a>`;
     }).join(" ");
 
@@ -1233,7 +1234,7 @@ function renderEtfList(data) {
     const perfCells = ETF_TIMEFRAMES.map(tf =>
       `<td class="${perfClass(row.perfs[tf])}">${fmtPct(row.perfs[tf])}</td>`
     ).join("");
-    const subUrl = `https://finviz.com/screener.ashx?v=211&f=subtheme_${key}&o=-perf13w`;
+    const subUrl = `https://finviz.com/screener.ashx?v=211&f=subtheme_${key}%2Cta_volatility_mo6&o=-perf13w`;
     const accel = subAccel[key] ?? 0;
     const accelSign = accel > 0 ? "+" : "";
     const accelClass = accel >= 20 ? "accel-fresh" : accel <= -20 ? "accel-extended" : accel >= 8 ? "accel-fresh-mild" : "accel-neutral";
