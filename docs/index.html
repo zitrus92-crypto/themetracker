@@ -34,7 +34,10 @@
           <h2 data-i18n="heatmapTitle">Industry Heatmap</h2>
           <span class="section-hint" data-hint-key="hintHeatmap">i</span>
         </div>
-        <button id="inst-toggle" class="inst-toggle-btn">🏛 INST only</button>
+        <div class="heatmap-header-actions">
+          <button id="ind-top20-btn" class="top20-btn">★ Top 20%</button>
+          <button id="inst-toggle" class="inst-toggle-btn">🏛 INST only</button>
+        </div>
       </div>
       <div id="loading" class="loading" data-i18n="loading">Daten werden geladen…</div>
       <div id="error-msg" class="error hidden"></div>
@@ -141,6 +144,7 @@
           <button class="viz-btn active" data-vizview="table">📋 Tabelle</button>
           <button class="viz-btn" data-vizview="bubble">🔵 Bubble</button>
           <button class="viz-btn" data-vizview="matrix">⊞ Matrix</button>
+          <button id="theme-top20-btn" class="top20-btn">★ Top 20%</button>
         </div>
         <div id="etf-bubble-view" class="hidden"></div>
         <div id="etf-matrix-view" class="hidden"></div>

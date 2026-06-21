@@ -421,6 +421,16 @@ a.etf-theme-badge:hover { filter: brightness(1.25); }
 .col-check { width: 36px; text-align: center !important; padding: 4px !important; }
 .col-check input[type="checkbox"] { accent-color: #3b82f6; cursor: pointer; }
 
+/* ── Top 20% quick-select button ─────────────────────────────────────────── */
+.heatmap-header-actions { display: flex; gap: 8px; align-items: center; }
+.top20-btn {
+  background: #1f2937; color: #fbbf24;
+  border: 1px solid #3b4252; border-radius: 6px;
+  padding: 5px 12px; font-size: 0.82rem; cursor: pointer;
+  white-space: nowrap;
+}
+.top20-btn:hover { background: #2b3648; border-color: #fbbf24; }
+
 /* ── Industry single-copy button (Setup Picks + Top 10) ──────────────────── */
 .ind-copy-btn {
   background: transparent; border: 1px solid var(--border);
