@@ -74,6 +74,7 @@ const I18N = {
     hintEtfPerf:      "32 ETFs in 4 Kategorien: Broad Market, US Sectors, Commodities, Crypto.\nScore = gewichteter Rang (1M×70%+1W×20%+3M×10%). Accel = 3M-Rang minus 1M-Rang.\nKlick auf Ticker öffnet Finviz-Chart.",
     top20Title:       "Top 20% der aktuellen Sortierung markieren (zum Kopieren)",
     top20IntersectTitle: "Schnittmenge der Top 20% nach 1W und 1M (nur die stärksten)",
+    top20Intersect2Title: "Schnittmenge der Top 20% nach 1M und 3M (nur die stärksten)",
   },
   en: {
     notLoaded:    "— not yet loaded —",
@@ -145,6 +146,7 @@ const I18N = {
     hintEtfPerf:      "32 ETFs in 4 categories: Broad Market, US Sectors, Commodities, Crypto.\nScore = weighted rank (1M×70%+1W×20%+3M×10%). Accel = 3M rank minus 1M rank.\nClick any ticker to open Finviz chart.",
     top20Title:       "Select the top 20% of the current sort (for copying)",
     top20IntersectTitle: "Intersection of the top 20% by 1W and by 1M (strongest only)",
+    top20Intersect2Title: "Intersection of the top 20% by 1M and by 3M (strongest only)",
   },
 };
 
@@ -184,6 +186,9 @@ function applyTranslations() {
   });
   ["ind-top20i-btn", "theme-top20i-btn"].forEach(id => {
     const b = document.getElementById(id); if (b) b.title = t("top20IntersectTitle");
+  });
+  ["ind-top20i2-btn", "theme-top20i2-btn"].forEach(id => {
+    const b = document.getElementById(id); if (b) b.title = t("top20Intersect2Title");
   });
   document.documentElement.lang = _lang;
   document.getElementById("lang-btn").textContent = _lang === "de" ? "EN" : "DE";
@@ -341,6 +346,14 @@ function initTop20Buttons() {
   const themeInterBtn = document.getElementById("theme-top20i-btn");
   if (themeInterBtn) themeInterBtn.onclick = () =>
     selectTopIntersection("etf-themes-body", "theme-select-all", updateThemeSelectionBar, k => _etfData?.themes?.[k]);
+
+  const indInter2Btn = document.getElementById("ind-top20i2-btn");
+  if (indInter2Btn) indInter2Btn.onclick = () =>
+    selectTopIntersection("heatmap-body", "ind-select-all", updateIndSelectionBar, k => _lastIndustries?.[k], ["1M", "3M"]);
+
+  const themeInter2Btn = document.getElementById("theme-top20i2-btn");
+  if (themeInter2Btn) themeInter2Btn.onclick = () =>
+    selectTopIntersection("etf-themes-body", "theme-select-all", updateThemeSelectionBar, k => _etfData?.themes?.[k], ["1M", "3M"]);
 }
 
 // ── Industry heatmap multi-select ─────────────────────────────────────────
