@@ -73,6 +73,7 @@ const I18N = {
     etfPerfNoData:    "ETF-Daten werden geladen oder sind noch nicht verfügbar.",
     hintEtfPerf:      "32 ETFs in 4 Kategorien: Broad Market, US Sectors, Commodities, Crypto.\nScore = gewichteter Rang (1M×70%+1W×20%+3M×10%). Accel = 3M-Rang minus 1M-Rang.\nKlick auf Ticker öffnet Finviz-Chart.",
     top20Title:       "Top 20% der aktuellen Sortierung markieren (zum Kopieren)",
+    top20IntersectTitle: "Schnittmenge der Top 20% nach 1W und 1M (nur die stärksten)",
   },
   en: {
     notLoaded:    "— not yet loaded —",
@@ -143,6 +144,7 @@ const I18N = {
     etfPerfNoData:    "ETF data is loading or not yet available.",
     hintEtfPerf:      "32 ETFs in 4 categories: Broad Market, US Sectors, Commodities, Crypto.\nScore = weighted rank (1M×70%+1W×20%+3M×10%). Accel = 3M rank minus 1M rank.\nClick any ticker to open Finviz chart.",
     top20Title:       "Select the top 20% of the current sort (for copying)",
+    top20IntersectTitle: "Intersection of the top 20% by 1W and by 1M (strongest only)",
   },
 };
 
@@ -177,8 +179,11 @@ function applyTranslations() {
     btn.textContent = _lang === "de" ? "📋 Kopieren" : "📋 Copy";
   });
   // Top 20% buttons: language-neutral label, localized tooltip
-  document.querySelectorAll(".top20-btn").forEach(btn => {
-    btn.title = t("top20Title");
+  ["ind-top20-btn", "theme-top20-btn"].forEach(id => {
+    const b = document.getElementById(id); if (b) b.title = t("top20Title");
+  });
+  ["ind-top20i-btn", "theme-top20i-btn"].forEach(id => {
+    const b = document.getElementById(id); if (b) b.title = t("top20IntersectTitle");
   });
   document.documentElement.lang = _lang;
   document.getElementById("lang-btn").textContent = _lang === "de" ? "EN" : "DE";
@@ -289,6 +294,37 @@ function selectTopPercent(tbodyId, headerCheckId, updateFn, pct = 0.20) {
   updateFn();
 }
 
+// Select rows that are in BOTH the top `pct` by each timeframe (intersection),
+// among currently-displayed rows. dataFor(key) -> row object with .perfs.
+// Replaces the current selection, then refreshes the selection bar.
+function selectTopIntersection(tbodyId, headerCheckId, updateFn, dataFor, tfs = ["1W", "1M"], pct = 0.20) {
+  const checks = [...document.querySelectorAll(`#${tbodyId} .row-check`)];
+  if (!checks.length) return;
+  const keys = checks.map(cb => cb.dataset.key);
+  const cutoff = Math.max(1, Math.ceil(keys.length * pct));
+
+  const topSets = tfs.map(tf => new Set(
+    keys
+      .map(k => ({ k, v: dataFor(k)?.perfs?.[tf] }))
+      .filter(o => o.v !== null && o.v !== undefined)
+      .sort((a, b) => b.v - a.v)
+      .slice(0, cutoff)
+      .map(o => o.k)
+  ));
+  const inter = topSets.reduce((acc, s) => new Set([...acc].filter(k => s.has(k))));
+
+  checks.forEach(cb => { cb.checked = inter.has(cb.dataset.key) && !cb.disabled; });
+
+  const header  = document.getElementById(headerCheckId);
+  const enabled = checks.filter(cb => !cb.disabled);
+  const checked = enabled.filter(cb => cb.checked).length;
+  if (header) {
+    header.indeterminate = checked > 0 && checked < enabled.length;
+    header.checked       = checked > 0 && checked === enabled.length;
+  }
+  updateFn();
+}
+
 function initTop20Buttons() {
   const indBtn = document.getElementById("ind-top20-btn");
   if (indBtn) indBtn.onclick = () =>
@@ -297,6 +333,14 @@ function initTop20Buttons() {
   const themeBtn = document.getElementById("theme-top20-btn");
   if (themeBtn) themeBtn.onclick = () =>
     selectTopPercent("etf-themes-body", "theme-select-all", updateThemeSelectionBar);
+
+  const indInterBtn = document.getElementById("ind-top20i-btn");
+  if (indInterBtn) indInterBtn.onclick = () =>
+    selectTopIntersection("heatmap-body", "ind-select-all", updateIndSelectionBar, k => _lastIndustries?.[k]);
+
+  const themeInterBtn = document.getElementById("theme-top20i-btn");
+  if (themeInterBtn) themeInterBtn.onclick = () =>
+    selectTopIntersection("etf-themes-body", "theme-select-all", updateThemeSelectionBar, k => _etfData?.themes?.[k]);
 }
 
 // ── Industry heatmap multi-select ─────────────────────────────────────────
