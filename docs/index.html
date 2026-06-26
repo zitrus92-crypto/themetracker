@@ -25,6 +25,7 @@
     <button class="sub-btn active" data-tab="heatmap" data-i18n="tabHeatmap">Heatmap</button>
     <button class="sub-btn" data-tab="picks" data-i18n="tabPicks">&#9733; Setup Picks</button>
     <button class="sub-btn" data-tab="top10" data-i18n="tabTop10">Top 10</button>
+    <button class="sub-btn" data-tab="ind-bubble" data-i18n="tabIndBubble">&#128309; Bubble</button>
   </nav>
 
   <main>
@@ -122,6 +123,14 @@
           </div>
         </div>
       </div>
+    </section>
+
+    <section class="section-ind-bubble tab-panel hidden" data-panel="ind-bubble">
+      <div class="heading-group">
+        <h2 data-i18n="indBubbleTitle">&#128309; Industry Bubble Chart</h2>
+        <span class="section-hint" data-hint-key="hintIndBubble">i</span>
+      </div>
+      <div id="ind-bubble-view"></div>
     </section>
 
     <!-- ETF Themes tab -->

@@ -13,6 +13,8 @@ const I18N = {
     tabHeatmap:   "Heatmap",
     tabPicks:     "★ Setup Picks",
     tabTop10:     "Top 10",
+    tabIndBubble: "🔵 Bubble",
+    indBubbleTitle: "🔵 Industry Bubble Chart",
     heatmapTitle: "Industry Heatmap",
     colIndustry:  "Industry",
     colScore:     "Score",
@@ -44,6 +46,7 @@ const I18N = {
     infoAccel:    "Accel = 3M-Rang minus 1W-Rang. Hoch positiv = war vor 3M noch schwach, jetzt stark = erster Leg, nicht extended. Ideal fuer First-Flag-Setups.",
     hintHeatmap:  "Score sortieren: Marktüberblick — welche Industries aktuell führen.\nAccel sortieren: First Flag Suche — frisches Momentum (3M schwach + 1W stark = erster Leg, nicht extended).\nINST-Filter: zeigt nur institutionell bestätigte Industries (Top 40 in 1M und 3M).\nKlick auf Spaltenkopf = sortieren, nochmal klicken = umkehren.",
     hintPicks:    "Vorgefilterter First-Flag-Kandidatenliste: Score Top 40 + positiver Accel + 1W > 1% + 1M > 0%.\nSortierung: 60% Accel-Gewicht + 40% Score — frischeste Bewegungen zuerst.\nINST-Badge = institutionelles Kapital bestätigt die Industry = höchste Konfluenz.\nKlick auf Industry-Name öffnet Finviz-Screener mit passenden Filtern.",
+    hintIndBubble:"X-Achse: 3M-Performance, Y-Achse: 1M-Performance.\nGröße = Stärke (Score) — starke Industries bleiben groß, egal ob beschleunigend oder konsolidierend.\nFarbe = Accel (stabiler Rang3M−Rang1M): grün = beschleunigt, grau = konsolidiert, rot = fällt ab.\nINST-Filter (Heatmap-Toggle) wirkt auch hier. Klick auf Bubble öffnet Finviz-Screener.",
     hintTop10:    "Top 10 Performer pro Zeitraum — zeigt aktuelle Marktführer.\nKarten: kompakte Übersicht pro Zeitraum.\nBalken: alle Industries sortiert nach 1M und 3M Performance.\nINST-Badge zeigt institutionelles Interesse.",
     hintMovers:   "Rang-Veränderung seit dem gewählten Zeitraum.\nRising: Industries die am stärksten gestiegen sind — frisches Kapital fließt ein. Hier suchen!\nFading: Industries die Ränge verloren haben — Kapital verlässt diesen Bereich. Meiden.\nZeitraum wählen: 1W / 2W / 1M / 3M (ausgegraut = noch nicht genug Daten).",
     tabEtfs:      "📈 Themes",
@@ -85,6 +88,8 @@ const I18N = {
     tabHeatmap:   "Heatmap",
     tabPicks:     "★ Setup Picks",
     tabTop10:     "Top 10",
+    tabIndBubble: "🔵 Bubble",
+    indBubbleTitle: "🔵 Industry Bubble Chart",
     heatmapTitle: "Industry Heatmap",
     colIndustry:  "Industry",
     colScore:     "Score",
@@ -116,6 +121,7 @@ const I18N = {
     infoAccel:    "Accel = 3M rank minus 1W rank. High positive = was weak 3M ago, now strong = first leg, not extended. Ideal for First Flag setups.",
     hintHeatmap:  "Sort by Score: market overview — which industries are currently leading.\nSort by Accel: First Flag search — fresh momentum (weak 3M + strong 1W = first leg, not extended).\nINST filter: shows only institutionally confirmed industries (Top 40 in 1M and 3M).\nClick any column header to sort, click again to reverse.",
     hintPicks:    "Pre-filtered First Flag candidate list: Score Top 40 + positive Accel + 1W > 1% + 1M > 0%.\nSorted by: 60% Accel weight + 40% Score — freshest moves first.\nINST badge = institutional capital confirms the industry = highest confluence.\nClick any industry name to open Finviz screener with matching filters.",
+    hintIndBubble:"X-axis: 3M performance, Y-axis: 1M performance.\nSize = strength (Score) — strong industries stay big regardless of accelerating or consolidating.\nColor = Accel (stable Rank3M−Rank1M): green = accelerating, gray = consolidating, red = fading.\nThe INST filter (Heatmap toggle) applies here too. Click a bubble to open the Finviz screener.",
     hintTop10:    "Top 10 performers per timeframe — shows current market leaders.\nCards: compact overview per timeframe.\nBar chart: all industries sorted by 1M and 3M performance.\nINST badge shows institutional interest.",
     hintMovers:   "Rank change since the selected period.\nRising: industries that climbed most in ranking — fresh capital flowing in. Look here!\nFading: industries that lost ranks — capital leaving. Avoid.\nSelect period: 1W / 2W / 1M / 3M (greyed out = not enough data yet).",
     tabEtfs:      "📈 Themes",
@@ -461,7 +467,10 @@ function initInstToggle() {
   btn.addEventListener("click", () => {
     _instFilter = !_instFilter;
     btn.classList.toggle("active", _instFilter);
-    if (_lastIndustries) renderHeatmap(_lastIndustries);
+    if (_lastIndustries) {
+      renderHeatmap(_lastIndustries);
+      renderIndustryBubble(_lastIndustries);
+    }
   });
 }
 
@@ -824,6 +833,7 @@ function renderAll(payload) {
   renderHeatmap(payload.industries);
   renderTop10(payload.industries);
   renderPicks(payload.industries);
+  renderIndustryBubble(payload.industries);
   updateTimestamp(payload.fetched_at);
 }
 
@@ -1467,7 +1477,9 @@ function renderBubbleChart(data, themeAccel) {
   const lo3M = min3M - pad3M, hi3M = max3M + pad3M;
   const lo1M = min1M - pad1M, hi1M = max1M + pad1M;
 
-  const maxTickers = Math.max(...entries.map(([,r]) => (r.tickers || []).length)) || 1;
+  const allScores = entries.map(([,r]) => r.score);
+  const minScore = Math.min(...allScores), maxScore = Math.max(...allScores);
+  const scoreRange = (maxScore - minScore) || 1;
 
   const W = 1100, H = 520;
   const PAD = { top: 28, right: 32, bottom: 48, left: 58 };
@@ -1476,7 +1488,8 @@ function renderBubbleChart(data, themeAccel) {
 
   const toX = v => PAD.left + ((v - lo3M) / (hi3M - lo3M)) * plotW;
   const toY = v => H - PAD.bottom - ((v - lo1M) / (hi1M - lo1M)) * plotH;
-  const toR = n => Math.max(6, Math.min(22, 6 + (n / maxTickers) * 16));
+  // Size = strength (composite score, lower = stronger) — strongest themes are biggest.
+  const toR = s => Math.max(6, Math.min(22, 22 - ((s - minScore) / scoreRange) * 16));
   const toColor = a => a >= 10 ? "#4ade80" : a <= -10 ? "#f87171" : a >= 5 ? "#86efac" : "#6b7280";
 
   const medX = toX(med3M).toFixed(1);
@@ -1510,13 +1523,13 @@ function renderBubbleChart(data, themeAccel) {
   const circles = entries.map(([theme, row]) => {
     const x = toX(row.perfs["3M"]).toFixed(1);
     const y = toY(row.perfs["1M"]).toFixed(1);
-    const r = toR((row.tickers || []).length).toFixed(1);
+    const r = toR(row.score).toFixed(1);
     const accel = themeAccel[theme] ?? 0;
     const color = toColor(accel);
     const accelSign = accel > 0 ? "+" : "";
     const p3 = row.perfs["3M"] > 0 ? "+" : "";
     const p1 = row.perfs["1M"] > 0 ? "+" : "";
-    const tip = `${theme}\n3M: ${p3}${row.perfs["3M"]?.toFixed(1)}%  1M: ${p1}${row.perfs["1M"]?.toFixed(1)}%\nAccel: ${accelSign}${accel}  |  ${(row.tickers||[]).length} Aktien`;
+    const tip = `${theme}\n3M: ${p3}${row.perfs["3M"]?.toFixed(1)}%  1M: ${p1}${row.perfs["1M"]?.toFixed(1)}%\nAccel: ${accelSign}${accel}  |  Score: ${row.score.toFixed(1)}  |  ${(row.tickers||[]).length} Aktien`;
     const url = themeScreenerUrl(theme);
     const shortLabel = theme.length > 11 ? theme.slice(0, 9) + "…" : theme;
     return `<a href="${url}" target="_blank" rel="noopener">
@@ -1555,7 +1568,119 @@ function renderBubbleChart(data, themeAccel) {
         <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#86efac" fill-opacity="0.8"/></svg> Accel +5…+9</span>
         <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#6b7280" fill-opacity="0.8"/></svg> Neutral</span>
         <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#f87171" fill-opacity="0.8"/></svg> Accel ≤ −10 (Extended/Fading)</span>
-        <span class="bubble-legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#9ca3af" fill-opacity="0.5"/></svg> Größe = Aktienanzahl</span>
+        <span class="bubble-legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#9ca3af" fill-opacity="0.5"/></svg> Größe = Stärke (Score)</span>
+      </div>
+    </div>`;
+}
+
+// --- Industry Bubble Chart (analogous to Theme bubble chart) ---
+// Size = strength (composite score, lower = stronger). Color = stable Accel
+// (rank3M - rank1M, from row.ranks — NOT the rank1W-based heatmap Accel column,
+// which churns its #1 spot ~43% of days). Keeps strong industries visually
+// prominent and on the radar even while consolidating (gray), not just while
+// actively accelerating (green).
+function renderIndustryBubble(industries) {
+  const container = document.getElementById("ind-bubble-view");
+  if (!container) return;
+  let entries = Object.entries(industries)
+    .filter(([,r]) => r.perfs["3M"] !== null && r.perfs["1M"] !== null);
+  if (_instFilter) entries = entries.filter(([,r]) => isInst(r));
+  if (!entries.length) { container.innerHTML = '<p style="color:#6b7280;padding:16px">No data</p>'; return; }
+
+  const all3M = entries.map(([,r]) => r.perfs["3M"]);
+  const all1M = entries.map(([,r]) => r.perfs["1M"]);
+  const med3M = [...all3M].sort((a,b)=>a-b)[Math.floor(all3M.length/2)];
+  const med1M = [...all1M].sort((a,b)=>a-b)[Math.floor(all1M.length/2)];
+  const min3M = Math.min(...all3M), max3M = Math.max(...all3M);
+  const min1M = Math.min(...all1M), max1M = Math.max(...all1M);
+  const pad3M = (max3M - min3M) * 0.1, pad1M = (max1M - min1M) * 0.1;
+  const lo3M = min3M - pad3M, hi3M = max3M + pad3M;
+  const lo1M = min1M - pad1M, hi1M = max1M + pad1M;
+
+  const allScores = entries.map(([,r]) => r.composite);
+  const minScore = Math.min(...allScores), maxScore = Math.max(...allScores);
+  const scoreRange = (maxScore - minScore) || 1;
+
+  const W = 1100, H = 520;
+  const PAD = { top: 28, right: 32, bottom: 48, left: 58 };
+  const plotW = W - PAD.left - PAD.right;
+  const plotH = H - PAD.top - PAD.bottom;
+
+  const toX = v => PAD.left + ((v - lo3M) / (hi3M - lo3M)) * plotW;
+  const toY = v => H - PAD.bottom - ((v - lo1M) / (hi1M - lo1M)) * plotH;
+  const toR = s => Math.max(6, Math.min(22, 22 - ((s - minScore) / scoreRange) * 16));
+  const toColor = a => a >= 10 ? "#4ade80" : a <= -10 ? "#f87171" : a >= 5 ? "#86efac" : "#6b7280";
+
+  const medX = toX(med3M).toFixed(1);
+  const medY = toY(med1M).toFixed(1);
+
+  const qLabels = [
+    { x: PAD.left + 4,      y: PAD.top + 14,       text: "🚀 First Flag",  fill: "#4ade80" },
+    { x: W - PAD.right - 4, y: PAD.top + 14,        text: "Extended ⚠️",    fill: "#f87171", anchor: "end" },
+    { x: PAD.left + 4,      y: H - PAD.bottom - 6,  text: "💀 Dead",        fill: "#6b7280" },
+    { x: W - PAD.right - 4, y: H - PAD.bottom - 6,  text: "🔻 Fading",      fill: "#f87171", anchor: "end" },
+  ].map(q => `<text x="${q.x}" y="${q.y}" font-size="10" fill="${q.fill}"
+    text-anchor="${q.anchor || "start"}" style="pointer-events:none">${q.text}</text>`).join("");
+
+  function axisTicks(axis) {
+    const isX = axis === "x";
+    const lo = isX ? lo3M : lo1M, hi = isX ? hi3M : hi1M;
+    return Array.from({length: 5}, (_, i) => {
+      const v = lo + (i / 4) * (hi - lo);
+      const coord = isX ? toX(v).toFixed(1) : toY(v).toFixed(1);
+      const lbl = `${v > 0 ? "+" : ""}${v.toFixed(1)}%`;
+      return isX
+        ? `<line x1="${coord}" y1="${H - PAD.bottom}" x2="${coord}" y2="${H - PAD.bottom + 4}" stroke="#4b5563" stroke-width="1"/>
+           <text x="${coord}" y="${H - PAD.bottom + 15}" text-anchor="middle" font-size="9" fill="#6b7280">${lbl}</text>`
+        : `<line x1="${PAD.left - 4}" y1="${coord}" x2="${PAD.left}" y2="${coord}" stroke="#4b5563" stroke-width="1"/>
+           <text x="${PAD.left - 6}" y="${parseFloat(coord) + 3}" text-anchor="end" font-size="9" fill="#6b7280">${lbl}</text>`;
+    }).join("");
+  }
+
+  const circles = entries.map(([name, row]) => {
+    const x = toX(row.perfs["3M"]).toFixed(1);
+    const y = toY(row.perfs["1M"]).toFixed(1);
+    const r = toR(row.composite).toFixed(1);
+    const accel = (row.ranks?.["3M"] ?? 0) - (row.ranks?.["1M"] ?? 0);
+    const color = toColor(accel);
+    const accelSign = accel > 0 ? "+" : "";
+    const p3 = row.perfs["3M"] > 0 ? "+" : "";
+    const p1 = row.perfs["1M"] > 0 ? "+" : "";
+    const tip = `${name}\n3M: ${p3}${row.perfs["3M"]?.toFixed(1)}%  1M: ${p1}${row.perfs["1M"]?.toFixed(1)}%\nAccel: ${accelSign}${accel}  |  Score: ${row.composite.toFixed(1)}`;
+    const url = finvizUrl(row.ticker);
+    const shortLabel = name.length > 11 ? name.slice(0, 9) + "…" : name;
+    const inner = `<circle cx="${x}" cy="${y}" r="${r}" fill="${color}" fill-opacity="0.72"
+        stroke="${color}" stroke-width="0.8"><title>${tip}</title></circle>
+      <text x="${x}" y="${(parseFloat(y) - parseFloat(r) - 3).toFixed(1)}"
+        text-anchor="middle" font-size="8" fill="${color}" style="pointer-events:none">${shortLabel}</text>`;
+    return url
+      ? `<a href="${url}" target="_blank" rel="noopener">${inner}</a>`
+      : inner;
+  }).join("");
+
+  container.innerHTML = `
+    <div class="bubble-chart-wrap">
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;max-height:480px;display:block">
+        <rect x="${PAD.left}" y="${PAD.top}" width="${plotW}" height="${plotH}"
+          fill="#0d1117" rx="4"/>
+        <line x1="${medX}" y1="${PAD.top}" x2="${medX}" y2="${H - PAD.bottom}"
+          stroke="#374151" stroke-width="1" stroke-dasharray="5,4"/>
+        <line x1="${PAD.left}" y1="${medY}" x2="${W - PAD.right}" y2="${medY}"
+          stroke="#374151" stroke-width="1" stroke-dasharray="5,4"/>
+        ${axisTicks("x")}${axisTicks("y")}
+        <text x="${PAD.left + plotW / 2}" y="${H - 4}" text-anchor="middle"
+          font-size="11" fill="#9ca3af">3M Performance →</text>
+        <text x="12" y="${PAD.top + plotH / 2}" text-anchor="middle" font-size="11"
+          fill="#9ca3af" transform="rotate(-90,12,${PAD.top + plotH / 2})">1M Performance ↑</text>
+        ${qLabels}
+        ${circles}
+      </svg>
+      <div class="bubble-legend">
+        <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#4ade80" fill-opacity="0.8"/></svg> Accel ≥ +10 (First Flag)</span>
+        <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#86efac" fill-opacity="0.8"/></svg> Accel +5…+9</span>
+        <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#6b7280" fill-opacity="0.8"/></svg> Neutral / Konsolidierung</span>
+        <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#f87171" fill-opacity="0.8"/></svg> Accel ≤ −10 (Extended/Fading)</span>
+        <span class="bubble-legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#9ca3af" fill-opacity="0.5"/></svg> Größe = Stärke (Score)</span>
       </div>
     </div>`;
 }
