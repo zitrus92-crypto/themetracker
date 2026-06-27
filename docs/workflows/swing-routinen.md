@@ -5,12 +5,14 @@
 **Prinzip:** Themes (Narrativ) → Industries (tradeable Gruppe) → Stocks (Finviz/TradingView/Deepvue).
 Qualität vor Quantität. Disziplin: Das Wochenende setzt die Fokusliste, der Tag arbeitet **nur** darin.
 
+> **🥇 Goldene Regel (über allem):** Die **Gruppen-Ebene (Theme/Industry, Accel, Bubble) ist NUR Revier-Auswahl** — sie sagt „hier schauen", **nie** „kaufen". Ob etwas **extended** ist, entscheidet sich **ausschließlich am Einzelchart** (Pivot-Distanz). Eine heiße Gruppe oder eine grüne Bubble ist **kein** Kaufsignal — sie ist nur die Erlaubnis, im Chart nach einer frischen Base zu suchen.
+
 **Cheatsheet — was die Kennzahlen bedeuten:**
 - **Score** = gewichteter Rang (1M×70% + 1W×20% + 3M×10%). *Niedriger = stärker.* → Wer führt gerade.
 - **Accel (Industry)** = 3M-Rang − 1W-Rang. **Hoch positiv = war vor 3M schwach, jetzt stark = erster Leg, NICHT extended.** → First-Flag-Signal.
 - **Accel (Theme)** = 3M-Rang − 1M-Rang. Hoch positiv (+10…+30) = frisches Momentum, viel Luft nach oben.
 - **INST-Badge** = Top 40 in *1M UND 3M* = institutionell bestätigt = höchste Konfluenz.
-- **Bubble-Zonen:** 🚀 First Flag (frisch, links/Mitte) = kaufen · ⚠️ Extended (rechts) = NICHT chasen · 🔻 Fading = raus · 💀 Dead = ignorieren.
+- **Bubble-Zonen (= Revier-Hinweis, kein Kaufsignal):** 🚀 First Flag (frisch, links/Mitte) = hier schauen · ⚠️ Extended (rechts) = Gruppe gelaufen · 🔻 Fading = raus · 💀 Dead = ignorieren. *(Ob ein einzelner Stock kaufbar ist, sagt nur der Chart.)*
 
 ---
 
@@ -41,12 +43,19 @@ Qualität vor Quantität. Disziplin: Das Wochenende setzt die Fokusliste, der Ta
 - [ ] **INST-Filter** mental gewichten: Industries mit **INST-Badge** zuerst (höchste Konfluenz).
 - [ ] **Industry → Bubble** zum Gegencheck: Liegen die Setup-Picks-Industries wirklich im **🚀 First-Flag-Bereich** und **nicht** im Extended-Bereich?
 - [ ] Optional in **Industry → Heatmap (Tabelle)**: dieselben **`1W∩1M`** / **`1M∩3M`**-Buttons markieren die in beiden Timeframes stärksten Industries automatisch.
-- [ ] **Verzahnung mit Schritt 2:** Industries bevorzugen, deren Story zu einem deiner heißen Themes passt (Theme-Rückenwind = besseres Setup).
+- [ ] **Verzahnung mit Schritt 2 (Confluence = Nice-to-have, KEIN Filter):** Theme↔Industry-Überschneidung (gemeinsame Ticker) wird **nicht erzwungen**. Echte Daten zeigen: Confluence ist die **Ausnahme, nicht die Regel** — z.B. „Home Improvement Retail" mit Accel +68 überlappt Themes nur um **1 Ticker**, „Real Estate – Development" um **null**. Deshalb:
+  - **Heiße Standalone-Industries ohne Theme-Überlappung bleiben voll gültiges Jagdrevier.** Nicht streichen, nur weil kein Theme dahinter liegt.
+  - Confluence ist ein **Sortier-Bonus** (höhere Konfidenz, wenn vorhanden) → solche Industries nach oben sortieren. Aber sie ist **niemals** ein Ausschluss-Kriterium für heiße Namen.
 
 ### Schritt 4 — Wochenfokus-Liste festschreiben
 - [ ] **3–5 Themes/Industries** als Wochenfokus festhalten (Datum, Regime, Liste).
 - [ ] Pro Eintrag notieren: Name · Accel · 1M% · INST? · zugehöriges Theme.
-- [ ] Diese Liste ist diese Woche dein **einziges Jagdrevier** — kein Drift in Namen außerhalb der Liste.
+- [ ] Diese Liste ist diese Woche dein **einziges Jagdrevier** — **harte Sperre**, kein Drift in Namen außerhalb der Liste.
+- [ ] **Eine Ausnahme — der „Hot-Swap" (max. 1× pro Woche):** Genau **ein** kontrollierter Tausch ist erlaubt. Ein **klar frischer, neu aufgetauchter First-Flag-Name** darf einen toten Eintrag ersetzen — aber **nur**, wenn ein Platz objektiv frei wird (siehe Rauswurf-Trigger unten). Kein zweiter Swap, kein „spontanes Dazunehmen".
+- [ ] **Objektiver Rauswurf-Trigger** (entscheidet, wann ein Slot frei wird — direkt im Tool ablesbar, kein Bauchgefühl):
+  - Eine **Industry verlässt die Setup-Picks-Liste** → Kriterien (Score Top 40 + Accel > 0 + 1W > 1% + 1M > 0%) **nicht mehr** erfüllt.
+  - Ein **Theme verlässt den „Fresh"-Quadranten** der Matrix.
+  - Erst wenn ein Name so **verifizierbar rausfällt**, wird der Hot-Swap-Slot frei.
 
 ```
 WOCHENFOKUS  KW__  | Regime: ____________
@@ -62,7 +71,7 @@ WOCHENFOKUS  KW__  | Regime: ____________
 ## ☀️ Tages-Routine — Setups in den heißen Industries finden
 
 > **Ergebnis:** 3–5 konkrete Stock-Setups auf der Watchlist.
-> **Scope:** NUR Industries/Themes aus der Wochenfokus-Liste. Keine neuen Namen jagen.
+> **Scope:** NUR Industries/Themes aus der Wochenfokus-Liste (harte Sperre). Neue Namen werden **nicht** spontan dazugejagt — höchstens **1× pro Woche** per kontrolliertem Hot-Swap (Rauswurf-Trigger erfüllt, siehe Wochenend-Routine Schritt 4).
 > **Zeit:** ~10–15 Min, einmal täglich nach Close.
 > **Cheatsheet Stock-Setup (einfach gehalten):** Ausbruch aus sauberer Konsolidierung/Base, **erhöhtes Volumen**, **nicht zu weit gelaufen** (nah am Pivot, nicht extended).
 
@@ -71,17 +80,31 @@ WOCHENFOKUS  KW__  | Regime: ____________
 - [ ] **Industry → Setup Picks** kurz öffnen: Stehen deine Fokus-Industries noch in der First-Flag-Liste, oder sind welche ins Extended/Fading gerutscht?
   - Fokus-Name **nicht mehr** First Flag / jetzt Extended → für heute **kein neuer Entry** dort (Leg gelaufen).
   - Fokus-Name weiter frisch → **aktiv jagen.**
+- [ ] **Rauswurf-Trigger prüfen** (objektiv, direkt im Tool): Hat eine Fokus-Industry die **Setup-Picks-Liste verlassen** (Score Top 40 + Accel > 0 + 1W > 1% + 1M > 0% nicht mehr erfüllt), oder hat ein Fokus-Theme den **„Fresh"-Quadranten** der Matrix verlassen? → Eintrag ist **tot**, ein **Hot-Swap-Slot** wird frei (max. 1× pro Woche). Sonst: Liste bleibt unverändert, **keine** neuen Namen.
 
 ### Schritt 2 — Vom Theme/Industry zur Stock-Liste
-- [ ] Pro aktivem Fokus-Eintrag die **Ticker-Liste** holen:
-  - Industry: Industry-Name anklicken → **Finviz-Screener** öffnet mit passenden Filtern, **oder** Ticker per Copy kopieren.
-  - Theme: Ticker des Themes / Top-Sub-Themes kopieren.
-- [ ] In **Finviz** die Liste grob vorsortieren: nach **Performance (Woche)** und **relativer Stärke** — die Anführer der Gruppe zuerst.
+
+**Zweistufige Übergabe an Claude (separates Projekt).** Top-Down-Filter macht Claude, die Leader-Stock-Auswahl machst **du** am Chart. Klare Arbeitsteilung:
+
+**Stufe 1 — Objektiver Top-Down-Filter (Claude):**
+- [ ] In der jeweiligen Tabelle (Themes / Industry-Heatmap) die **aktiven Fokus-Zeilen selektieren** und per **JSON-Export** rauskopieren.
+  - Der **JSON-Export** liefert pro Zeile gruppierten Kontext: `name · score · accel · ranks{1W,1M,3M} · perfs{1W,1M,3M} · tickers`.
+  - *(Bei Themes können die Pro-Timeframe-Ränge eingeschränkt sein — das regelt das Export-Feature selbst, hier nicht weiter wichtig.)*
+  - Die **flache „Ticker kopieren"-Funktion** (Clipboard) bleibt parallel bestehen — die ist für **TradingView/Deepvue** (Watchlist-Import).
+- [ ] JSON ins **Claude-Projekt** geben → Claude liefert die **Top 5–7 heißesten Themes/Industries mit ihren gruppierten Tickern** zurück (rein objektiver Top-Down-Filter).
+
+**Stufe 2 — Leader-Stocks wählst DU am Chart:**
+- [ ] Aus den von Claude gelieferten Gruppen die **konkreten Leader-Stocks selbst** am Chart picken (TradingView / Deepvue):
+  - **sauberste Base** · **größtes Volumen am Pivot** · **am nächsten am Ausbruch**.
+- [ ] ⚠️ **Claude bewertet KEINE Leader.** Eine Finviz-RS-Tabelle würde die **bereits am weitesten gelaufene** Aktie als „Leader" oben anzeigen — genau falsch für einen Fresh-Breakout-Stil. Das Stock-Picking bleibt am Chart, bei dir.
+- [ ] Für den **Watchlist-Import** zusätzlich die flache Ticker-Liste (Clipboard) nach TradingView/Deepvue übernehmen.
 
 ### Schritt 3 — Charts prüfen (TradingView / Deepvue)
+**Hier — und nur hier — entscheidet sich „extended".** Die Gruppe/Bubble hat dich nur ins Revier gebracht; ob ein einzelner Name kaufbar oder schon gelaufen ist, lest du **ausschließlich an der Pivot-Distanz im Einzelchart** ab. Eine grüne Bubble rettet keinen extended Chart.
+
 Für die Top-Kandidaten der Gruppe, der Reihe nach:
 - [ ] **Base / Konsolidierung** vorhanden? (Seitwärts-Range, Flag, Cup — irgendeine saubere Verengung, kein Chaos.)
-- [ ] **Frischer Ausbruch** oder unmittelbar davor? (Nicht schon mehrere Tage/>~5% über dem Pivot = sonst **extended → skip.**)
+- [ ] **Frischer Ausbruch** oder unmittelbar davor? (Nicht schon mehrere Tage/>~5% über dem Pivot = sonst **extended → skip** — **das ist die einzige gültige Extended-Entscheidung, nicht die Bubble**.)
 - [ ] **Volumen** beim Ausbruch erhöht? (Bestätigt echte Nachfrage.)
 - [ ] Über den steigenden gleitenden Durchschnitten, Trend intakt?
 - [ ] ❌ **Aussortieren:** schon weit gelaufen / parabolisch / unter MAs / kein Volumen / keine erkennbare Base.
@@ -104,8 +127,10 @@ ______ | ______________ | ____.__ | _______________
 ---
 
 ### Goldene Regeln
-1. **Nicht extended kaufen.** Hoch positiver Accel + First-Flag-Zone = frisch. Extended-Bubble (rechts) = vorbei, nicht chasen.
-2. **Top-Down bleiben.** Erst Theme-Rückenwind, dann Industry, dann Stock. Ein Stock ohne heiße Gruppe = nachrangig.
-3. **Im Revier bleiben.** Der Tag jagt nur in der Wochenfokus-Liste. Neue heiße Namen → notieren, fürs nächste Wochenende, nicht spontan jagen.
-4. **Regime respektiert Size.** Risk-Off-Woche = weniger Trades, kleinere Positionen.
-5. **Eng halten.** 3–5 Fokus, 3–5 Setups. Lieber 3 saubere als 12 mittelmäßige.
+1. **Gruppe = nur Revier, Chart = Entscheidung.** Theme/Industry-Accel und Bubble sagen nur „hier schauen", nie „kaufen". **Extended entscheidet sich ausschließlich am Einzelchart (Pivot-Distanz)** — nie an Gruppe oder Bubble.
+2. **Nicht extended kaufen.** Hoch positiver Accel + First-Flag-Zone = frisches Revier. Aber kaufbar ist nur, was im **Chart** nah am Pivot steht.
+3. **Top-Down bleiben.** Erst Theme/Industry-Revier, dann Stock. **Aber:** heiße **Standalone-Industries ohne Theme-Überlappung sind voll gültig** — Confluence ist Nice-to-have-Bonus, kein Filter.
+4. **Im Revier bleiben — harte Sperre.** Der Tag jagt nur in der Wochenfokus-Liste. Genau **1 Hot-Swap pro Woche** erlaubt, und nur wenn ein Name **objektiv** rausfällt (Industry verlässt Setup-Picks ODER Theme verlässt „Fresh"-Quadrant). Sonst: notieren fürs nächste Wochenende.
+5. **Claude filtert, du pickst.** Claude liefert (aus dem JSON-Export) die heißesten Gruppen + Ticker; die **Leader-Stocks wählst du selbst am Chart**. Claude bewertet keine Leader.
+6. **Regime respektiert Size.** Risk-Off-Woche = weniger Trades, kleinere Positionen.
+7. **Eng halten.** 3–5 Fokus, 3–5 Setups. Lieber 3 saubere als 12 mittelmäßige.

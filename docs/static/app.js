@@ -20,6 +20,7 @@ const I18N = {
     colScore:     "Score",
     colAccel:     "Accel",
     colTrend:     "Trend",
+    exportJson:   "📤 JSON kopieren",
     picksTitle:   "★ Setup Picks — First Flag",
     picksSubtitle:"Industries mit positivem Momentum-Profil für den First-Flag-Breakout-Trade.",
     picksColReason: "Setup-Begründung",
@@ -95,6 +96,7 @@ const I18N = {
     colScore:     "Score",
     colAccel:     "Accel",
     colTrend:     "Trend",
+    exportJson:   "📤 Copy JSON",
     picksTitle:   "★ Setup Picks — First Flag",
     picksSubtitle:"Industries with positive momentum profile for First Flag breakout trades.",
     picksColReason: "Setup Rationale",
@@ -186,6 +188,9 @@ function applyTranslations() {
   document.querySelectorAll(".selection-bar__copy-btn").forEach(btn => {
     btn.textContent = _lang === "de" ? "📋 Kopieren" : "📋 Copy";
   });
+  document.querySelectorAll(".selection-bar__export-btn").forEach(btn => {
+    btn.textContent = t("exportJson");
+  });
   // Top 20% buttons: language-neutral label, localized tooltip
   ["ind-top20-btn", "theme-top20-btn"].forEach(id => {
     const b = document.getElementById(id); if (b) b.title = t("top20Title");
@@ -272,6 +277,7 @@ function buildSparkline(ranks, maxRank) {
 let _sortState = { col: "score", dir: 1 };
 let _instFilter = false;
 let _lastIndustries = null;
+let _themeAccel = {}; // last computed theme acceleration map, for JSON export
 let _lastPayload = null;
 
 function sortedEntries(industries) {
@@ -453,6 +459,23 @@ function renderHeatmap(industries) {
     navigator.clipboard.writeText(deduped.join(",")).then(() => {
       showToast(_lang === "de" ? `${deduped.length} Ticker kopiert!` : `${deduped.length} tickers copied!`);
     });
+  };
+  indBar.querySelector(".selection-bar__export-btn").onclick = () => {
+    const checked = [...document.querySelectorAll("#heatmap-body .row-check:checked")];
+    const rows = checked.map(cb => {
+      const name = cb.dataset.key;
+      const row  = _lastIndustries?.[name];
+      if (!row) return null;
+      return {
+        name,
+        score: row.composite,
+        accel: row.acceleration,
+        ranks: { "1W": row.ranks?.["1W"], "1M": row.ranks?.["1M"], "3M": row.ranks?.["3M"] },
+        perfs: { "1W": row.perfs?.["1W"], "1M": row.perfs?.["1M"], "3M": row.perfs?.["3M"] },
+        tickers: row.tickers ?? [],
+      };
+    }).filter(Boolean);
+    exportSelectionJson(rows);
   };
   indBar.querySelector(".selection-bar__clear-btn").onclick = () => {
     indRowChecks.forEach(cb => cb.checked = false);
@@ -1086,6 +1109,20 @@ function showToast(msg) {
   toast._hideTimer = setTimeout(() => toast.classList.remove("copy-toast--visible"), 2000);
 }
 
+// Build a structured JSON array for the currently selected rows and copy it to
+// the clipboard. `rows` is an array of {name, score, accel, ranks?, perfs, tickers}
+// objects (already shaped by the caller). Each row keeps its own ticker grouping.
+function exportSelectionJson(rows) {
+  if (!rows || !rows.length) return;
+  const json = JSON.stringify(rows, null, 2);
+  navigator.clipboard.writeText(json).then(() => {
+    const n = rows.length;
+    showToast(_lang === "de"
+      ? `JSON für ${n} ${n === 1 ? "Zeile" : "Zeilen"} kopiert!`
+      : `JSON for ${n} ${n === 1 ? "row" : "rows"} copied!`);
+  });
+}
+
 // Compute Accel = rank_3M - rank_1M for a themes or subnodes map.
 // Returns { [key]: number } — positive = fresh momentum.
 function computeAccel(entries) {
@@ -1166,6 +1203,7 @@ function renderEtfThemes(data) {
   // Must be computed before view-switch so bubble/matrix can use it
   let entries = Object.entries(data.themes);
   const themeAccel = computeAccel(entries);
+  _themeAccel = themeAccel; // stash for JSON export
 
   // Show/hide the three view containers
   const tableScroll = document.querySelector("#etf-themes-view .table-scroll");
@@ -1272,6 +1310,24 @@ function renderEtfThemes(data) {
     navigator.clipboard.writeText(deduped.join(",")).then(() => {
       showToast(_lang === "de" ? `${deduped.length} Ticker kopiert!` : `${deduped.length} tickers copied!`);
     });
+  };
+  themeBar.querySelector(".selection-bar__export-btn").onclick = () => {
+    const checked = [...document.querySelectorAll("#etf-themes-body .row-check:checked")];
+    const rows = checked.map(cb => {
+      const name = cb.dataset.key;
+      const row  = _etfData?.themes?.[name];
+      if (!row) return null;
+      return {
+        name,
+        score: row.score,
+        accel: _themeAccel[name],
+        // Themes only have a single overall rank, not per-timeframe ranks.
+        ranks: { overall: row.rank },
+        perfs: { "1W": row.perfs?.["1W"], "1M": row.perfs?.["1M"], "3M": row.perfs?.["3M"] },
+        tickers: row.tickers ?? [],
+      };
+    }).filter(Boolean);
+    exportSelectionJson(rows);
   };
   themeBar.querySelector(".selection-bar__clear-btn").onclick = () => {
     themeRowChecks.forEach(cb => cb.checked = false);
