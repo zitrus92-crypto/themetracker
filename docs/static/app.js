@@ -460,7 +460,8 @@ function renderHeatmap(industries) {
       showToast(_lang === "de" ? `${deduped.length} Ticker kopiert!` : `${deduped.length} tickers copied!`);
     });
   };
-  indBar.querySelector(".selection-bar__export-btn").onclick = () => {
+  const indExportBtn = indBar.querySelector(".selection-bar__export-btn");
+  if (indExportBtn) indExportBtn.onclick = () => {
     const checked = [...document.querySelectorAll("#heatmap-body .row-check:checked")];
     const rows = checked.map(cb => {
       const name = cb.dataset.key;
@@ -1311,7 +1312,8 @@ function renderEtfThemes(data) {
       showToast(_lang === "de" ? `${deduped.length} Ticker kopiert!` : `${deduped.length} tickers copied!`);
     });
   };
-  themeBar.querySelector(".selection-bar__export-btn").onclick = () => {
+  const themeExportBtn = themeBar.querySelector(".selection-bar__export-btn");
+  if (themeExportBtn) themeExportBtn.onclick = () => {
     const checked = [...document.querySelectorAll("#etf-themes-body .row-check:checked")];
     const rows = checked.map(cb => {
       const name = cb.dataset.key;
