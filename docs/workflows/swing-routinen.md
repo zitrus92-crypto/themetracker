@@ -27,10 +27,11 @@ Qualität vor Quantität. Disziplin: Das Wochenende setzt die Fokusliste, der Ta
 - [ ] Notiz machen: **Regime = Risk-On / Neutral / Risk-Off** (steuert deine Aggressivität für die Woche).
 
 ### Schritt 2 — Heiße Themes filtern (das Narrativ)
-- [ ] **Themes → Matrix** öffnen, Button **`1M∩3M`** aktivieren.
-  → Zeigt Themes, die in **1M UND 3M** stark sind = institutionell bestätigtes, anhaltendes Momentum (Ariel-Kriterium).
-- [ ] Zusätzlich **`1W∩1M`** prüfen → frischere Themes, die gerade erst andrehen.
-- [ ] **Themes → Bubble**: Im **🚀 First-Flag-Bereich** (frisches Momentum, hoch positiver Accel, noch nicht extended/rechts) die grünen Bubbles markieren.
+- [ ] **Themes → Matrix** öffnen: Quadranten-Ansicht. Der **🚀 First-Flag-Zone**-Quadrant (3M schwach + 1M stark = war schwach, dreht frisch an) ist dein Jagdrevier. **Fading/Dead** ignorieren.
+- [ ] In der **Themes → Tabelle** die Toolbar-Buttons nutzen (sie markieren die passenden Zeilen automatisch):
+  - **`1M∩3M`** → Themes in Top-20% nach **1M UND 3M** = institutionell bestätigtes, anhaltendes Momentum (Ariel-Kriterium).
+  - **`1W∩1M`** → Themes in Top-20% nach **1W UND 1M** = frischer angedreht.
+- [ ] **Themes → Bubble**: Im **🚀 First-Flag-Bereich** (oben-links: niedrige 3M-, hohe 1M-Perf, hoch positiver Accel, noch nicht extended/rechts) die grünen Bubbles markieren.
 - [ ] **Auswahl-Regel Theme:** positiver **Accel** + **1M > 0%** + erscheint in `1M∩3M` **oder** `1W∩1M`. Extended-Bubbles (ganz rechts) **streichen**.
 - [ ] → **2–4 Themes** notieren.
 
@@ -39,6 +40,7 @@ Qualität vor Quantität. Disziplin: Das Wochenende setzt die Fokusliste, der Ta
   (Score Top 40 + Accel > 0 + 1W > 1% + 1M > 0%, sortiert nach 60% Accel / 40% Score).
 - [ ] **INST-Filter** mental gewichten: Industries mit **INST-Badge** zuerst (höchste Konfluenz).
 - [ ] **Industry → Bubble** zum Gegencheck: Liegen die Setup-Picks-Industries wirklich im **🚀 First-Flag-Bereich** und **nicht** im Extended-Bereich?
+- [ ] Optional in **Industry → Heatmap (Tabelle)**: dieselben **`1W∩1M`** / **`1M∩3M`**-Buttons markieren die in beiden Timeframes stärksten Industries automatisch.
 - [ ] **Verzahnung mit Schritt 2:** Industries bevorzugen, deren Story zu einem deiner heißen Themes passt (Theme-Rückenwind = besseres Setup).
 
 ### Schritt 4 — Wochenfokus-Liste festschreiben
