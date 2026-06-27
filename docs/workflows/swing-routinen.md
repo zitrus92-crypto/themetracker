@@ -9,8 +9,12 @@ Qualität vor Quantität. Disziplin: Das Wochenende setzt die Fokusliste, der Ta
 
 **Cheatsheet — was die Kennzahlen bedeuten:**
 - **Score** = gewichteter Rang (1M×70% + 1W×20% + 3M×10%). *Niedriger = stärker.* → Wer führt gerade.
-- **Accel (Industry)** = 3M-Rang − 1W-Rang. **Hoch positiv = war vor 3M schwach, jetzt stark = erster Leg, NICHT extended.** → First-Flag-Signal.
-- **Accel (Theme)** = 3M-Rang − 1M-Rang. Hoch positiv (+10…+30) = frisches Momentum, viel Luft nach oben.
+- **Accel (Industry)** = 3M-Rang − **1W**-Rang. **Hoch positiv = war vor 3M schwach, jetzt stark = erster Leg, NICHT extended.** → First-Flag-Signal.
+- **Accel (Theme)** = 3M-Rang − **1M**-Rang. Hoch positiv (+10…+30) = frisches Momentum, viel Luft nach oben.
+- ⚠️ **Wichtig zu Accel — die beiden Formeln sind ABSICHTLICH unterschiedlich** (Per-View-Optimierung, kein Bug):
+  - **Industry nutzt 1W** (zwitschriger, frühere Erkennung — enge tradeable Gruppe, 1W trägt Signal). **Theme nutzt 1M** (glatter — breites gemitteltes Aggregat, dort ist 1W rauschdominiert). *Hinweis: die Theme-Rausch-Annahme ist begründet, aber noch nicht empirisch gemessen — beide Varianten werden künftig mitgeloggt.*
+  - **Industry- und Theme-Accel sind daher NICHT 1:1 vergleichbar.** „+15" auf einer Industry ≠ „+15" auf einem Theme. Industry-Accel immer als *frischer/kurzfristiger* lesen.
+  - **Nur Accel ≥ ~10 ist ein echtes First-Flag-Signal.** Kleine positive Werte (+1…+5) sind Rauschen — am Code/History verifiziert: bei Accel ≥ 10 bleibt das Signal zu **83%** im nächsten Tag stark frisch und zu **90%** überhaupt positiv; darunter kippt das Vorzeichen täglich.
 - **INST-Badge** = Top 40 in *1M UND 3M* = institutionell bestätigt = höchste Konfluenz.
 - **Bubble-Zonen (= Revier-Hinweis, kein Kaufsignal):** 🚀 First Flag (frisch, links/Mitte) = hier schauen · ⚠️ Extended (rechts) = Gruppe gelaufen · 🔻 Fading = raus · 💀 Dead = ignorieren. *(Ob ein einzelner Stock kaufbar ist, sagt nur der Chart.)*
 
