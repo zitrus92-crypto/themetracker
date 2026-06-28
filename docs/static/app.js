@@ -468,6 +468,7 @@ function renderHeatmap(industries) {
       const row  = _lastIndustries?.[name];
       if (!row) return null;
       return {
+        type: "industry",
         name,
         score: row.composite,
         accel: row.acceleration,
@@ -1320,6 +1321,7 @@ function renderEtfThemes(data) {
       const row  = _etfData?.themes?.[name];
       if (!row) return null;
       return {
+        type: "theme",
         name,
         score: row.score,
         accel: _themeAccel[name],
