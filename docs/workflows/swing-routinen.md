@@ -26,11 +26,16 @@ Qualität vor Quantität. Disziplin: Das Wochenende setzt die Fokusliste, der Ta
 > **Zeit:** ~20–30 Min, einmal pro Woche (z.B. Samstag).
 
 ### Schritt 1 — Marktlage / Regime einordnen
-- [ ] **Themes → Bubble** öffnen. Gesamtbild lesen: Wo ballt sich die Masse der Bubbles?
-  - Wolke oben/rechts & viel Grün → **Risk-On**, Breakouts haben Rückenwind.
+- [ ] **Regime-Badge im Header ablesen** — der objektive Startwert (automatisch berechnet: QQQ > SMA20/SMA50 + T2108-Breadth von Stockbee, 2-Tage-Hysterese, Abstufung in RISK_OFF sofort). Tooltip zeigt die Inputs und die Wirkung:
+  - **RISK_ON** → volle Sizing-Tiers, Add-ons erlaubt.
+  - **NEUTRAL** → Tiers eine Stufe reduziert, keine Add-ons.
+  - **RISK_OFF** → keine neuen Entries, nur Verwaltung offener Positionen (rotes Banner erscheint über den Setup-Picks).
+  - Graues Badge „DATEN VERALTET" → Inputs stale, Zustand eingefroren — dann zählt der manuelle Gegencheck unten.
+- [ ] **Themes → Bubble** als Gegencheck öffnen. Gesamtbild lesen: Wo ballt sich die Masse der Bubbles?
+  - Wolke oben/rechts & viel Grün → bestätigt **Risk-On**, Breakouts haben Rückenwind.
   - Wolke unten/links, viel Rot, „Fading/Dead" stark besetzt → **Risk-Off / Korrektur** → diese Woche selektiver sein, kleinere Size, weniger Trades.
 - [ ] **Industry → Bubble** zum Gegencheck: Bestätigt die Breite das Theme-Bild? (Breite Grün-Wolke = gesunder Markt.)
-- [ ] Notiz machen: **Regime = Risk-On / Neutral / Risk-Off** (steuert deine Aggressivität für die Woche).
+- [ ] Notiz machen: **Regime = Risk-On / Neutral / Risk-Off** (Badge-Wert, ggf. durch Bubble-Gegencheck geschärft — steuert deine Aggressivität für die Woche).
 
 ### Schritt 2 — Heiße Themes filtern (das Narrativ)
 - [ ] **Themes → Matrix** öffnen: Quadranten-Ansicht. Der **🚀 First-Flag-Zone**-Quadrant (3M schwach + 1M stark = war schwach, dreht frisch an) ist dein Jagdrevier. **Fading/Dead** ignorieren.

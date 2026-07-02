@@ -79,6 +79,17 @@ const I18N = {
     top20Title:       "Top 20% der aktuellen Sortierung markieren (zum Kopieren)",
     top20IntersectTitle: "Schnittmenge der Top 20% nach 1W und 1M (nur die stärksten)",
     top20Intersect2Title: "Schnittmenge der Top 20% nach 1M und 3M (nur die stärksten)",
+    regimeStale:      "DATEN VERALTET",
+    regimeUnknown:    "REGIME ?",
+    regimeEffectOn:      "Volle Sizing-Tiers. Add-ons erlaubt.",
+    regimeEffectNeutral: "Tiers eine Stufe reduziert. Keine Add-ons.",
+    regimeEffectOff:     "Keine neuen Entries. Nur Verwaltung offener Positionen, Trails enger.",
+    regimeBannerOff:  "🔴 RISK_OFF — keine neuen Entries. Nur Verwaltung offener Positionen.",
+    regimeTipTitle:   (d) => `Regime-Gate (QQQ + T2108) — Stand ${d}`,
+    regimeTipBreadth: (d) => `Stand ${d}`,
+    regimeTipStale:   "⚠ Breadth-Daten älter als 3 Handelstage — Zustand eingefroren.",
+    regimeTipNoData:  "Regime-Inputs unvollständig — Zustand nicht berechenbar.",
+    regimeTipFooter:  "Schwellen: DEFAULT — UNVALIDIERT",
   },
   en: {
     notLoaded:    "— not yet loaded —",
@@ -155,6 +166,17 @@ const I18N = {
     top20Title:       "Select the top 20% of the current sort (for copying)",
     top20IntersectTitle: "Intersection of the top 20% by 1W and by 1M (strongest only)",
     top20Intersect2Title: "Intersection of the top 20% by 1M and by 3M (strongest only)",
+    regimeStale:      "DATA STALE",
+    regimeUnknown:    "REGIME ?",
+    regimeEffectOn:      "Full sizing tiers. Add-ons allowed.",
+    regimeEffectNeutral: "All tiers reduced one step. No add-ons.",
+    regimeEffectOff:     "No new entries. Manage open positions only, tighter trails.",
+    regimeBannerOff:  "🔴 RISK_OFF — no new entries. Manage open positions only.",
+    regimeTipTitle:   (d) => `Regime gate (QQQ + T2108) — as of ${d}`,
+    regimeTipBreadth: (d) => `as of ${d}`,
+    regimeTipStale:   "⚠ Breadth data older than 3 trading days — state frozen.",
+    regimeTipNoData:  "Regime inputs incomplete — state cannot be computed.",
+    regimeTipFooter:  "Thresholds: DEFAULT — UNVALIDATED",
   },
 };
 
@@ -208,6 +230,7 @@ function applyTranslations() {
   if (_lastHistory) renderMovers(_lastHistory, _activePeriodDays);
   if (_etfData) renderEtfTab();
   if (_etfPerfData) renderEtfPerfTab(_etfPerfData);
+  renderRegime();
 }
 
 // --- INST helper ---
@@ -1116,6 +1139,8 @@ function showToast(msg) {
 // objects (already shaped by the caller). Each row keeps its own ticker grouping.
 function exportSelectionJson(rows) {
   if (!rows || !rows.length) return;
+  // Aktuelles Regime in jede Zeile stempeln (Kontext für den Leader-Analyst).
+  if (_regimeData?.state) rows.forEach(r => { r.regime = _regimeData.state; });
   const json = JSON.stringify(rows, null, 2);
   navigator.clipboard.writeText(json).then(() => {
     const n = rows.length;
@@ -1812,6 +1837,69 @@ function initEtfSortHeaders() {
   });
 }
 
+// ── Regime-Gate Badge (Modul A) ───────────────────────────────────────────
+// Datenquelle: docs/regime.json (vom Scraper geschrieben, letzter Eintrag zählt).
+// Design: docs/superpowers/plans/2026-07-02-regime-gate-theme-id-empfehlung.md
+let _regimeData = null;
+
+function fmtSma(v) {
+  if (v === null || v === undefined) return "—";
+  return (v >= 0 ? "+" : "") + v.toFixed(2) + "%";
+}
+
+function renderRegime() {
+  const badge  = document.getElementById("regime-badge");
+  const banner = document.getElementById("regime-banner");
+  if (!badge) return;
+  const r = _regimeData;
+  if (!r) {
+    badge.classList.add("hidden");
+    if (banner) banner.classList.add("hidden");
+    return;
+  }
+
+  const inputsMissing = r.t1 === null || r.t2 === null || r.b1 === null;
+  const stale = r.b1_stale || inputsMissing;
+  const state = r.state;
+
+  let cls, label;
+  if (!state)                    { cls = "regime-stale";   label = t("regimeUnknown"); }
+  else if (stale)                { cls = "regime-stale";   label = t("regimeStale"); }
+  else if (state === "RISK_ON")  { cls = "regime-on";      label = "RISK-ON"; }
+  else if (state === "NEUTRAL")  { cls = "regime-neutral"; label = "NEUTRAL"; }
+  else                           { cls = "regime-off";     label = "RISK-OFF"; }
+
+  const check = v => v === true ? "✓" : v === false ? "✗" : "?";
+  const lines = [
+    t("regimeTipTitle", r.date),
+    `T1  QQQ > SMA20: ${check(r.t1)} (${fmtSma(r.qqq_sma20)})`,
+    `T2  QQQ > SMA50: ${check(r.t2)} (${fmtSma(r.qqq_sma50)})`,
+    `B1  T2108 Breadth: ${r.b1 != null ? r.b1 + "%" : "—"} (${t("regimeTipBreadth", r.b1_date ?? "—")})`,
+    `IWM: SMA20 ${fmtSma(r.iwm_sma20)} · SMA50 ${fmtSma(r.iwm_sma50)}`,
+  ];
+  if (state === "RISK_ON")       lines.push(t("regimeEffectOn"));
+  else if (state === "NEUTRAL")  lines.push(t("regimeEffectNeutral"));
+  else if (state === "RISK_OFF") lines.push(t("regimeEffectOff"));
+  if (inputsMissing)   lines.push(t("regimeTipNoData"));
+  else if (r.b1_stale) lines.push(t("regimeTipStale"));
+  if (state && stale)  lines.push(`(eingefroren: ${state})`);
+  lines.push(t("regimeTipFooter"));
+
+  badge.className = "regime-badge " + cls;
+  badge.textContent = label;
+  badge.title = lines.join("\n");
+
+  // Banner immer bei RISK_OFF — auch eingefroren gilt: keine neuen Entries.
+  if (banner) {
+    if (state === "RISK_OFF") {
+      banner.textContent = t("regimeBannerOff");
+      banner.classList.remove("hidden");
+    } else {
+      banner.classList.add("hidden");
+    }
+  }
+}
+
 initTabs();
 initSortHeaders();
 initInstToggle();
@@ -1839,11 +1927,12 @@ async function loadData() {
   const bust = `?t=${Date.now()}`;
 
   try {
-    const [dataRes, histRes, etfRes, etfPerfRes] = await Promise.all([
+    const [dataRes, histRes, etfRes, etfPerfRes, regimeRes] = await Promise.all([
       fetch("data.json" + bust),        // → dataRes    (index 0)
       fetch("history.json" + bust),     // → histRes    (index 1)
       fetch("etf_data.json" + bust),    // → etfRes     (index 2)
       fetch("etf_perf.json" + bust),    // → etfPerfRes (index 3)
+      fetch("regime.json" + bust),      // → regimeRes  (index 4)
     ]);
 
     if (!dataRes.ok) throw new Error(`data.json: HTTP ${dataRes.status}`);
@@ -1865,6 +1954,14 @@ async function loadData() {
       document.getElementById("etf-error").textContent = t("etfNoData");
       document.getElementById("etf-error").classList.remove("hidden");
     }
+
+    if (regimeRes.ok) {
+      // regime.json existiert erst nach dem ersten Scraper-Lauf — 404 ist ok.
+      const regimeHist = await regimeRes.json();
+      _regimeData = Array.isArray(regimeHist) && regimeHist.length
+        ? regimeHist[regimeHist.length - 1] : null;
+    }
+    renderRegime();
 
     if (etfPerfRes.ok) {
       _etfPerfData = await etfPerfRes.json();

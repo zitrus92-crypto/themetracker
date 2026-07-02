@@ -1,3 +1,5 @@
+import csv
+import io
 import json
 import re
 import time
@@ -743,3 +745,107 @@ def fetch_industry_tickers(scored: dict) -> dict:
     total = sum(len(scored[n].get("tickers", [])) for n in names)
     print(f"    Industry tickers: {total} across {len(names)} industries")
     return scored
+
+
+# ── Regime-Gate (Modul A) ─────────────────────────────────────────────────
+# Design: docs/superpowers/plans/2026-07-02-regime-gate-theme-id-empfehlung.md
+# T1 = QQQ > SMA20 (Proxy für Spec-21-EMA — Finviz liefert keine EMA-Distanz),
+# T2 = QQQ > SMA50, B1 = Stockbee-T2108 (% Aktien über 40-Tage-MA, Gesamtmarkt).
+# Alle Schwellen: DEFAULT — UNVALIDIERT (Momentum-Konvention, nicht backgetestet).
+REGIME_CONFIG = {
+    "TREND_TICKER": "QQQ",   # schaltet das Gate
+    "INFO_TICKER":  "IWM",   # nur Tooltip-Anzeige, schaltet nichts
+    "B1_HEALTHY":   50.0,    # T2108 > 50 → gesunde Breadth      (UNVALIDIERT)
+    "B1_WEAK":      40.0,    # T2108 < 40 → schwache Breadth     (UNVALIDIERT)
+    # Hochstufung erst nach 2 EOD-Bestätigungen in Folge (fest verdrahtet in
+    # apply_regime_hysteresis: raw == gestriges raw). Abstufung in RISK_OFF sofort.
+}
+
+STOCKBEE_MM_CSV = (
+    "https://docs.google.com/spreadsheet/pub"
+    "?key=0Am_cU8NLIU20dEhiQnVHN3Nnc3B1S3J6eGhKZFo0N3c&output=csv"
+)
+
+
+def _fetch_sma_distances(ticker: str) -> dict:
+    """SMA20-/SMA50-Distanz in % von der Finviz-Quote-Seite (positiv = darüber).
+
+    quote.ashx redirectet auf /stock?t=…; requests folgt automatisch.
+    """
+    url = f"https://finviz.com/quote.ashx?t={ticker}"
+    resp = requests.get(url, headers=HEADERS, timeout=15)
+    resp.raise_for_status()
+    out = {}
+    for label in ("SMA20", "SMA50"):
+        m = re.search(
+            re.escape(label) + r"</div>\s*</td>.{0,500}?>\s*(-?\d+\.\d+)%\s*<",
+            resp.text, re.DOTALL,
+        )
+        out[label] = float(m.group(1)) if m else None
+    return out
+
+
+def _fetch_stockbee_breadth() -> dict:
+    """Jüngste T2108-Zeile aus dem Stockbee-Market-Monitor-Sheet.
+
+    Publiziertes Google Sheet als CSV; Zeile 0 = Gruppen-Header, Zeile 1 =
+    Spalten-Header, danach Datenzeilen (neueste zuerst, Datum M/D/YYYY).
+    Returns {"date": "YYYY-MM-DD", "value": float}.
+    """
+    resp = requests.get(STOCKBEE_MM_CSV, headers=HEADERS, timeout=20)
+    resp.raise_for_status()
+    rows = list(csv.reader(io.StringIO(resp.text)))
+    header = rows[1]
+    t2108_idx = next(i for i, h in enumerate(header) if "T2108" in h)
+    for row in rows[2:]:
+        try:
+            date = datetime.strptime(row[0].strip(), "%m/%d/%Y").date()
+            value = float(row[t2108_idx])
+            return {"date": date.isoformat(), "value": value}
+        except (ValueError, IndexError):
+            continue
+    raise ValueError("No parsable T2108 row found in Stockbee sheet")
+
+
+def fetch_regime_inputs() -> dict:
+    """Alle Regime-Inputs holen. Fehler pro Quelle → None, kein Abbruch."""
+    out = {"trend": None, "info": None, "b1": None}
+    try:
+        out["trend"] = _fetch_sma_distances(REGIME_CONFIG["TREND_TICKER"])
+    except Exception as e:
+        print(f"  WARNING: regime trend fetch failed ({REGIME_CONFIG['TREND_TICKER']}): {e}")
+    try:
+        out["info"] = _fetch_sma_distances(REGIME_CONFIG["INFO_TICKER"])
+    except Exception as e:
+        print(f"  WARNING: regime info fetch failed ({REGIME_CONFIG['INFO_TICKER']}): {e}")
+    try:
+        out["b1"] = _fetch_stockbee_breadth()
+    except Exception as e:
+        print(f"  WARNING: regime breadth fetch failed (Stockbee): {e}")
+    return out
+
+
+def compute_regime_state(t1, t2, b1):
+    """Roh-Zustand nach Spec-Tabelle. Fehlender Input → None (unbekannt)."""
+    if t1 is None or t2 is None or b1 is None:
+        return None
+    if (not t2) or b1 < REGIME_CONFIG["B1_WEAK"]:
+        return "RISK_OFF"
+    if t1 and t2 and b1 > REGIME_CONFIG["B1_HEALTHY"]:
+        return "RISK_ON"
+    return "NEUTRAL"
+
+
+def apply_regime_hysteresis(raw, prev_raw, prev_effective):
+    """State-Wechsel erst nach 2 EOD-Bestätigungen; RISK_OFF gilt sofort."""
+    if raw is None:
+        return prev_effective  # kein Input → Zustand halten (Badge zeigt stale)
+    if raw == "RISK_OFF":
+        return "RISK_OFF"      # asymmetrisch defensiv (Spec)
+    if prev_effective is None:
+        return raw             # allererster Lauf
+    if raw == prev_effective:
+        return raw
+    if raw == prev_raw:
+        return raw             # zweite Bestätigung in Folge → Wechsel wirksam
+    return prev_effective      # erste Abweichung → abwarten

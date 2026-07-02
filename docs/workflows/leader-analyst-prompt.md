@@ -58,6 +58,13 @@ Quelle: Mein Finviz-ThemeTracker. Alle Felder sind auf GRUPPEN-Ebene
            interpretiert (höher = mehr gestiegen).
 - tickers = reine Symbole der Gruppen-Mitglieder. KEINE Per-Stock-Kenn-
             zahlen enthalten.
+- regime = globaler Markt-Regime-Zustand des Trackers zum Export-Zeitpunkt
+           (RISK_ON | NEUTRAL | RISK_OFF; identisch auf allen Zeilen, kann
+           bei aelteren Exporten fehlen). Quelle: QQQ-Trend + T2108-Breadth.
+           RISK_ON = aggressiv long ok · NEUTRAL = reduzierte Size, keine
+           Add-ons · RISK_OFF = keine neuen Entries. Als Markt-Kontext fuer
+           die Aggressivitaets-Einordnung nutzen — es ist KEINE Gruppen-
+           Kennzahl und aendert die Gruppen-Reihenfolge nicht.
 INTERPRETATIONS-WARNUNG (kritisch):
 score und accel sind RANG-Momentum, NICHT Preis-Extension. Eine Gruppe kann
 laut accel "frisch" sein und im Kurs (perfs) trotzdem schon weit gelaufen.

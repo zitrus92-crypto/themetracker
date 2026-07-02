@@ -5,11 +5,12 @@ Fetches Finviz industry data AND Finviz thematic map data in parallel, writes:
   docs/etf_data.json    — thematic map snapshot (ETF Themes tab)
   docs/etf_perf.json    — ETF performance snapshot (ETFs tab)
   docs/history.json     — compact daily history (Movers tab)
+  docs/regime.json      — daily Regime-Gate states (header badge)
 """
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import scraper
 from scores import compute_scores
@@ -39,6 +40,72 @@ def fetch_etf_perf():
     return result
 
 
+def fetch_regime():
+    print("Fetching regime inputs (QQQ/IWM quote + Stockbee T2108)...")
+    return scraper.fetch_regime_inputs()
+
+
+def _trading_days_between(d1: str, d2: str) -> int:
+    """Approximation: Wochentage (Mo–Fr) zwischen d1 (exkl.) und d2 (inkl.)."""
+    a = datetime.strptime(d1, "%Y-%m-%d").date()
+    b = datetime.strptime(d2, "%Y-%m-%d").date()
+    days = 0
+    while a < b:
+        a += timedelta(days=1)
+        if a.weekday() < 5:
+            days += 1
+    return days
+
+
+B1_STALE_TRADING_DAYS = 3  # ältere Breadth-Zeile ⇒ Badge "DATEN VERALTET"
+
+
+def write_regime(regime_inputs: dict, today: str) -> dict:
+    """Regime-Zustand aus den Inputs berechnen und in docs/regime.json anhängen.
+
+    Idempotent pro Datum (Re-Runs überschreiben den Tageseintrag, wie
+    history.json). Hysterese läuft über die Vortages-Einträge.
+    Returns the entry written (for logging/tests).
+    """
+    regime_path = DOCS / "regime.json"
+    history = json.loads(regime_path.read_text()) if regime_path.exists() else []
+    history = [e for e in history if e["date"] != today]
+    prev = history[-1] if history else {}
+
+    trend = regime_inputs.get("trend") or {}
+    info  = regime_inputs.get("info") or {}
+    b1row = regime_inputs.get("b1") or {}
+
+    sma20, sma50 = trend.get("SMA20"), trend.get("SMA50")
+    t1 = (sma20 > 0) if sma20 is not None else None
+    t2 = (sma50 > 0) if sma50 is not None else None
+    b1 = b1row.get("value")
+    b1_date = b1row.get("date")
+    b1_stale = (
+        b1_date is None
+        or _trading_days_between(b1_date, today) > B1_STALE_TRADING_DAYS
+    )
+
+    raw = scraper.compute_regime_state(t1, t2, b1)
+    state = scraper.apply_regime_hysteresis(raw, prev.get("raw"), prev.get("state"))
+
+    entry = {
+        "date": today,
+        "t1": t1, "t2": t2,
+        "b1": b1, "b1_date": b1_date, "b1_stale": b1_stale,
+        "qqq_sma20": sma20, "qqq_sma50": sma50,
+        "iwm_sma20": info.get("SMA20"), "iwm_sma50": info.get("SMA50"),
+        "raw": raw, "state": state,
+    }
+    history.append(entry)
+    history = history[-MAX_HISTORY:]
+    regime_path.write_text(
+        json.dumps(history, ensure_ascii=False, separators=(",", ":"))
+    )
+    print(f"  Saved regime.json (state: {state}, raw: {raw}, b1: {b1} @ {b1_date})")
+    return entry
+
+
 def main():
     DOCS.mkdir(exist_ok=True)
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -47,28 +114,34 @@ def main():
     scored = None
     etf_payload = None
     etf_perf_payload = None
+    regime_inputs = None
 
-    with ThreadPoolExecutor(max_workers=3) as pool:
+    with ThreadPoolExecutor(max_workers=4) as pool:
         fut_ind      = pool.submit(fetch_industries)
         fut_etf      = pool.submit(fetch_themes)
         fut_etf_perf = pool.submit(fetch_etf_perf)
+        fut_regime   = pool.submit(fetch_regime)
 
-        for fut in as_completed([fut_ind, fut_etf, fut_etf_perf]):
+        for fut in as_completed([fut_ind, fut_etf, fut_etf_perf, fut_regime]):
             try:
                 result = fut.result()
                 if fut is fut_ind:
                     scored = result
                 elif fut is fut_etf:
                     etf_payload = result
-                else:
+                elif fut is fut_etf_perf:
                     etf_perf_payload = result
+                else:
+                    regime_inputs = result
             except Exception as e:
                 if fut is fut_ind:
                     print(f"  ERROR: Industry fetch failed: {e}")
                 elif fut is fut_etf:
                     print(f"  WARNING: ETF themes fetch failed: {e}")
-                else:
+                elif fut is fut_etf_perf:
                     print(f"  WARNING: ETF perf fetch failed: {e}")
+                else:
+                    print(f"  WARNING: Regime fetch failed: {e}")
 
     # ── Write data.json ───────────────────────────────────────────────────────
     if scored:
@@ -104,6 +177,12 @@ def main():
         print(f"  Saved etf_perf.json ({len(etf_perf_payload)} ETFs)")
     else:
         print("  SKIPPED etf_perf.json (fetch failed)")
+
+    # ── Write regime.json ─────────────────────────────────────────────────────
+    if regime_inputs is not None:
+        write_regime(regime_inputs, today)
+    else:
+        print("  SKIPPED regime.json (fetch failed)")
 
     # ── Append to history.json ────────────────────────────────────────────────
     if scored:
