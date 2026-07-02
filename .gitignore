@@ -2,3 +2,10 @@ __pycache__/
 *.py[cod]
 .env
 .superpowers/
+
+# Lokale Backtest-Skripte & Ergebnis-Dumps (nicht Teil der App)
+backtest_*.py
+backtest_*_result.txt
+backtest_result.txt
+scrape_output.txt
+scraper_out.txt
