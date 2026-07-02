@@ -27,9 +27,9 @@ Qualität vor Quantität. Disziplin: Das Wochenende setzt die Fokusliste, der Ta
 
 ### Schritt 1 — Marktlage / Regime einordnen
 - [ ] **Regime-Badge im Header ablesen** — der objektive Startwert (automatisch berechnet: QQQ > SMA20/SMA50 + T2108-Breadth von Stockbee, 2-Tage-Hysterese, Abstufung in RISK_OFF sofort). Tooltip zeigt die Inputs und die Wirkung:
-  - **RISK_ON** → volle Sizing-Tiers, Add-ons erlaubt.
-  - **NEUTRAL** → Tiers eine Stufe reduziert, keine Add-ons.
-  - **RISK_OFF** → keine neuen Entries, nur Verwaltung offener Positionen (rotes Banner erscheint über den Setup-Picks).
+  - **RISK_ON** → volle Size (1 % Risk/Trade), Add-ons erlaubt.
+  - **NEUTRAL** → neue Trades nur mit **0,5 % Risk statt 1 %**, keine Add-ons.
+  - **RISK_OFF** → keine neuen Entries, nur Verwaltung offener Positionen (rotes Banner erscheint über den Setup-Picks). Bereits platzierte GTC-Orders bleiben bewusst unberührt — ein Buy-Stop füllt nur bei Stärke.
   - Graues Badge „DATEN VERALTET" → Inputs stale, Zustand eingefroren — dann zählt der manuelle Gegencheck unten.
 - [ ] **Themes → Bubble** als Gegencheck öffnen. Gesamtbild lesen: Wo ballt sich die Masse der Bubbles?
   - Wolke oben/rechts & viel Grün → bestätigt **Risk-On**, Breakouts haben Rückenwind.

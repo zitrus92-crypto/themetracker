@@ -155,3 +155,25 @@ Alle ursprünglich offenen Fragen sind entschieden:
 | 10 | Wochenfokus-Panel (Restumfang) | Nicht bauen; Papier-Template bleibt. |
 
 **Nächster Schritt:** Finale Freigabe durch Chris, dann Implementierung des Regime-Gate-Badge exakt nach Abschnitt „Schritt 3 — Finalisierte Empfehlung".
+
+---
+
+## Nachtrag: Validierung & Praxis-Regeln (Backtest + zweites Grilling, 2026-07-02)
+
+Implementiert, gepusht, live. Danach mit `backtest_regime.py` (QQQ 2015–heute via yfinance, exakt die implementierte Logik inkl. Hysterese; Stockbee-Fenster Dez 2025–Jul 2026 mit echtem T2108) validiert:
+
+**Befunde:**
+- Vor **80 %** der 40 schlimmsten QQQ-Tage stand das Gate am Vorabend auf RISK_OFF (72 %) oder NEUTRAL (8 %). Die restlichen 20 % sind der strukturell unvermeidbare „erste Crash-Tag" — dafür sind Stops zuständig, nicht das Gate.
+- **Tiefe Drawdowns (>15 %):** praktisch 100 % RISK_OFF-Abdeckung (Dez 2018, COVID 2020, Anfang 2022, April 2025) — **außer** im langen 2022er-Bär (277 Tage): dort nur 49 % RISK_OFF / 41 % RISK_ON, weil Bärenrallyes die Trend-Beine reaktivieren.
+- **T2108 liefert echten Mehrwert:** Vor den zwei schlimmsten Tagen 2026 (−4,8 % am 4.6., −3,3 % am 22.6.) sagten die Trend-Beine noch RISK_ON, das volle Gate stand auf RISK_OFF/NEUTRAL.
+- **Kostenseite:** RISK_OFF-Phasen enthalten die besten Folgetage (V-Bottoms) — das Gate ist eine Tail-Risk-Versicherung (RISK_ON: 3,2 % Tail-Tage vs. RISK_OFF: 12,3 %), keine Renditequelle. ~32 % aller Tage gesperrt, ~19 Zustandswechsel/Jahr.
+- **SMA200-Variante durchgerechnet:** RISK_ON zusätzlich an QQQ > SMA200 zu knüpfen halbiert die Vollgas-Zeit im 2022er-Bär (41 %→23 %) bei sonst fast identischen Kennzahlen (2023-Wiedereinstieg +15 Tage).
+
+**Entscheidungen Chris (zweites Grilling):**
+
+| # | Frage | Entscheidung |
+|---|---|---|
+| 11 | Trade-off (verpasste V-Bottoms gegen 4× weniger Tail-Risk) | Akzeptiert — Versicherung gewollt. |
+| 12 | SMA200-Sperre für RISK_ON | **Nein, Spec-treu bleiben.** Variante bleibt nur in backtest_regime.py dokumentiert; Neubewertung beim nächsten echten Bär möglich. |
+| 13 | Bereits platzierte GTC-Buy-Stops bei RISK_OFF | **Bleiben unberührt** — das EOD-Signal steuert nur neue Orders; ein Buy-Stop füllt nur bei Stärke. |
+| 14 | NEUTRAL konkret | **0,5 % Risk pro neuem Trade statt 1 %, keine Add-ons.** Tooltip + Routine entsprechend präzisiert. |
