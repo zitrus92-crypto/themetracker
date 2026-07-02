@@ -1,145 +1,108 @@
-# Swing-Trading Routinen — Top-Down First-Flag Workflow
+# Swing-Routine — Kompakt (WE ~15 Min · Tag ~5 Min)
 
-**Ziel:** Top-Down die heißesten Themes & Industries finden → Fokus auf *frische* Base-Breakouts / First Flags → **nicht extended kaufen.**
+**Ziel:** Die heißesten Themes finden → frische Base-Breakouts handeln → **nicht extended kaufen.**
+**Ausführung:** 90 % End-of-Day (Watchlist → GTC-Buy-Stops über dem Pivot), 10 % Intraday-Zugriff — beides **nur innerhalb der Wochenfokus-Liste**.
 
-**Prinzip:** Themes (Narrativ) → Industries (tradeable Gruppe) → Stocks (Finviz/TradingView/Deepvue).
-Qualität vor Quantität. Disziplin: Das Wochenende setzt die Fokusliste, der Tag arbeitet **nur** darin.
+> **🥇 Goldene Regel:** Theme/Industry-Ebene = **nur Revier-Auswahl** („hier schauen"), nie Kaufsignal. Ob ein Name kaufbar oder **extended** ist, entscheidet **ausschließlich der Einzelchart** (Pivot-Distanz).
 
-> **🥇 Goldene Regel (über allem):** Die **Gruppen-Ebene (Theme/Industry, Accel, Bubble) ist NUR Revier-Auswahl** — sie sagt „hier schauen", **nie** „kaufen". Ob etwas **extended** ist, entscheidet sich **ausschließlich am Einzelchart** (Pivot-Distanz). Eine heiße Gruppe oder eine grüne Bubble ist **kein** Kaufsignal — sie ist nur die Erlaubnis, im Chart nach einer frischen Base zu suchen.
-
-**Cheatsheet — was die Kennzahlen bedeuten:**
-- **Score** = gewichteter Rang (1M×70% + 1W×20% + 3M×10%). *Niedriger = stärker.* → Wer führt gerade.
-- **Accel (Industry)** = 3M-Rang − **1W**-Rang. **Hoch positiv = war vor 3M schwach, jetzt stark = erster Leg, NICHT extended.** → First-Flag-Signal.
-- **Accel (Theme)** = 3M-Rang − **1M**-Rang. Hoch positiv (+10…+30) = frisches Momentum, viel Luft nach oben.
-- ⚠️ **Wichtig zu Accel — die beiden Formeln sind ABSICHTLICH unterschiedlich** (Per-View-Optimierung, kein Bug):
-  - **Industry nutzt 1W** (zwitschriger, frühere Erkennung — enge tradeable Gruppe, 1W trägt Signal). **Theme nutzt 1M** (glatter — breites gemitteltes Aggregat, dort ist 1W rauschdominiert). *Hinweis: die Theme-Rausch-Annahme ist begründet, aber noch nicht empirisch gemessen — beide Varianten werden künftig mitgeloggt.*
-  - **Industry- und Theme-Accel sind daher NICHT 1:1 vergleichbar.** „+15" auf einer Industry ≠ „+15" auf einem Theme. Industry-Accel immer als *frischer/kurzfristiger* lesen.
-  - **Nur Accel ≥ ~10 ist ein echtes First-Flag-Signal.** Kleine positive Werte (+1…+5) sind Rauschen — am Code/History verifiziert: bei Accel ≥ 10 bleibt das Signal zu **83%** im nächsten Tag stark frisch und zu **90%** überhaupt positiv; darunter kippt das Vorzeichen täglich.
-- **INST-Badge** = Top 40 in *1M UND 3M* = institutionell bestätigt = höchste Konfluenz.
-- **Bubble-Zonen (= Revier-Hinweis, kein Kaufsignal):** 🚀 First Flag (frisch, links/Mitte) = hier schauen · ⚠️ Extended (rechts) = Gruppe gelaufen · 🔻 Fading = raus · 💀 Dead = ignorieren. *(Ob ein einzelner Stock kaufbar ist, sagt nur der Chart.)*
+**Kennzahlen-Cheatsheet (Kurzform):**
+- **Score** = gewichteter Rang (1M×70 % + 1W×20 % + 3M×10 %). *Niedriger = stärker.*
+- **Accel (Theme)** = Rang 3M − Rang 1M. Hoch positiv = war schwach, dreht frisch an = erster Leg. **Nur Accel ≥ +10 ist ein echtes Signal** (verifiziert: 83 % Signal-Stabilität am Folgetag; +1…+5 ist Rauschen).
+- **Accel (Industry)** = Rang 3M − Rang **1W** (zwitschriger, frühere Erkennung). Nicht 1:1 mit Theme-Accel vergleichbar.
+- **INST-Badge** = Top 40 in 1M UND 3M = institutionell bestätigt.
+- **★-Buttons** = markieren automatisch die Schnittmenge der Top 20 % (1W∩1M = frisch angedreht · 1M∩3M = institutionell anhaltend).
 
 ---
 
-## 🗓️ Wochenend-Routine — Marktlage einordnen & Wochenfokus setzen
+## 🗓️ Wochenend-Routine (~15 Min, z. B. Samstag)
 
-> **Ergebnis:** 3–5 „heiße" Themes/Industries als **Wochenfokus-Liste**. Mehr nicht — eng halten.
-> **Zeit:** ~20–30 Min, einmal pro Woche (z.B. Samstag).
+> **Ergebnis:** Fokusliste mit 3–5 Einträgen + fertige Watchlists in TradingView/Deepvue.
 
-### Schritt 1 — Marktlage / Regime einordnen
-- [ ] **Regime-Badge im Header ablesen** — der objektive Startwert (automatisch berechnet: QQQ > SMA20/SMA50 + T2108-Breadth von Stockbee, 2-Tage-Hysterese, Abstufung in RISK_OFF sofort). Tooltip zeigt die Inputs und die Wirkung:
-  - **RISK_ON** → volle Size (1 % Risk/Trade), Add-ons erlaubt.
-  - **NEUTRAL** → neue Trades nur mit **0,5 % Risk statt 1 %**, keine Add-ons.
-  - **RISK_OFF** → keine neuen Entries, nur Verwaltung offener Positionen (rotes Banner erscheint über den Setup-Picks). Bereits platzierte GTC-Orders bleiben bewusst unberührt — ein Buy-Stop füllt nur bei Stärke.
-  - Graues Badge „DATEN VERALTET" → Inputs stale, Zustand eingefroren — dann zählt der manuelle Gegencheck unten.
-- [ ] **Themes → Bubble** als Gegencheck öffnen. Gesamtbild lesen: Wo ballt sich die Masse der Bubbles?
-  - Wolke oben/rechts & viel Grün → bestätigt **Risk-On**, Breakouts haben Rückenwind.
-  - Wolke unten/links, viel Rot, „Fading/Dead" stark besetzt → **Risk-Off / Korrektur** → diese Woche selektiver sein, kleinere Size, weniger Trades.
-- [ ] **Industry → Bubble** zum Gegencheck: Bestätigt die Breite das Theme-Bild? (Breite Grün-Wolke = gesunder Markt.)
-- [ ] Notiz machen: **Regime = Risk-On / Neutral / Risk-Off** (Badge-Wert, ggf. durch Bubble-Gegencheck geschärft — steuert deine Aggressivität für die Woche).
+### 1 — Regime ablesen (1 Min)
+- [ ] **Regime-Badge im Header** ablesen und notieren. Wirkung (mechanisch, keine Interpretation):
+  - **RISK-ON** → 1 % Risk/Trade, Add-ons erlaubt.
+  - **NEUTRAL** → 0,5 % Risk/Trade, keine Add-ons.
+  - **RISK-OFF** → keine neuen Entries, nur Verwaltung. Bereits platzierte GTC-Buy-Stops bleiben (füllen nur bei Stärke).
+  - **DATEN VERALTET (grau)** → wie NEUTRAL behandeln.
 
-### Schritt 2 — Heiße Themes filtern (das Narrativ)
-- [ ] **Themes → Matrix** öffnen: Quadranten-Ansicht. Der **🚀 First-Flag-Zone**-Quadrant (3M schwach + 1M stark = war schwach, dreht frisch an) ist dein Jagdrevier. **Fading/Dead** ignorieren.
-- [ ] In der **Themes → Tabelle** die Toolbar-Buttons nutzen (sie markieren die passenden Zeilen automatisch):
-  - **`1M∩3M`** → Themes in Top-20% nach **1M UND 3M** = institutionell bestätigtes, anhaltendes Momentum (Ariel-Kriterium).
-  - **`1W∩1M`** → Themes in Top-20% nach **1W UND 1M** = frischer angedreht.
-- [ ] **Themes → Bubble**: Im **🚀 First-Flag-Bereich** (oben-links: niedrige 3M-, hohe 1M-Perf, hoch positiver Accel, noch nicht extended/rechts) die grünen Bubbles markieren.
-- [ ] **Auswahl-Regel Theme:** positiver **Accel** + **1M > 0%** + erscheint in `1M∩3M` **oder** `1W∩1M`. Extended-Bubbles (ganz rechts) **streichen**.
-- [ ] → **2–4 Themes** notieren.
+### 2 — Themes qualifizieren (5 Min)
+- [ ] **Themes → 📋 Tabelle** öffnen, Spalte **Accel** absteigend sortieren.
+- [ ] **★ 1W∩1M** klicken → markierte Zeilen durchgehen. **★ 1M∩3M** klicken → dito.
+- [ ] **Aufnahme-Formel (alle 3 Bedingungen, stur abhaken):**
+  1. Von **mindestens einem** ★-Button markiert (1W∩1M *oder* 1M∩3M)
+  2. **Accel ≥ +10**
+  3. **1M-Perf > 0 %**
+- [ ] Qualifizierte Themes nach Accel absteigend → **Top 3–5 nehmen.** Fertig, keine weitere Abwägung.
+- [ ] *(Optional, 30 Sek.:)* **⊞ Matrix** öffnen — Fokus-Themes sollten in 🚀 First-Flag/Trending liegen. Nur Info, **kein Veto.**
 
-### Schritt 3 — Heiße Industries filtern (die tradeable Gruppe)
-- [ ] **Industry → Setup Picks** öffnen. Das ist die vorgefilterte First-Flag-Liste
-  (Score Top 40 + Accel > 0 + 1W > 1% + 1M > 0%, sortiert nach 60% Accel / 40% Score).
-- [ ] **INST-Filter** mental gewichten: Industries mit **INST-Badge** zuerst (höchste Konfluenz).
-- [ ] **Industry → Bubble** zum Gegencheck: Liegen die Setup-Picks-Industries wirklich im **🚀 First-Flag-Bereich** und **nicht** im Extended-Bereich?
-- [ ] Optional in **Industry → Heatmap (Tabelle)**: dieselben **`1W∩1M`** / **`1M∩3M`**-Buttons markieren die in beiden Timeframes stärksten Industries automatisch.
-- [ ] **Verzahnung mit Schritt 2 (Confluence = Nice-to-have, KEIN Filter):** Theme↔Industry-Überschneidung (gemeinsame Ticker) wird **nicht erzwungen**. Echte Daten zeigen: Confluence ist die **Ausnahme, nicht die Regel** — z.B. „Home Improvement Retail" mit Accel +68 überlappt Themes nur um **1 Ticker**, „Real Estate – Development" um **null**. Deshalb:
-  - **Heiße Standalone-Industries ohne Theme-Überlappung bleiben voll gültiges Jagdrevier.** Nicht streichen, nur weil kein Theme dahinter liegt.
-  - Confluence ist ein **Sortier-Bonus** (höhere Konfidenz, wenn vorhanden) → solche Industries nach oben sortieren. Aber sie ist **niemals** ein Ausschluss-Kriterium für heiße Namen.
+### 3 — Fallback: Auffüllen bei < 3 Treffern (2 Min)
+- [ ] Qualifizieren weniger als 3 Themes → freie Slots mechanisch füllen mit **Industry → ★ Setup Picks** (vorgefilterte First-Flag-Liste): **INST-Badge zuerst, dann Listen-Reihenfolge.**
+- [ ] Heiße Standalone-Industries ohne Theme-Bezug sind **voll gültiges Revier** (Confluence ist Bonus, kein Filter).
+- [ ] **Bei RISK-OFF wird nicht aufgefüllt** — kurze Liste ist dann gewollt.
 
-### Schritt 4 — Wochenfokus-Liste festschreiben
-- [ ] **3–5 Themes/Industries** als Wochenfokus festhalten (Datum, Regime, Liste).
-- [ ] Pro Eintrag notieren: Name · Accel · 1M% · INST? · zugehöriges Theme.
-- [ ] Diese Liste ist diese Woche dein **einziges Jagdrevier** — **harte Sperre**, kein Drift in Namen außerhalb der Liste.
-- [ ] **Eine Ausnahme — der „Hot-Swap" (max. 1× pro Woche):** Genau **ein** kontrollierter Tausch ist erlaubt. Ein **klar frischer, neu aufgetauchter First-Flag-Name** darf einen toten Eintrag ersetzen — aber **nur**, wenn ein Platz objektiv frei wird (siehe Rauswurf-Trigger unten). Kein zweiter Swap, kein „spontanes Dazunehmen".
-- [ ] **Objektiver Rauswurf-Trigger** (entscheidet, wann ein Slot frei wird — direkt im Tool ablesbar, kein Bauchgefühl):
-  - Eine **Industry verlässt die Setup-Picks-Liste** → Kriterien (Score Top 40 + Accel > 0 + 1W > 1% + 1M > 0%) **nicht mehr** erfüllt.
-  - Ein **Theme verlässt den „Fresh"-Quadranten** der Matrix.
-  - Erst wenn ein Name so **verifizierbar rausfällt**, wird der Hot-Swap-Slot frei.
+### 4 — Watchlists bauen (5 Min)
+- [ ] Pro Fokus-Eintrag die Zeile in der Tabelle anhaken → **📋 Kopieren** → als eigene Watchlist in TradingView/Deepvue anlegen (Vorwochen-Liste überschreiben).
+- [ ] **Gespeicherten Screener-Filter** auf den Watchlists prüfen/aktiv halten: *Kurs ≤ 5 % unter 20-Tage-Hoch + über SMA50 + Mindestvolumen.* Das ist der tägliche Vorfilter — ohne ihn ist die Tages-Routine nicht in 5 Min machbar.
+- [ ] *(Optional für Ad-hoc-Analysen: **📤 JSON kopieren** liefert den gruppierten Kontext inkl. Regime-Stempel — kein Pflichtschritt.)*
+
+### 5 — Fokusliste festschreiben (2 Min)
 
 ```
 WOCHENFOKUS  KW__  | Regime: ____________
-1. ______________  Accel:__  1M:__%  INST:__  Theme:________
-2. ______________  Accel:__  1M:__%  INST:__  Theme:________
-3. ______________  Accel:__  1M:__%  INST:__  Theme:________
-4. ______________  Accel:__  1M:__%  INST:__  Theme:________
-5. ______________  Accel:__  1M:__%  INST:__  Theme:________
+1. ______________  Accel:__  1M:__%  INST:__  Quelle: Theme/Pick
+2. ______________  Accel:__  1M:__%  INST:__  Quelle: Theme/Pick
+3. ______________  Accel:__  1M:__%  INST:__  Quelle: Theme/Pick
+4. ______________  Accel:__  1M:__%  INST:__  Quelle: Theme/Pick
+5. ______________  Accel:__  1M:__%  INST:__  Quelle: Theme/Pick
 ```
+
+- Diese Liste ist die Woche über das **einzige Jagdrevier — harte Sperre.**
+- **Hot-Swap max. 1× pro Woche:** Nur wenn ein Slot per Killswitch (unten) objektiv frei wird, darf genau ein neuer Name rein — und nur, wenn er die Aufnahme-Formel **am selben Tag** erfüllt.
 
 ---
 
-## ☀️ Tages-Routine — Setups in den heißen Industries finden
+## ☀️ Tages-Routine (~5 Min, nach US-Close)
 
-> **Ergebnis:** 3–5 konkrete Stock-Setups auf der Watchlist.
-> **Scope:** NUR Industries/Themes aus der Wochenfokus-Liste (harte Sperre). Neue Namen werden **nicht** spontan dazugejagt — höchstens **1× pro Woche** per kontrolliertem Hot-Swap (Rauswurf-Trigger erfüllt, siehe Wochenend-Routine Schritt 4).
-> **Zeit:** ~10–15 Min, einmal täglich nach Close.
-> **Cheatsheet Stock-Setup (einfach gehalten):** Ausbruch aus sauberer Konsolidierung/Base, **erhöhtes Volumen**, **nicht zu weit gelaufen** (nah am Pivot, nicht extended).
+> **Ergebnis:** GTC-Buy-Stop-Orders über den Pivots der frischen Setups. Kein Export, kein Claude-Schritt.
 
-### Schritt 1 — Fokus-Check (30 Sek.)
-- [ ] Wochenfokus-Liste daneben legen.
-- [ ] **Industry → Setup Picks** kurz öffnen: Stehen deine Fokus-Industries noch in der First-Flag-Liste, oder sind welche ins Extended/Fading gerutscht?
-  - Fokus-Name **nicht mehr** First Flag / jetzt Extended → für heute **kein neuer Entry** dort (Leg gelaufen).
-  - Fokus-Name weiter frisch → **aktiv jagen.**
-- [ ] **Rauswurf-Trigger prüfen** (objektiv, direkt im Tool): Hat eine Fokus-Industry die **Setup-Picks-Liste verlassen** (Score Top 40 + Accel > 0 + 1W > 1% + 1M > 0% nicht mehr erfüllt), oder hat ein Fokus-Theme den **„Fresh"-Quadranten** der Matrix verlassen? → Eintrag ist **tot**, ein **Hot-Swap-Slot** wird frei (max. 1× pro Woche). Sonst: Liste bleibt unverändert, **keine** neuen Namen.
+### 1 — Regime-Check (10 Sek.)
+- [ ] Badge ablesen → bestimmt Size/Erlaubnis für heute (Tabelle oben). RISK-OFF → Schritt 3+4 entfallen, nur offene Positionen verwalten.
 
-### Schritt 2 — Vom Theme/Industry zur Stock-Liste
+### 2 — Killswitch-Check (1 Min)
+- [ ] Pro Fokus-Eintrag **nur eine Zahl** prüfen: die **1M-Perf** (Themes-Tabelle bzw. Industry-Heatmap/Setup Picks).
+  - **1M < 0 %** → Eintrag ist **tot**: keine neuen Entries dort, offene GTC-Orders für neue Positionen in dem Revier löschen, Slot frei (Hot-Swap möglich, max. 1×/Woche).
+  - Sonst: Eintrag bleibt. **Nichts anderes wird täglich geprüft** — kein Quadranten-, kein Accel-Geflatter.
 
-**Zweistufige Übergabe an Claude (separates Projekt).** Top-Down-Filter macht Claude, die Leader-Stock-Auswahl machst **du** am Chart. Klare Arbeitsteilung:
+### 3 — Setups finden (2–3 Min)
+- [ ] Gespeicherten **Screener-Filter** über die Fokus-Watchlists laufen lassen (≤ 5 % unter 20-Tage-Hoch + über SMA50 + Volumen) → es bleiben typischerweise 5–15 Namen.
+- [ ] Nur diese Namen bekommen den Chartblick. Pro Chart, hart:
+  - **Base/Konsolidierung** vorhanden? (Flag, Range, Cup — saubere Verengung.)
+  - **Frisch:** nicht mehr als ~5 % über dem Pivot / nicht schon Tage gelaufen → sonst **extended → skip.**
+  - **Volumen** am Ausbruch erhöht bzw. am Pivot vorhanden?
+  - ❌ Parabolisch / unter MAs / keine Base → raus.
 
-**Stufe 1 — Objektiver Top-Down-Filter (Claude):**
-- [ ] In der jeweiligen Tabelle (Themes / Industry-Heatmap) die **aktiven Fokus-Zeilen selektieren** und per **JSON-Export** rauskopieren.
-  - Der **JSON-Export** liefert pro Zeile gruppierten Kontext: `name · score · accel · ranks{1W,1M,3M} · perfs{1W,1M,3M} · tickers`.
-  - *(Bei Themes können die Pro-Timeframe-Ränge eingeschränkt sein — das regelt das Export-Feature selbst, hier nicht weiter wichtig.)*
-  - Die **flache „Ticker kopieren"-Funktion** (Clipboard) bleibt parallel bestehen — die ist für **TradingView/Deepvue** (Watchlist-Import).
-- [ ] JSON ins **Claude-Projekt** geben → Claude liefert die **Top 5–7 heißesten Themes/Industries mit ihren gruppierten Tickern** zurück (rein objektiver Top-Down-Filter).
-
-**Stufe 2 — Leader-Stocks wählst DU am Chart:**
-- [ ] Aus den von Claude gelieferten Gruppen die **konkreten Leader-Stocks selbst** am Chart picken (TradingView / Deepvue):
-  - **sauberste Base** · **größtes Volumen am Pivot** · **am nächsten am Ausbruch**.
-- [ ] ⚠️ **Claude bewertet KEINE Leader.** Eine Finviz-RS-Tabelle würde die **bereits am weitesten gelaufene** Aktie als „Leader" oben anzeigen — genau falsch für einen Fresh-Breakout-Stil. Das Stock-Picking bleibt am Chart, bei dir.
-- [ ] Für den **Watchlist-Import** zusätzlich die flache Ticker-Liste (Clipboard) nach TradingView/Deepvue übernehmen.
-
-### Schritt 3 — Charts prüfen (TradingView / Deepvue)
-**Hier — und nur hier — entscheidet sich „extended".** Die Gruppe/Bubble hat dich nur ins Revier gebracht; ob ein einzelner Name kaufbar oder schon gelaufen ist, lest du **ausschließlich an der Pivot-Distanz im Einzelchart** ab. Eine grüne Bubble rettet keinen extended Chart.
-
-Für die Top-Kandidaten der Gruppe, der Reihe nach:
-- [ ] **Base / Konsolidierung** vorhanden? (Seitwärts-Range, Flag, Cup — irgendeine saubere Verengung, kein Chaos.)
-- [ ] **Frischer Ausbruch** oder unmittelbar davor? (Nicht schon mehrere Tage/>~5% über dem Pivot = sonst **extended → skip** — **das ist die einzige gültige Extended-Entscheidung, nicht die Bubble**.)
-- [ ] **Volumen** beim Ausbruch erhöht? (Bestätigt echte Nachfrage.)
-- [ ] Über den steigenden gleitenden Durchschnitten, Trend intakt?
-- [ ] ❌ **Aussortieren:** schon weit gelaufen / parabolisch / unter MAs / kein Volumen / keine erkennbare Base.
-
-### Schritt 4 — Watchlist schreiben
-- [ ] **3–5 Setups** notieren, die *heute frisch* sind (eng halten).
-- [ ] Pro Setup: Ticker · Industry/Theme (Fokus-Bezug) · Pivot/Trigger-Level · kurze Notiz (z.B. „Flat Base, Vol ok").
-- [ ] Fertig — Entry/Stop/Sizing nach deinen eigenen Regeln (nicht Teil dieser Routine).
+### 4 — Orders platzieren (1–2 Min)
+- [ ] **3–5 Setups max.** Pro Setup: GTC-**Buy-Stop knapp über dem Pivot**, Stop/Sizing nach eigenen Regeln, Risk nach Regime (1 % / 0,5 % / kein Entry).
 
 ```
 WATCHLIST  ____.____  (Datum)
-Ticker | Industry/Theme | Trigger | Notiz
-______ | ______________ | ____.__ | _______________
-______ | ______________ | ____.__ | _______________
-______ | ______________ | ____.__ | _______________
-______ | ______________ | ____.__ | _______________
-______ | ______________ | ____.__ | _______________
+Ticker | Fokus-Bezug | Buy-Stop | Notiz
+______ | ___________ | ____.___ | _______________
+______ | ___________ | ____.___ | _______________
+______ | ___________ | ____.___ | _______________
 ```
+
+### Die 10 % — Intraday-Zugriff (Ausnahmeregel)
+Bist du zufällig intraday am Markt und ein **Fokuslisten-Name** bricht frisch mit Volumen über den Pivot aus, darfst du manuell zugreifen — **gleiche Chart-Kriterien, gleiche Regime-Size, niemals außerhalb der Fokusliste.** Alles andere bleibt EOD.
 
 ---
 
 ### Goldene Regeln
-1. **Gruppe = nur Revier, Chart = Entscheidung.** Theme/Industry-Accel und Bubble sagen nur „hier schauen", nie „kaufen". **Extended entscheidet sich ausschließlich am Einzelchart (Pivot-Distanz)** — nie an Gruppe oder Bubble.
-2. **Nicht extended kaufen.** Hoch positiver Accel + First-Flag-Zone = frisches Revier. Aber kaufbar ist nur, was im **Chart** nah am Pivot steht.
-3. **Top-Down bleiben.** Erst Theme/Industry-Revier, dann Stock. **Aber:** heiße **Standalone-Industries ohne Theme-Überlappung sind voll gültig** — Confluence ist Nice-to-have-Bonus, kein Filter.
-4. **Im Revier bleiben — harte Sperre.** Der Tag jagt nur in der Wochenfokus-Liste. Genau **1 Hot-Swap pro Woche** erlaubt, und nur wenn ein Name **objektiv** rausfällt (Industry verlässt Setup-Picks ODER Theme verlässt „Fresh"-Quadrant). Sonst: notieren fürs nächste Wochenende.
-5. **Claude filtert, du pickst.** Claude liefert (aus dem JSON-Export) die heißesten Gruppen + Ticker; die **Leader-Stocks wählst du selbst am Chart**. Claude bewertet keine Leader.
-6. **Regime respektiert Size.** Risk-Off-Woche = weniger Trades, kleinere Positionen.
-7. **Eng halten.** 3–5 Fokus, 3–5 Setups. Lieber 3 saubere als 12 mittelmäßige.
+1. **Gruppe = Revier, Chart = Entscheidung.** Extended entscheidet sich ausschließlich am Einzelchart (Pivot-Distanz), nie an Gruppe, Bubble oder Quadrant.
+2. **Nicht extended kaufen.** Kaufbar ist nur, was im Chart nah am Pivot steht.
+3. **Aufnahme nur per Formel.** ★-Treffer + Accel ≥ +10 + 1M > 0 %. Kein Bauchgefühl, kein „sieht heiß aus".
+4. **Harte Sperre.** Gehandelt wird nur die Fokusliste. Genau 1 Hot-Swap/Woche, nur bei objektiv freiem Slot (1M < 0 %).
+5. **Ein Killswitch, eine Zahl.** Täglich stirbt ein Eintrag nur durch 1M < 0 % — sonst bleibt die Liste in Ruhe.
+6. **Regime steuert Size mechanisch.** RISK-ON 1 % · NEUTRAL 0,5 %, keine Add-ons · RISK-OFF keine neuen Entries (GTC-Stops bleiben) · grau = NEUTRAL.
+7. **Leader pickst du am Chart.** Keine RS-Tabelle, kein Auto-Ranking — eine RS-Liste spült die am weitesten gelaufene Aktie nach oben, genau falsch für Fresh Breakouts.
+8. **Eng halten.** 3–5 Fokus, 3–5 Setups. Lieber 3 saubere als 12 mittelmäßige.
