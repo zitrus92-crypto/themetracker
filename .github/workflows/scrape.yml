@@ -1,25 +1,22 @@
-name: Finviz Scrape (twice daily, NY time)
+name: Finviz Scrape (hourly during RTH, NY time)
 
-# Refreshes all data around the US close on weekdays.
+# Refreshes all data hourly (on the full hour) through the US regular trading
+# session on weekdays, plus one settled post-close run.
 #
 # GitHub Actions cron is UTC-only and does NOT observe daylight saving time,
 # and scheduled runs are "best effort" (often delayed 15 min to a few hours).
-# We therefore schedule four UTC slots covering both 15:30 and 17:00 New York
-# time in summer (EDT) and winter (EST), and run every time WITHOUT a wall-clock
-# gate — GitHub's delays make exact-time gating unreliable. The data writes are
-# idempotent per date, so extra runs simply overwrite the day's entry with
-# fresher data.
+# We therefore schedule hourly UTC slots that cover 10:00–16:00 New York time
+# in BOTH summer (EDT, UTC-4) and winter (EST, UTC-5), and run every time
+# WITHOUT a wall-clock gate — GitHub's delays make exact-time gating
+# unreliable. The data writes are idempotent per date, so extra runs simply
+# overwrite the day's entry with fresher data.
 #
-#   19:30 UTC → 15:30 EDT (summer) / 14:30 EST (winter)
-#   20:30 UTC → 16:30 EDT          / 15:30 EST
-#   21:00 UTC → 17:00 EDT          / 16:00 EST
-#   22:00 UTC → 18:00 EDT          / 17:00 EST
+#   14:00–21:00 UTC hourly → 10:00–17:00 EDT (summer) / 09:00–16:00 EST (winter)
+#   22:00 UTC              → 18:00 EDT               / 17:00 EST (settled close)
 
 on:
   schedule:
-    - cron: '30 19 * * 1-5'
-    - cron: '30 20 * * 1-5'
-    - cron: '0 21 * * 1-5'
+    - cron: '0 14-21 * * 1-5'
     - cron: '0 22 * * 1-5'
   workflow_dispatch:  # Manual trigger via GitHub UI
 
