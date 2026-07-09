@@ -927,6 +927,9 @@ function initTabs() {
       document.querySelectorAll(".sub-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       showPanel(btn.dataset.tab);
+      // Re-render with real measurements — the initial render may have
+      // happened while the panel was hidden (autoscale fallback dims).
+      if (btn.dataset.tab === "ind-bubble" && _lastIndustries) renderIndustryBubble(_lastIndustries);
     });
   });
 }
@@ -1545,89 +1548,130 @@ function renderMomentumMatrix(data, themeAccel) {
     </p>`;
 }
 
-function renderBubbleChart(data, themeAccel) {
-  const container = document.getElementById("etf-bubble-view");
-  const entries = Object.entries(data.themes)
-    .filter(([,r]) => r.perfs["3M"] !== null && r.perfs["1M"] !== null);
-  if (!entries.length) { container.innerHTML = '<p style="color:#6b7280;padding:16px">No data</p>'; return; }
+// ── Bubble chart shared core (Themes + Industry) ────────────────────────────
+// Autoscale: the viewBox is computed from the container width and the
+// remaining viewport height, so the chart fills the screen; a debounced
+// window-resize listener re-renders. Labels are placed greedily
+// (above/below/right/left, biggest bubble claims its spot first); when no
+// free spot remains the label is dropped — the tooltip keeps the full name.
 
-  const all3M = entries.map(([,r]) => r.perfs["3M"]);
-  const all1M = entries.map(([,r]) => r.perfs["1M"]);
-  const med3M = [...all3M].sort((a,b)=>a-b)[Math.floor(all3M.length/2)];
-  const med1M = [...all1M].sort((a,b)=>a-b)[Math.floor(all1M.length/2)];
-  const min3M = Math.min(...all3M), max3M = Math.max(...all3M);
-  const min1M = Math.min(...all1M), max1M = Math.max(...all1M);
-  // Add 10% padding to axis ranges
-  const pad3M = (max3M - min3M) * 0.1, pad1M = (max1M - min1M) * 0.1;
-  const lo3M = min3M - pad3M, hi3M = max3M + pad3M;
-  const lo1M = min1M - pad1M, hi1M = max1M + pad1M;
+function bubbleChartDims(container) {
+  const visible = container.clientWidth > 0;
+  const W = Math.max(700, Math.round(
+    visible ? container.clientWidth
+            : (document.querySelector("main")?.clientWidth || window.innerWidth - 48)));
+  // When rendered while hidden (e.g. initial load on another tab), estimate;
+  // the tab-switch re-render fixes it up with real measurements.
+  const top = visible ? container.getBoundingClientRect().top : 190;
+  const LEGEND_SPACE = 60; // legend row + margins below the SVG
+  const H = Math.min(1600, Math.max(420,
+    Math.round(window.innerHeight - Math.max(top, 0) - LEGEND_SPACE)));
+  return { W, H };
+}
 
-  const allScores = entries.map(([,r]) => r.score);
-  const minScore = Math.min(...allScores), maxScore = Math.max(...allScores);
-  const scoreRange = (maxScore - minScore) || 1;
+function placeBubbleLabels(pts, bounds) {
+  const placed = [], out = [];
+  const ctx = document.createElement("canvas").getContext("2d");
+  ctx.font = `9px ${getComputedStyle(document.body).fontFamily}`;
+  const LBL_H = 10, GAP = 1.5; // breathing room between label boxes
+  for (const p of [...pts].sort((a, b) => b.r - a.r)) {
+    const w = ctx.measureText(p.label).width;
+    const cands = [
+      { x: p.x, y: p.y - p.r - 4,  anchor: "middle" },
+      { x: p.x, y: p.y + p.r + 11, anchor: "middle" },
+      { x: p.x + p.r + 4, y: p.y + 3, anchor: "start" },
+      { x: p.x - p.r - 4, y: p.y + 3, anchor: "end" },
+    ];
+    for (const c of cands) {
+      const x0 = c.anchor === "middle" ? c.x - w / 2 : c.anchor === "start" ? c.x : c.x - w;
+      const box = { x0: x0 - GAP, x1: x0 + w + GAP, y0: c.y - LBL_H + 2 - GAP, y1: c.y + 2 + GAP };
+      if (box.x0 < bounds.x0 || box.x1 > bounds.x1 || box.y0 < bounds.y0 || box.y1 > bounds.y1) continue;
+      if (placed.some(b => box.x1 > b.x0 && box.x0 < b.x1 && box.y1 > b.y0 && box.y0 < b.y1)) continue;
+      placed.push(box);
+      out.push(`<text x="${c.x.toFixed(1)}" y="${c.y.toFixed(1)}" text-anchor="${c.anchor}"
+        font-size="9" fill="${p.color}" style="pointer-events:none">${p.label}</text>`);
+      break;
+    }
+  }
+  return out.join("");
+}
 
-  const W = 1100, H = 520;
-  const PAD = { top: 28, right: 32, bottom: 48, left: 58 };
+function renderBubbleSvg(container, pts, neutralLabel) {
+  if (!pts.length) { container.innerHTML = '<p style="color:#6b7280;padding:16px">No data</p>'; return; }
+
+  const xs = pts.map(p => p.x3m), ys = pts.map(p => p.y1m);
+  const med3M = [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+  const med1M = [...ys].sort((a, b) => a - b)[Math.floor(ys.length / 2)];
+  const pad3M = (Math.max(...xs) - Math.min(...xs)) * 0.06 || 1;
+  const pad1M = (Math.max(...ys) - Math.min(...ys)) * 0.08 || 1;
+  const lo3M = Math.min(...xs) - pad3M, hi3M = Math.max(...xs) + pad3M;
+  const lo1M = Math.min(...ys) - pad1M, hi1M = Math.max(...ys) + pad1M;
+
+  const scores = pts.map(p => p.score);
+  const minScore = Math.min(...scores);
+  const scoreRange = (Math.max(...scores) - minScore) || 1;
+
+  const { W, H } = bubbleChartDims(container);
+  const PAD = { top: 28, right: 36, bottom: 48, left: 58 };
   const plotW = W - PAD.left - PAD.right;
   const plotH = H - PAD.top - PAD.bottom;
 
   const toX = v => PAD.left + ((v - lo3M) / (hi3M - lo3M)) * plotW;
   const toY = v => H - PAD.bottom - ((v - lo1M) / (hi1M - lo1M)) * plotH;
-  // Size = strength (composite score, lower = stronger) — strongest themes are biggest.
-  const toR = s => Math.max(6, Math.min(22, 22 - ((s - minScore) / scoreRange) * 16));
+  // Size = strength (score, lower = stronger) — strongest themes stay biggest.
+  // Radius range scales gently with the plot area.
+  const rMax = Math.max(20, Math.min(30, Math.round(Math.sqrt(plotW * plotH) / 32)));
+  const rMin = Math.max(6, Math.round(rMax * 0.28));
+  const toR = s => rMax - ((s - minScore) / scoreRange) * (rMax - rMin);
   const toColor = a => a >= 10 ? "#4ade80" : a <= -10 ? "#f87171" : a >= 5 ? "#86efac" : "#6b7280";
+
+  pts.forEach(p => {
+    p.x = toX(p.x3m); p.y = toY(p.y1m); p.r = toR(p.score); p.color = toColor(p.accel);
+  });
 
   const medX = toX(med3M).toFixed(1);
   const medY = toY(med1M).toFixed(1);
 
-  // Quadrant label positions
   const qLabels = [
-    { x: PAD.left + 4,      y: PAD.top + 14,       text: "🚀 First Flag",  fill: "#4ade80" },
+    { x: PAD.left + 4,      y: PAD.top + 14,        text: "🚀 First Flag",  fill: "#4ade80" },
     { x: W - PAD.right - 4, y: PAD.top + 14,        text: "Extended ⚠️",    fill: "#f87171", anchor: "end" },
     { x: PAD.left + 4,      y: H - PAD.bottom - 6,  text: "💀 Dead",        fill: "#6b7280" },
     { x: W - PAD.right - 4, y: H - PAD.bottom - 6,  text: "🔻 Fading",      fill: "#f87171", anchor: "end" },
   ].map(q => `<text x="${q.x}" y="${q.y}" font-size="10" fill="${q.fill}"
     text-anchor="${q.anchor || "start"}" style="pointer-events:none">${q.text}</text>`).join("");
 
-  // Axis tick lines + labels (5 ticks each axis)
+  // Axis tick lines + labels — tick count scales with plot size
   function axisTicks(axis) {
     const isX = axis === "x";
     const lo = isX ? lo3M : lo1M, hi = isX ? hi3M : hi1M;
-    return Array.from({length: 5}, (_, i) => {
-      const v = lo + (i / 4) * (hi - lo);
+    const n = isX ? Math.max(5, Math.min(12, Math.round(plotW / 160)))
+                  : Math.max(5, Math.min(10, Math.round(plotH / 90)));
+    return Array.from({length: n}, (_, i) => {
+      const v = lo + (i / (n - 1)) * (hi - lo);
       const coord = isX ? toX(v).toFixed(1) : toY(v).toFixed(1);
       const lbl = `${v > 0 ? "+" : ""}${v.toFixed(1)}%`;
       return isX
         ? `<line x1="${coord}" y1="${H - PAD.bottom}" x2="${coord}" y2="${H - PAD.bottom + 4}" stroke="#4b5563" stroke-width="1"/>
-           <text x="${coord}" y="${H - PAD.bottom + 15}" text-anchor="middle" font-size="9" fill="#6b7280">${lbl}</text>`
+           ${i === 0 ? "" : `<text x="${coord}" y="${H - PAD.bottom + 15}" text-anchor="middle" font-size="9" fill="#6b7280">${lbl}</text>`}`
         : `<line x1="${PAD.left - 4}" y1="${coord}" x2="${PAD.left}" y2="${coord}" stroke="#4b5563" stroke-width="1"/>
            <text x="${PAD.left - 6}" y="${parseFloat(coord) + 3}" text-anchor="end" font-size="9" fill="#6b7280">${lbl}</text>`;
     }).join("");
   }
 
-  const circles = entries.map(([theme, row]) => {
-    const x = toX(row.perfs["3M"]).toFixed(1);
-    const y = toY(row.perfs["1M"]).toFixed(1);
-    const r = toR(row.score).toFixed(1);
-    const accel = themeAccel[theme] ?? 0;
-    const color = toColor(accel);
-    const accelSign = accel > 0 ? "+" : "";
-    const p3 = row.perfs["3M"] > 0 ? "+" : "";
-    const p1 = row.perfs["1M"] > 0 ? "+" : "";
-    const tip = `${theme}\n3M: ${p3}${row.perfs["3M"]?.toFixed(1)}%  1M: ${p1}${row.perfs["1M"]?.toFixed(1)}%\nAccel: ${accelSign}${accel}  |  Score: ${row.score.toFixed(1)}  |  ${(row.tickers||[]).length} Aktien`;
-    const url = themeScreenerUrl(theme);
-    const shortLabel = theme.length > 11 ? theme.slice(0, 9) + "…" : theme;
-    return `<a href="${url}" target="_blank" rel="noopener">
-      <circle cx="${x}" cy="${y}" r="${r}" fill="${color}" fill-opacity="0.72"
-        stroke="${color}" stroke-width="0.8"><title>${tip}</title></circle>
-      <text x="${x}" y="${(parseFloat(y) - parseFloat(r) - 3).toFixed(1)}"
-        text-anchor="middle" font-size="8" fill="${color}" style="pointer-events:none">${shortLabel}</text>
-    </a>`;
+  const circles = pts.map(p => {
+    const inner = `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${p.r.toFixed(1)}"
+        fill="${p.color}" fill-opacity="0.72" stroke="${p.color}" stroke-width="0.8"><title>${p.tip}</title></circle>`;
+    return p.url ? `<a href="${p.url}" target="_blank" rel="noopener">${inner}</a>` : inner;
   }).join("");
+
+  const labels = placeBubbleLabels(pts, {
+    x0: PAD.left + 2, x1: W - PAD.right - 2,
+    y0: PAD.top + 2,  y1: H - PAD.bottom - 2,
+  });
 
   container.innerHTML = `
     <div class="bubble-chart-wrap">
-      <svg viewBox="0 0 ${W} ${H}" style="width:100%;max-height:480px;display:block">
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">
         <!-- Grid background -->
         <rect x="${PAD.left}" y="${PAD.top}" width="${plotW}" height="${plotH}"
           fill="#0d1117" rx="4"/>
@@ -1636,26 +1680,42 @@ function renderBubbleChart(data, themeAccel) {
           stroke="#374151" stroke-width="1" stroke-dasharray="5,4"/>
         <line x1="${PAD.left}" y1="${medY}" x2="${W - PAD.right}" y2="${medY}"
           stroke="#374151" stroke-width="1" stroke-dasharray="5,4"/>
-        <!-- Axis ticks -->
         ${axisTicks("x")}${axisTicks("y")}
-        <!-- Axis labels -->
         <text x="${PAD.left + plotW / 2}" y="${H - 4}" text-anchor="middle"
           font-size="11" fill="#9ca3af">3M Performance →</text>
         <text x="12" y="${PAD.top + plotH / 2}" text-anchor="middle" font-size="11"
           fill="#9ca3af" transform="rotate(-90,12,${PAD.top + plotH / 2})">1M Performance ↑</text>
-        <!-- Quadrant labels -->
         ${qLabels}
-        <!-- Bubbles -->
         ${circles}
+        ${labels}
       </svg>
       <div class="bubble-legend">
         <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#4ade80" fill-opacity="0.8"/></svg> Accel ≥ +10 (First Flag)</span>
         <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#86efac" fill-opacity="0.8"/></svg> Accel +5…+9</span>
-        <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#6b7280" fill-opacity="0.8"/></svg> Neutral</span>
+        <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#6b7280" fill-opacity="0.8"/></svg> ${neutralLabel}</span>
         <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#f87171" fill-opacity="0.8"/></svg> Accel ≤ −10 (Extended/Fading)</span>
         <span class="bubble-legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#9ca3af" fill-opacity="0.5"/></svg> Größe = Stärke (Score)</span>
       </div>
     </div>`;
+}
+
+function renderBubbleChart(data, themeAccel) {
+  const container = document.getElementById("etf-bubble-view");
+  const pts = Object.entries(data.themes)
+    .filter(([,r]) => r.perfs["3M"] !== null && r.perfs["1M"] !== null)
+    .map(([theme, row]) => {
+      const accel = themeAccel[theme] ?? 0;
+      const accelSign = accel > 0 ? "+" : "";
+      const p3 = row.perfs["3M"] > 0 ? "+" : "";
+      const p1 = row.perfs["1M"] > 0 ? "+" : "";
+      return {
+        x3m: row.perfs["3M"], y1m: row.perfs["1M"], score: row.score, accel,
+        label: theme.length > 16 ? theme.slice(0, 14) + "…" : theme,
+        tip: `${theme}\n3M: ${p3}${row.perfs["3M"]?.toFixed(1)}%  1M: ${p1}${row.perfs["1M"]?.toFixed(1)}%\nAccel: ${accelSign}${accel}  |  Score: ${row.score.toFixed(1)}  |  ${(row.tickers||[]).length} Aktien`,
+        url: themeScreenerUrl(theme),
+      };
+    });
+  renderBubbleSvg(container, pts, "Neutral");
 }
 
 // --- Industry Bubble Chart (analogous to Theme bubble chart) ---
@@ -1670,105 +1730,35 @@ function renderIndustryBubble(industries) {
   let entries = Object.entries(industries)
     .filter(([,r]) => r.perfs["3M"] !== null && r.perfs["1M"] !== null);
   if (_instFilter) entries = entries.filter(([,r]) => isInst(r));
-  if (!entries.length) { container.innerHTML = '<p style="color:#6b7280;padding:16px">No data</p>'; return; }
 
-  const all3M = entries.map(([,r]) => r.perfs["3M"]);
-  const all1M = entries.map(([,r]) => r.perfs["1M"]);
-  const med3M = [...all3M].sort((a,b)=>a-b)[Math.floor(all3M.length/2)];
-  const med1M = [...all1M].sort((a,b)=>a-b)[Math.floor(all1M.length/2)];
-  const min3M = Math.min(...all3M), max3M = Math.max(...all3M);
-  const min1M = Math.min(...all1M), max1M = Math.max(...all1M);
-  const pad3M = (max3M - min3M) * 0.1, pad1M = (max1M - min1M) * 0.1;
-  const lo3M = min3M - pad3M, hi3M = max3M + pad3M;
-  const lo1M = min1M - pad1M, hi1M = max1M + pad1M;
-
-  const allScores = entries.map(([,r]) => r.composite);
-  const minScore = Math.min(...allScores), maxScore = Math.max(...allScores);
-  const scoreRange = (maxScore - minScore) || 1;
-
-  const W = 1100, H = 520;
-  const PAD = { top: 28, right: 32, bottom: 48, left: 58 };
-  const plotW = W - PAD.left - PAD.right;
-  const plotH = H - PAD.top - PAD.bottom;
-
-  const toX = v => PAD.left + ((v - lo3M) / (hi3M - lo3M)) * plotW;
-  const toY = v => H - PAD.bottom - ((v - lo1M) / (hi1M - lo1M)) * plotH;
-  const toR = s => Math.max(6, Math.min(22, 22 - ((s - minScore) / scoreRange) * 16));
-  const toColor = a => a >= 10 ? "#4ade80" : a <= -10 ? "#f87171" : a >= 5 ? "#86efac" : "#6b7280";
-
-  const medX = toX(med3M).toFixed(1);
-  const medY = toY(med1M).toFixed(1);
-
-  const qLabels = [
-    { x: PAD.left + 4,      y: PAD.top + 14,       text: "🚀 First Flag",  fill: "#4ade80" },
-    { x: W - PAD.right - 4, y: PAD.top + 14,        text: "Extended ⚠️",    fill: "#f87171", anchor: "end" },
-    { x: PAD.left + 4,      y: H - PAD.bottom - 6,  text: "💀 Dead",        fill: "#6b7280" },
-    { x: W - PAD.right - 4, y: H - PAD.bottom - 6,  text: "🔻 Fading",      fill: "#f87171", anchor: "end" },
-  ].map(q => `<text x="${q.x}" y="${q.y}" font-size="10" fill="${q.fill}"
-    text-anchor="${q.anchor || "start"}" style="pointer-events:none">${q.text}</text>`).join("");
-
-  function axisTicks(axis) {
-    const isX = axis === "x";
-    const lo = isX ? lo3M : lo1M, hi = isX ? hi3M : hi1M;
-    return Array.from({length: 5}, (_, i) => {
-      const v = lo + (i / 4) * (hi - lo);
-      const coord = isX ? toX(v).toFixed(1) : toY(v).toFixed(1);
-      const lbl = `${v > 0 ? "+" : ""}${v.toFixed(1)}%`;
-      return isX
-        ? `<line x1="${coord}" y1="${H - PAD.bottom}" x2="${coord}" y2="${H - PAD.bottom + 4}" stroke="#4b5563" stroke-width="1"/>
-           <text x="${coord}" y="${H - PAD.bottom + 15}" text-anchor="middle" font-size="9" fill="#6b7280">${lbl}</text>`
-        : `<line x1="${PAD.left - 4}" y1="${coord}" x2="${PAD.left}" y2="${coord}" stroke="#4b5563" stroke-width="1"/>
-           <text x="${PAD.left - 6}" y="${parseFloat(coord) + 3}" text-anchor="end" font-size="9" fill="#6b7280">${lbl}</text>`;
-    }).join("");
-  }
-
-  const circles = entries.map(([name, row]) => {
-    const x = toX(row.perfs["3M"]).toFixed(1);
-    const y = toY(row.perfs["1M"]).toFixed(1);
-    const r = toR(row.composite).toFixed(1);
+  const pts = entries.map(([name, row]) => {
     const accel = (row.ranks?.["3M"] ?? 0) - (row.ranks?.["1M"] ?? 0);
-    const color = toColor(accel);
     const accelSign = accel > 0 ? "+" : "";
     const p3 = row.perfs["3M"] > 0 ? "+" : "";
     const p1 = row.perfs["1M"] > 0 ? "+" : "";
-    const tip = `${name}\n3M: ${p3}${row.perfs["3M"]?.toFixed(1)}%  1M: ${p1}${row.perfs["1M"]?.toFixed(1)}%\nAccel: ${accelSign}${accel}  |  Score: ${row.composite.toFixed(1)}`;
-    const url = finvizUrl(row.ticker);
-    const shortLabel = name.length > 11 ? name.slice(0, 9) + "…" : name;
-    const inner = `<circle cx="${x}" cy="${y}" r="${r}" fill="${color}" fill-opacity="0.72"
-        stroke="${color}" stroke-width="0.8"><title>${tip}</title></circle>
-      <text x="${x}" y="${(parseFloat(y) - parseFloat(r) - 3).toFixed(1)}"
-        text-anchor="middle" font-size="8" fill="${color}" style="pointer-events:none">${shortLabel}</text>`;
-    return url
-      ? `<a href="${url}" target="_blank" rel="noopener">${inner}</a>`
-      : inner;
-  }).join("");
-
-  container.innerHTML = `
-    <div class="bubble-chart-wrap">
-      <svg viewBox="0 0 ${W} ${H}" style="width:100%;max-height:480px;display:block">
-        <rect x="${PAD.left}" y="${PAD.top}" width="${plotW}" height="${plotH}"
-          fill="#0d1117" rx="4"/>
-        <line x1="${medX}" y1="${PAD.top}" x2="${medX}" y2="${H - PAD.bottom}"
-          stroke="#374151" stroke-width="1" stroke-dasharray="5,4"/>
-        <line x1="${PAD.left}" y1="${medY}" x2="${W - PAD.right}" y2="${medY}"
-          stroke="#374151" stroke-width="1" stroke-dasharray="5,4"/>
-        ${axisTicks("x")}${axisTicks("y")}
-        <text x="${PAD.left + plotW / 2}" y="${H - 4}" text-anchor="middle"
-          font-size="11" fill="#9ca3af">3M Performance →</text>
-        <text x="12" y="${PAD.top + plotH / 2}" text-anchor="middle" font-size="11"
-          fill="#9ca3af" transform="rotate(-90,12,${PAD.top + plotH / 2})">1M Performance ↑</text>
-        ${qLabels}
-        ${circles}
-      </svg>
-      <div class="bubble-legend">
-        <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#4ade80" fill-opacity="0.8"/></svg> Accel ≥ +10 (First Flag)</span>
-        <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#86efac" fill-opacity="0.8"/></svg> Accel +5…+9</span>
-        <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#6b7280" fill-opacity="0.8"/></svg> Neutral / Konsolidierung</span>
-        <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#f87171" fill-opacity="0.8"/></svg> Accel ≤ −10 (Extended/Fading)</span>
-        <span class="bubble-legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#9ca3af" fill-opacity="0.5"/></svg> Größe = Stärke (Score)</span>
-      </div>
-    </div>`;
+    return {
+      x3m: row.perfs["3M"], y1m: row.perfs["1M"], score: row.composite, accel,
+      label: name.length > 16 ? name.slice(0, 14) + "…" : name,
+      tip: `${name}\n3M: ${p3}${row.perfs["3M"]?.toFixed(1)}%  1M: ${p1}${row.perfs["1M"]?.toFixed(1)}%\nAccel: ${accelSign}${accel}  |  Score: ${row.composite.toFixed(1)}`,
+      url: finvizUrl(row.ticker),
+    };
+  });
+  renderBubbleSvg(container, pts, "Neutral / Konsolidierung");
 }
+
+// Autoscale: re-render whichever bubble chart is currently visible when the
+// window resizes, so the SVG keeps filling the viewport.
+let _bubbleResizeTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(_bubbleResizeTimer);
+  _bubbleResizeTimer = setTimeout(() => {
+    const ind = document.getElementById("ind-bubble-view");
+    if (ind && ind.clientWidth > 0 && _lastIndustries) renderIndustryBubble(_lastIndustries);
+    const etf = document.getElementById("etf-bubble-view");
+    if (etf && etf.clientWidth > 0 && _etfData?.themes && _themeVizView === "bubble")
+      renderBubbleChart(_etfData, _themeAccel);
+  }, 150);
+});
 
 function renderEtfTab() {
   if (!_etfData) return;

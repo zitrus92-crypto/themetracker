@@ -36,6 +36,7 @@ header h1 { font-size: 18px; font-weight: 600; color: var(--accent); }
 .regime-badge {
   padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 700;
   letter-spacing: 0.4px; cursor: help; white-space: nowrap;
+  display: none; /* erstmal ausgeblendet (Chris, 2026-07-09) — zum Reaktivieren diese Zeile entfernen */
 }
 .regime-on      { background: #0d2a0d; color: #39d353; border: 1px solid #1f6f2f; }
 .regime-neutral { background: #2a2000; color: #fbbf24; border: 1px solid #8a6d1a; }
