@@ -1057,7 +1057,7 @@ let _etfData       = null;
 let _etfView       = "themes";   // "themes" | "etfs"
 let _etfThemeSort  = { col: "score", dir: 1 };
 let _etfListSort   = { col: "score", dir: 1 };
-let _themeVizView  = "table"; // "table" | "bubble" | "matrix"
+let _themeVizView  = "bubble"; // "table" | "bubble" | "matrix"
 
 // Theme badge colours for all 40 Finviz themes
 const THEME_COLORS = {

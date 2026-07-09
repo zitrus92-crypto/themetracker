@@ -18,11 +18,11 @@
   </header>
 
   <nav class="top-nav">
-    <button class="top-btn active" data-top="industry" data-i18n="topIndustry">Industry</button>
-    <button class="top-btn" data-top="themes" data-i18n="tabEtfs">&#128200; Themes</button>
+    <button class="top-btn" data-top="industry" data-i18n="topIndustry">Industry</button>
+    <button class="top-btn active" data-top="themes" data-i18n="tabEtfs">&#128200; Themes</button>
     <button class="top-btn" data-top="etfperf" data-i18n="topEtfs">&#128202; ETFs</button>
   </nav>
-  <nav class="sub-nav" id="industry-subnav">
+  <nav class="sub-nav hidden" id="industry-subnav">
     <button class="sub-btn active" data-tab="heatmap" data-i18n="tabHeatmap">Heatmap</button>
     <button class="sub-btn" data-tab="picks" data-i18n="tabPicks">&#9733; Setup Picks</button>
     <button class="sub-btn" data-tab="top10" data-i18n="tabTop10">Top 10</button>
@@ -30,7 +30,7 @@
   </nav>
 
   <main>
-    <section class="section-heatmap tab-panel" data-panel="heatmap">
+    <section class="section-heatmap tab-panel hidden" data-panel="heatmap">
       <div class="heatmap-header">
         <div class="heading-group">
           <h2 data-i18n="heatmapTitle">Industry Heatmap</h2>
@@ -137,7 +137,7 @@
     </section>
 
     <!-- ETF Themes tab -->
-    <section class="section-etfs tab-panel hidden" data-panel="etfs">
+    <section class="section-etfs tab-panel" data-panel="etfs">
       <div class="etf-header">
         <div class="heading-group">
           <h2 data-i18n="etfTitle">&#128200; Thematic Heatmap</h2>
@@ -155,8 +155,8 @@
       <div id="etf-themes-view">
         <!-- Viz toggle: only visible in Themes tab -->
         <div class="viz-toggle" id="theme-viz-toggle">
-          <button class="viz-btn active" data-vizview="table">📋 Tabelle</button>
-          <button class="viz-btn" data-vizview="bubble">🔵 Bubble</button>
+          <button class="viz-btn" data-vizview="table">📋 Tabelle</button>
+          <button class="viz-btn active" data-vizview="bubble">🔵 Bubble</button>
           <button class="viz-btn" data-vizview="matrix">⊞ Matrix</button>
           <button id="theme-top20-btn" class="top20-btn" title="Top 20% der aktuellen Sortierung markieren (zum Kopieren)">★ Top 20%</button>
           <button id="theme-top20i-btn" class="top20-btn" title="Schnittmenge der Top 20% nach 1W und 1M (nur die stärksten)">★ 1W∩1M</button>
