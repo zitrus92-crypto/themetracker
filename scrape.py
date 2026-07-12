@@ -89,6 +89,19 @@ def write_regime(regime_inputs: dict, today: str) -> dict:
     raw = scraper.compute_regime_state(t1, t2, b1)
     state = scraper.apply_regime_hysteresis(raw, prev.get("raw"), prev.get("state"))
 
+    # Situational-Awareness-Ampel (Stockbee) — eigener Block, eigener Zustand.
+    # Spec: docs/superpowers/specs/2026-07-12-situational-awareness-design.md
+    sa_in = b1row.get("sa") or {}
+    sa = {
+        "state": scraper.compute_situational_state(
+            sa_in.get("ratio5d"), sa_in.get("ratio10d"), b1, sa_in.get("t2108_avg5")
+        ),
+        "ratio5d": sa_in.get("ratio5d"), "ratio10d": sa_in.get("ratio10d"),
+        "t2108": b1, "t2108_avg5": sa_in.get("t2108_avg5"),
+        "up4": sa_in.get("up4"), "down4": sa_in.get("down4"),
+        "date": b1_date,
+    }
+
     entry = {
         "date": today,
         "t1": t1, "t2": t2,
@@ -96,6 +109,7 @@ def write_regime(regime_inputs: dict, today: str) -> dict:
         "qqq_sma20": sma20, "qqq_sma50": sma50,
         "iwm_sma20": info.get("SMA20"), "iwm_sma50": info.get("SMA50"),
         "raw": raw, "state": state,
+        "sa": sa,
     }
     history.append(entry)
     history = history[-MAX_HISTORY:]

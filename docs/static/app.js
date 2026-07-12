@@ -90,6 +90,24 @@ const I18N = {
     regimeTipStale:   "⚠ Breadth-Daten älter als 3 Handelstage — Zustand eingefroren.",
     regimeTipNoData:  "Regime-Inputs unvollständig — Zustand nicht berechenbar.",
     regimeTipFooter:  "Schwellen: DEFAULT — UNVALIDIERT",
+    saTipTitle:    (d) => `Situational Awareness (Stockbee) — Stand ${d}`,
+    saTipIntro:    "Marktbreite-Ampel: In welchem Markt trade ich gerade? Liest die Breadth, um die Odds einzuschätzen, bevor ein Trade eingegangen wird.",
+    saGreenBody:   "Aufwärts-Surges dominieren, 5- & 10-Tage-Ratios halten über 1,0, und T2108 steigt durch die 50–65-Zone; 20%-Study-LOW-Count (<20) zeigt extremes Oversold.\nT2108 < 10: starkes bullisches Signal",
+    saGreenAction: "Breakouts handeln · Size erhöhen",
+    saYellowBody:  "Surges gemischt; 5- & 10-Tage-Ratios pendeln um 1,0; T2108 extended oder choppy. Momentum lässt nach; 20%-Study-HIGH-Count (>100) zeigt überkaufte Lage — Wahrscheinlichkeit eines baldigen Rücksetzers.",
+    saYellowAction:"Nur beste Setups · Size reduzieren",
+    saRedBody:     "Abwärts-Surges dominieren, 5- & 10-Tage-Ratios unter 1,0, T2108 fällt. Distribution läuft.",
+    saRedAction:   "Abseits stehen · Kapital schützen",
+    saValRatio5:   "5-Tage-Ratio",
+    saValRatio10:  "10-Tage-Ratio",
+    saVal4pct:     "4% up / down heute",
+    saRising:      "steigend (über Ø der letzten 5 Tage)",
+    saFalling:     "fallend (unter Ø der letzten 5 Tage)",
+    saStale:       "DATEN VERALTET",
+    saUnknown:     "BREADTH ?",
+    saTipStale:    "⚠ Breadth-Daten älter als 3 Handelstage — Zustand nicht aktuell.",
+    saTipNoData:   "Breadth-Inputs unvollständig — Zustand nicht berechenbar.",
+    saRule:        "Regel: GRÜN = beide Ratios > 1,0 und T2108 steigend · ROT = beide < 1,0 und T2108 fallend · sonst GELB.",
   },
   en: {
     notLoaded:    "— not yet loaded —",
@@ -177,6 +195,24 @@ const I18N = {
     regimeTipStale:   "⚠ Breadth data older than 3 trading days — state frozen.",
     regimeTipNoData:  "Regime inputs incomplete — state cannot be computed.",
     regimeTipFooter:  "Thresholds: DEFAULT — UNVALIDATED",
+    saTipTitle:    (d) => `Situational Awareness (Stockbee) — as of ${d}`,
+    saTipIntro:    "Market breadth traffic light: what kind of market are you trading in? Reads overall breadth to gauge the odds before you commit to any trade.",
+    saGreenBody:   "Up-surges dominate, 5 & 10-day ratios hold above 1.0, and T2108 is rising through the 50-65 zone; 20% Study LOW Count (<20) indicating extreme oversold.\nT2108 < 10: Strong bullish signal",
+    saGreenAction: "Take breakouts · size up",
+    saYellowBody:  "Surges mixed; 5 & 10-day ratios hovering near 1.0; T2108 extended or choppy. Momentum is fading; 20% study HIGH count (>100), indicating overbought condition, probability of downturn soon.",
+    saYellowAction:"Best setups only · trim size",
+    saRedBody:     "Down-surges dominate, 5 & 10-day ratios below 1.0, T2108 falling. Distribution is underway.",
+    saRedAction:   "Stand aside · protect capital",
+    saValRatio5:   "5-day ratio",
+    saValRatio10:  "10-day ratio",
+    saVal4pct:     "4% up / down today",
+    saRising:      "rising (above 5-day average)",
+    saFalling:     "falling (below 5-day average)",
+    saStale:       "DATA STALE",
+    saUnknown:     "BREADTH ?",
+    saTipStale:    "⚠ Breadth data older than 3 trading days — state not current.",
+    saTipNoData:   "Breadth inputs incomplete — state cannot be computed.",
+    saRule:        "Rule: GREEN = both ratios > 1.0 and T2108 rising · RED = both < 1.0 and T2108 falling · else YELLOW.",
   },
 };
 
@@ -231,6 +267,7 @@ function applyTranslations() {
   if (_etfData) renderEtfTab();
   if (_etfPerfData) renderEtfPerfTab(_etfPerfData);
   renderRegime();
+  renderSituational();
 }
 
 // --- INST helper ---
@@ -1890,6 +1927,68 @@ function renderRegime() {
   }
 }
 
+// ── Situational-Awareness-Ampel (Stockbee) ────────────────────────────────
+// Datenquelle: regime.json → letzter Eintrag → "sa"-Block (vom Scraper).
+// Spec: docs/superpowers/specs/2026-07-12-situational-awareness-design.md
+const SA_STATES = [
+  { key: "GREEN",  cls: "sa-green",  label: "Breakouts Work", body: "saGreenBody",  action: "saGreenAction" },
+  { key: "YELLOW", cls: "sa-yellow", label: "Be Selective",   body: "saYellowBody", action: "saYellowAction" },
+  { key: "RED",    cls: "sa-red",    label: "Breakouts Fail", body: "saRedBody",    action: "saRedAction" },
+];
+
+function renderSituational() {
+  const badge = document.getElementById("sa-badge");
+  if (!badge) return;
+  const r = _regimeData;
+  const sa = r?.sa;
+  if (!sa) { badge.classList.add("hidden"); return; }
+
+  const state  = sa.state;                       // GREEN | YELLOW | RED | null
+  const stale  = r.b1_stale === true;
+  const active = SA_STATES.find(s => s.key === state);
+
+  let cls, label;
+  if (!active)    { cls = "sa-stale"; label = t("saUnknown"); }
+  else if (stale) { cls = "sa-stale"; label = t("saStale"); }
+  else            { cls = active.cls; label = active.label; }
+
+  const fmtRatio = v => v == null ? "—" : v.toFixed(2);
+  const t2108Trend = (sa.t2108 != null && sa.t2108_avg5 != null)
+    ? (sa.t2108 > sa.t2108_avg5 ? `↑ ${t("saRising")}` : `↓ ${t("saFalling")}`)
+    : "";
+
+  const cards = SA_STATES.map(s => `
+    <div class="sa-tip-card ${s.cls} ${s === active && !stale ? "active" : ""}">
+      <div class="sa-tip-head"><span class="sa-dot ${s.cls}"></span>${s.label}</div>
+      <div class="sa-tip-body">${t(s.body).replace(/\n/g, "<br>")}</div>
+      <div class="sa-tip-action">${t(s.action)}</div>
+    </div>`).join("");
+
+  const vals = [
+    [t("saValRatio5"),  fmtRatio(sa.ratio5d)],
+    [t("saValRatio10"), fmtRatio(sa.ratio10d)],
+    ["T2108", sa.t2108 != null ? `${sa.t2108}% ${t2108Trend}` : "—"],
+    [t("saVal4pct"), (sa.up4 != null && sa.down4 != null) ? `${sa.up4} / ${sa.down4}` : "—"],
+  ].map(([k, v]) => `<div class="sa-tip-val"><span>${k}</span><span>${v}</span></div>`).join("");
+
+  const notes = [];
+  if (!state)     notes.push(t("saTipNoData"));
+  else if (stale) notes.push(t("saTipStale"));
+
+  badge.className = "sa-badge " + cls;
+  badge.innerHTML = `
+    <span class="sa-dot ${cls}"></span><span class="sa-label">${label}</span>
+    <div class="sa-tooltip">
+      <div class="sa-tip-title">${t("saTipTitle", sa.date ?? "—")}</div>
+      <div class="sa-tip-intro">${t("saTipIntro")}</div>
+      ${cards}
+      <div class="sa-tip-vals">${vals}</div>
+      ${notes.map(n => `<div class="sa-tip-note">${n}</div>`).join("")}
+      <div class="sa-tip-foot">${t("saRule")}</div>
+    </div>`;
+  badge.classList.remove("hidden");
+}
+
 initTabs();
 initSortHeaders();
 initInstToggle();
@@ -1952,6 +2051,7 @@ async function loadData() {
         ? regimeHist[regimeHist.length - 1] : null;
     }
     renderRegime();
+    renderSituational();
 
     if (etfPerfRes.ok) {
       _etfPerfData = await etfPerfRes.json();

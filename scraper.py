@@ -786,25 +786,84 @@ def _fetch_sma_distances(ticker: str) -> dict:
 
 
 def _fetch_stockbee_breadth() -> dict:
-    """Jüngste T2108-Zeile aus dem Stockbee-Market-Monitor-Sheet.
+    """Jüngste Breadth-Zeile aus dem Stockbee-Market-Monitor-Sheet.
 
     Publiziertes Google Sheet als CSV; Zeile 0 = Gruppen-Header, Zeile 1 =
     Spalten-Header, danach Datenzeilen (neueste zuerst, Datum M/D/YYYY).
-    Returns {"date": "YYYY-MM-DD", "value": float}.
+    Returns {"date", "value" (T2108), "sa": {up4, down4, ratio5d, ratio10d,
+    t2108_avg5}} — "sa" speist die Situational-Awareness-Ampel
+    (docs/superpowers/specs/2026-07-12-situational-awareness-design.md);
+    t2108_avg5 = Schnitt der 5 Vortages-Werte, None bei zu wenig Historie.
     """
     resp = requests.get(STOCKBEE_MM_CSV, headers=HEADERS, timeout=20)
     resp.raise_for_status()
     rows = list(csv.reader(io.StringIO(resp.text)))
     header = rows[1]
-    t2108_idx = next(i for i, h in enumerate(header) if "T2108" in h)
+
+    def col(pred):
+        return next((i for i, h in enumerate(header) if pred(h.lower())), None)
+
+    t2108_idx = col(lambda h: "t2108" in h)
+    up4_idx   = col(lambda h: "up 4%" in h)
+    down4_idx = col(lambda h: "down 4%" in h)
+    r5_idx    = col(lambda h: "5 day" in h and "ratio" in h and "10" not in h)
+    r10_idx   = col(lambda h: "10 day" in h and "ratio" in h)
+    if t2108_idx is None:
+        raise ValueError("No T2108 column found in Stockbee sheet")
+
+    def num(row, idx, cast=float):
+        if idx is None or idx >= len(row):
+            return None
+        try:
+            return cast(row[idx].replace(",", ""))
+        except ValueError:
+            return None
+
+    latest = None
+    prev_t2108 = []  # T2108 der 5 Zeilen vor der jüngsten (für den Trend)
     for row in rows[2:]:
         try:
             date = datetime.strptime(row[0].strip(), "%m/%d/%Y").date()
             value = float(row[t2108_idx])
-            return {"date": date.isoformat(), "value": value}
         except (ValueError, IndexError):
             continue
-    raise ValueError("No parsable T2108 row found in Stockbee sheet")
+        if latest is None:
+            latest = {
+                "date": date.isoformat(),
+                "value": value,
+                "sa": {
+                    "up4":      num(row, up4_idx, int),
+                    "down4":    num(row, down4_idx, int),
+                    "ratio5d":  num(row, r5_idx),
+                    "ratio10d": num(row, r10_idx),
+                },
+            }
+        else:
+            prev_t2108.append(value)
+            if len(prev_t2108) == 5:
+                break
+    if latest is None:
+        raise ValueError("No parsable T2108 row found in Stockbee sheet")
+    latest["sa"]["t2108_avg5"] = (
+        round(sum(prev_t2108) / len(prev_t2108), 2) if len(prev_t2108) == 5 else None
+    )
+    return latest
+
+
+def compute_situational_state(ratio5d, ratio10d, t2108, t2108_avg5):
+    """Stockbee Situational Awareness: GREEN / YELLOW / RED, None bei Lücken.
+
+    GREEN = beide Ratios > 1.0 und T2108 über dem Schnitt seiner letzten
+    5 Werte; RED = beide < 1.0 und T2108 darunter; sonst YELLOW.
+    """
+    if None in (ratio5d, ratio10d, t2108, t2108_avg5):
+        return None
+    rising = t2108 > t2108_avg5
+    if ratio5d > 1.0 and ratio10d > 1.0 and rising:
+        return "GREEN"
+    if ratio5d < 1.0 and ratio10d < 1.0 and not rising:
+        return "RED"
+    return "YELLOW"
 
 
 def fetch_regime_inputs() -> dict:
