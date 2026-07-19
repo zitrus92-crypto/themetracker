@@ -112,6 +112,14 @@ header h1 { font-size: 18px; font-weight: 600; color: var(--accent); }
   font-size: 10.5px; color: var(--text-dim); margin-top: 8px;
   border-top: 1px solid var(--border); padding-top: 6px; line-height: 1.4;
 }
+/* Mobil: Tooltip als Overlay ueber die volle Breite statt am Badge verankert
+   (verankert liefe er links aus dem Viewport) */
+@media (max-width: 640px) {
+  .sa-tooltip {
+    position: fixed; left: 12px; right: 12px; top: 12px;
+    width: auto; max-width: none; max-height: calc(100vh - 24px);
+  }
+}
 
 .btn-refresh, .btn-lang {
   background: var(--bg3); border: 1px solid var(--border); color: var(--text);
@@ -252,9 +260,18 @@ svg.sparkline { display: block; }
   z-index: 200; box-shadow: 0 4px 16px rgba(0,0,0,0.5);
 }
 .section-hint:hover::after { opacity: 1; }
+/* Mobil: Hint-Tooltip als Overlay — absolut verankert wuerde sein min-width
+   die Seite horizontal aufspannen (Ursache der abgeschnittenen Mobil-Ansicht) */
+@media (max-width: 640px) {
+  .section-hint::after {
+    position: fixed; left: 12px; right: 12px; top: 12px;
+    min-width: 0; max-width: none;
+    max-height: calc(100vh - 24px); overflow-y: auto;
+  }
+}
 
 /* Heatmap header + INST toggle */
-.heatmap-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.heatmap-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
 .heatmap-header h2 { margin-bottom: 0; }
 .inst-toggle-btn, .etf-view-btn {
   background: var(--bg3); border: 1px solid var(--border); color: var(--text-dim);
@@ -278,6 +295,19 @@ svg.sparkline { display: block; }
 .pick-stat { text-align: right; font-size: 13px; }
 .pick-stat span { display: block; font-size: 10px; color: var(--text-dim); margin-bottom: 2px; }
 .pick-reason { font-size: 12px; color: var(--text-dim); border-left: 2px solid var(--border); padding-left: 12px; }
+/* Mobil: 7-Spalten-Grid der Pick-Cards passt nicht in schmale Viewports —
+   Name/Begruendung ueber volle Breite, Stats 3-spaltig, Header-Zeile weg
+   (jede Stat-Zelle traegt ihr eigenes Label) */
+@media (max-width: 640px) {
+  .picks-grid > .pick-card:first-child { display: none; }
+  .pick-card { grid-template-columns: repeat(3, 1fr); gap: 8px 10px; }
+  .pick-card .pick-name { grid-column: 1 / 3; }
+  .pick-card .ind-copy-btn { justify-self: end; }
+  .pick-card .pick-reason {
+    grid-column: 1 / -1; border-left: none; padding-left: 0;
+    border-top: 1px solid var(--border); padding-top: 8px;
+  }
+}
 .pick-tag {
   display: inline-block; font-size: 11px; font-weight: 700;
   padding: 2px 8px; border-radius: 4px; margin-right: 4px; margin-bottom: 3px;
@@ -429,7 +459,7 @@ a.etf-theme-badge:hover { filter: brightness(1.25); }
 #etf-list-table td:last-child { padding: 4px 8px; }
 
 /* Viz toggle (Table / Bubble / Matrix) */
-.viz-toggle { display:flex; gap:6px; margin-bottom:12px; }
+.viz-toggle { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
 .viz-btn {
   padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
   border: 1px solid var(--border); background: var(--bg2); color: var(--text-dim);
@@ -508,7 +538,7 @@ a.etf-theme-badge:hover { filter: brightness(1.25); }
 .col-check input[type="checkbox"] { accent-color: #3b82f6; cursor: pointer; }
 
 /* ── Top 20% quick-select button ─────────────────────────────────────────── */
-.heatmap-header-actions { display: flex; gap: 8px; align-items: center; }
+.heatmap-header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .top20-btn {
   background: #1f2937; color: #fbbf24;
   border: 1px solid #3b4252; border-radius: 6px;
