@@ -22,6 +22,10 @@ Vollautomatisch aus dem Stockbee-Market-Monitor-Sheet — kein manueller Pflegea
 
 ## Regel (exakt)
 
+- **NEON-GRÜN „Oversold Bounce likely"** — T2108 ≤ 10 (Vorrang vor allen
+  anderen Zuständen; Nachtrag Chris 2026-07-19). Tooltip: „Historisch
+  überverkaufter Bereich und Bounce sehr wahrscheinlich. Markt kaufen,
+  z.B. SPY, QQQ, TQQQ."
 - **GRÜN** — 5d-Ratio > 1,0 **und** 10d-Ratio > 1,0 **und** T2108 > Ø(letzte 5)
 - **ROT** — 5d-Ratio < 1,0 **und** 10d-Ratio < 1,0 **und** T2108 < Ø(letzte 5)
 - **GELB** — alles andere (gemischte Signale)

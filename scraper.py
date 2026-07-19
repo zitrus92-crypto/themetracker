@@ -851,11 +851,15 @@ def _fetch_stockbee_breadth() -> dict:
 
 
 def compute_situational_state(ratio5d, ratio10d, t2108, t2108_avg5):
-    """Stockbee Situational Awareness: GREEN / YELLOW / RED, None bei Lücken.
+    """Stockbee Situational Awareness: OVERSOLD / GREEN / YELLOW / RED, None bei Lücken.
 
-    GREEN = beide Ratios > 1.0 und T2108 über dem Schnitt seiner letzten
-    5 Werte; RED = beide < 1.0 und T2108 darunter; sonst YELLOW.
+    OVERSOLD = T2108 <= 10 (extrem überverkauft, Bounce wahrscheinlich —
+    hat Vorrang vor allen anderen Zuständen); GREEN = beide Ratios > 1.0
+    und T2108 über dem Schnitt seiner letzten 5 Werte; RED = beide < 1.0
+    und T2108 darunter; sonst YELLOW.
     """
+    if t2108 is not None and t2108 <= 10.0:
+        return "OVERSOLD"
     if None in (ratio5d, ratio10d, t2108, t2108_avg5):
         return None
     rising = t2108 > t2108_avg5

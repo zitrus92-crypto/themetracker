@@ -92,6 +92,8 @@ const I18N = {
     regimeTipFooter:  "Schwellen: DEFAULT — UNVALIDIERT",
     saTipTitle:    (d) => `Situational Awareness (Stockbee) — Stand ${d}`,
     saTipIntro:    "Marktbreite-Ampel: In welchem Markt trade ich gerade? Liest die Breadth, um die Odds einzuschätzen, bevor ein Trade eingegangen wird.",
+    saOversoldBody:   "Historisch überverkaufter Bereich und Bounce sehr wahrscheinlich. Markt kaufen, z.B. SPY, QQQ, TQQQ.",
+    saOversoldAction: "Bedingung: T2108 ≤ 10",
     saGreenBody:   "Aufwärts-Surges dominieren, 5- & 10-Tage-Ratios halten über 1,0, und T2108 steigt durch die 50–65-Zone; 20%-Study-LOW-Count (<20) zeigt extremes Oversold.\nT2108 < 10: starkes bullisches Signal",
     saGreenAction: "Breakouts handeln · Size erhöhen",
     saYellowBody:  "Surges gemischt; 5- & 10-Tage-Ratios pendeln um 1,0; T2108 extended oder choppy. Momentum lässt nach; 20%-Study-HIGH-Count (>100) zeigt überkaufte Lage — Wahrscheinlichkeit eines baldigen Rücksetzers.",
@@ -107,7 +109,7 @@ const I18N = {
     saUnknown:     "BREADTH ?",
     saTipStale:    "⚠ Breadth-Daten älter als 3 Handelstage — Zustand nicht aktuell.",
     saTipNoData:   "Breadth-Inputs unvollständig — Zustand nicht berechenbar.",
-    saRule:        "Regel: GRÜN = beide Ratios > 1,0 und T2108 steigend · ROT = beide < 1,0 und T2108 fallend · sonst GELB.",
+    saRule:        "Regel: NEON-GRÜN = T2108 ≤ 10 (Vorrang) · GRÜN = beide Ratios > 1,0 und T2108 steigend · ROT = beide < 1,0 und T2108 fallend · sonst GELB.",
   },
   en: {
     notLoaded:    "— not yet loaded —",
@@ -197,6 +199,8 @@ const I18N = {
     regimeTipFooter:  "Thresholds: DEFAULT — UNVALIDATED",
     saTipTitle:    (d) => `Situational Awareness (Stockbee) — as of ${d}`,
     saTipIntro:    "Market breadth traffic light: what kind of market are you trading in? Reads overall breadth to gauge the odds before you commit to any trade.",
+    saOversoldBody:   "Historically oversold territory — a bounce is very likely. Buy the market, e.g. SPY, QQQ, TQQQ.",
+    saOversoldAction: "Condition: T2108 ≤ 10",
     saGreenBody:   "Up-surges dominate, 5 & 10-day ratios hold above 1.0, and T2108 is rising through the 50-65 zone; 20% Study LOW Count (<20) indicating extreme oversold.\nT2108 < 10: Strong bullish signal",
     saGreenAction: "Take breakouts · size up",
     saYellowBody:  "Surges mixed; 5 & 10-day ratios hovering near 1.0; T2108 extended or choppy. Momentum is fading; 20% study HIGH count (>100), indicating overbought condition, probability of downturn soon.",
@@ -212,7 +216,7 @@ const I18N = {
     saUnknown:     "BREADTH ?",
     saTipStale:    "⚠ Breadth data older than 3 trading days — state not current.",
     saTipNoData:   "Breadth inputs incomplete — state cannot be computed.",
-    saRule:        "Rule: GREEN = both ratios > 1.0 and T2108 rising · RED = both < 1.0 and T2108 falling · else YELLOW.",
+    saRule:        "Rule: NEON GREEN = T2108 ≤ 10 (takes precedence) · GREEN = both ratios > 1.0 and T2108 rising · RED = both < 1.0 and T2108 falling · else YELLOW.",
   },
 };
 
@@ -1931,6 +1935,7 @@ function renderRegime() {
 // Datenquelle: regime.json → letzter Eintrag → "sa"-Block (vom Scraper).
 // Spec: docs/superpowers/specs/2026-07-12-situational-awareness-design.md
 const SA_STATES = [
+  { key: "OVERSOLD", cls: "sa-oversold", label: "Oversold Bounce likely", body: "saOversoldBody", action: "saOversoldAction" },
   { key: "GREEN",  cls: "sa-green",  label: "Breakouts Work", body: "saGreenBody",  action: "saGreenAction" },
   { key: "YELLOW", cls: "sa-yellow", label: "Be Selective",   body: "saYellowBody", action: "saYellowAction" },
   { key: "RED",    cls: "sa-red",    label: "Breakouts Fail", body: "saRedBody",    action: "saRedAction" },
