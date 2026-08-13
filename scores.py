@@ -1,5 +1,5 @@
-WEIGHTS = {"1D": 0.0, "1W": 0.20, "1M": 0.70, "3M": 0.10, "YTD": 0.0}
-TIMEFRAMES = ["1D", "1W", "1M", "3M", "YTD"]
+WEIGHTS = {"1D": 0.0, "1W": 0.20, "1M": 0.70, "3M": 0.10, "6M": 0.0, "YTD": 0.0}
+TIMEFRAMES = ["1D", "1W", "1M", "3M", "6M", "YTD"]
 
 
 def compute_scores(data: dict) -> dict:

@@ -17,18 +17,19 @@ HEADERS = {
 
 URL = "https://finviz.com/groups.ashx?g=industry&v=210&o=name&st=d1"
 
-TIMEFRAMES = ["1D", "1W", "1M", "3M", "YTD"]
+TIMEFRAMES = ["1D", "1W", "1M", "3M", "6M", "YTD"]
 
 PERF_FIELDS = {
     "1D":  "perfT",
     "1W":  "perfW",
     "1M":  "perfM",
     "3M":  "perfQ",
+    "6M":  "perfH",
     "YTD": "perfYtd",
 }
 
 # Trading days per period (approximate)
-_PERIOD_DAYS = {"1D": 1, "1W": 5, "1M": 21, "3M": 63}
+_PERIOD_DAYS = {"1D": 1, "1W": 5, "1M": 21, "3M": 63, "6M": 126}
 
 
 def fetch_all() -> dict:
@@ -419,7 +420,7 @@ for _node in NODE_LABELS:
             NODE_TO_THEME[_node] = THEME_LABELS[_prefix]
             break
 
-_TIMEFRAMES_ST = {"1D": "d1", "1W": "w1", "1M": "w4", "3M": "w13", "YTD": "ytd"}
+_TIMEFRAMES_ST = {"1D": "d1", "1W": "w1", "1M": "w4", "3M": "w13", "6M": "w26", "YTD": "ytd"}
 
 
 # Finviz screener theme slugs that differ from the auto-derived form.
@@ -498,14 +499,14 @@ def _fetch_one_timeframe(tf: str) -> tuple[str, dict]:
 
 def fetch_themes_data() -> dict:
     """
-    Fetch all 5 timeframes of Finviz thematic map data in parallel.
+    Fetch all 6 timeframes of Finviz thematic map data in parallel.
     Returns a dict ready to be serialised as etf_data.json.
     """
-    print("  Fetching Finviz themes map (5 timeframes in parallel)…")
+    print("  Fetching Finviz themes map (6 timeframes in parallel)…")
 
-    # Parallel fetch all 5 timeframes
+    # Parallel fetch all 6 timeframes
     tf_perfs: dict[str, dict[str, float]] = {}
-    with ThreadPoolExecutor(max_workers=5) as pool:
+    with ThreadPoolExecutor(max_workers=6) as pool:
         futures = {pool.submit(_fetch_one_timeframe, tf): tf for tf in _TIMEFRAMES_ST}
         for fut in as_completed(futures):
             try:
@@ -517,7 +518,7 @@ def fetch_themes_data() -> dict:
     # Build per-node perf records
     subnodes = {}
     for node_key, label in NODE_LABELS.items():
-        perfs = {tf: tf_perfs.get(tf, {}).get(node_key) for tf in ["1D", "1W", "1M", "3M", "YTD"]}
+        perfs = {tf: tf_perfs.get(tf, {}).get(node_key) for tf in ["1D", "1W", "1M", "3M", "6M", "YTD"]}
         subnodes[node_key] = {
             "label": label,
             "theme": NODE_TO_THEME.get(node_key, "Other"),
@@ -559,7 +560,7 @@ def fetch_themes_data() -> dict:
         top3 = sorted(nodes, key=lambda k: (subnodes[k]["perfs"].get("1M") or -999), reverse=True)[:3]
 
         themes_out[theme_label] = {
-            "perfs":    {tf: avg_perf(tf) for tf in ["1D", "1W", "1M", "3M", "YTD"]},
+            "perfs":    {tf: avg_perf(tf) for tf in ["1D", "1W", "1M", "3M", "6M", "YTD"]},
             "score":    round(avg_score, 2),
             "subnodes": nodes,
             "top3":     top3,
@@ -659,14 +660,14 @@ ETF_UNIVERSE = [
     {"ticker": "BITO", "name": "ProShares Bitcoin Strategy ETF", "category": "Crypto"},
 ]
 
-ETF_TF_MAP = {"1D": "d1", "1W": "w1", "1M": "w4", "3M": "w13", "YTD": "ytd"}
+ETF_TF_MAP = {"1D": "d1", "1W": "w1", "1M": "w4", "3M": "w13", "6M": "w26", "YTD": "ytd"}
 KNOWN_TICKERS = {e["ticker"] for e in ETF_UNIVERSE}
 
 
 def _fetch_etf_perf() -> dict:
-    """Fetch ETF performance across 5 timeframes from Finviz map.ashx.
+    """Fetch ETF performance across 6 timeframes from Finviz map.ashx.
 
-    URL pattern:  https://finviz.com/map.ashx?t=etf&st={d1,w1,w4,w13,ytd}
+    URL pattern:  https://finviz.com/map.ashx?t=etf&st={d1,w1,w4,w13,w26,ytd}
     Data pattern: FinvizInitCanvas(..., initialPerf: {"nodes": {"SPY": 3.41, ...}}, ...)
     Note: the "nodes" wrapper is unique to ETF maps (themes map has flat initialPerf).
     """
