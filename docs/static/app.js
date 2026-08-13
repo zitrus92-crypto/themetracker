@@ -1,6 +1,6 @@
-const TIMEFRAMES     = ["1D", "1W", "1M", "3M", "YTD"];
-const ETF_TIMEFRAMES = ["1D", "1W", "1M", "3M", "YTD"];
-const SPARKLINE_ORDER = ["YTD", "3M", "1M", "1W", "1D"];
+const TIMEFRAMES     = ["1D", "1W", "1M", "3M", "6M", "YTD"];
+const ETF_TIMEFRAMES = ["1D", "1W", "1M", "3M", "6M", "YTD"];
+const SPARKLINE_ORDER = ["YTD", "6M", "3M", "1M", "1W", "1D"];
 
 // --- i18n ---
 const I18N = {
@@ -493,7 +493,7 @@ function renderHeatmap(industries) {
     </tr>`;
   });
 
-  tbody.innerHTML = rows.join("") || `<tr><td colspan="11" class="empty-msg">${t("noData")}</td></tr>`;
+  tbody.innerHTML = rows.join("") || `<tr><td colspan="12" class="empty-msg">${t("noData")}</td></tr>`;
 
   // ── Multi-select wiring ───────────────────────────────────────────────────
   const indHeaderCheck = document.getElementById("ind-select-all");
@@ -1012,8 +1012,7 @@ function renderEtfPerfTab(data) {
 
   const entries = Object.entries(data.etfs);
   if (!entries.length) {
-    // Note: spec says colspan="11" but that is a spec error — the table has 10 columns
-    tbody.innerHTML = `<tr><td colspan="10" class="empty-msg">${t("etfPerfNoData")}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="empty-msg">${t("etfPerfNoData")}</td></tr>`;
     return;
   }
 
@@ -1046,7 +1045,7 @@ function renderEtfPerfTab(data) {
     const tickerLink = `<a href="${tickerUrl}" target="_blank" rel="noopener" class="etf-ticker-link">${esc(ticker)}</a>`;
     const etfCell   = `${tickerLink}${catBadge}<span class="etf-cell-name">${esc(row.name)}</span>`;
 
-    const perfCells = ["1D","1W","1M","3M","YTD"].map(tf => {
+    const perfCells = ETF_TIMEFRAMES.map(tf => {
       const v = row.perfs[tf] ?? null;
       return `<td class="${perfClass(v)}">${fmtPct(v)}</td>`;
     }).join("");
@@ -1207,9 +1206,9 @@ function computeAccel(entries) {
   return accel;
 }
 
-// Render a 4-point sparkline SVG (YTD→3M→1M→1W) colored by accel value.
+// Render a 5-point sparkline SVG (YTD→6M→3M→1M→1W) colored by accel value.
 function renderSparkline(perfs, accel) {
-  const TFS = ["YTD", "3M", "1M", "1W"];
+  const TFS = ["YTD", "6M", "3M", "1M", "1W"];
   const vals = TFS.map(tf => perfs[tf] ?? null);
   const defined = vals.filter(v => v !== null);
   if (defined.length < 2) return `<svg width="72" height="26" style="display:block"></svg>`;
@@ -1267,7 +1266,7 @@ function updateThemeSelectionBar() {
 function renderEtfThemes(data) {
   const tbody = document.getElementById("etf-themes-body");
   if (!data || !data.themes) {
-    tbody.innerHTML = `<tr><td colspan="12" class="empty-msg">${t("etfNoData")}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="13" class="empty-msg">${t("etfNoData")}</td></tr>`;
     return;
   }
 
@@ -1351,7 +1350,7 @@ function renderEtfThemes(data) {
     </tr>`;
   });
 
-  tbody.innerHTML = rows.join("") || `<tr><td colspan="12" class="empty-msg">${t("etfNoData")}</td></tr>`;
+  tbody.innerHTML = rows.join("") || `<tr><td colspan="13" class="empty-msg">${t("etfNoData")}</td></tr>`;
 
   // ── Multi-select wiring ───────────────────────────────────────────────────
   const themeHeaderCheck = document.getElementById("theme-select-all");
@@ -1431,7 +1430,7 @@ function updateSubSelectionBar() {
 function renderEtfList(data) {
   const tbody = document.getElementById("etf-list-body");
   if (!data || !data.subnodes) {
-    tbody.innerHTML = `<tr><td colspan="11" class="empty-msg">${t("etfNoData")}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="13" class="empty-msg">${t("etfNoData")}</td></tr>`;
     return;
   }
 
@@ -1495,7 +1494,7 @@ function renderEtfList(data) {
     </tr>`;
   });
 
-  tbody.innerHTML = rows.join("") || `<tr><td colspan="12" class="empty-msg">${t("etfNoData")}</td></tr>`;
+  tbody.innerHTML = rows.join("") || `<tr><td colspan="13" class="empty-msg">${t("etfNoData")}</td></tr>`;
 
   // ── Multi-select wiring ───────────────────────────────────────────────────
   const subHeaderCheck = document.getElementById("sub-select-all");
