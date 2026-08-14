@@ -557,3 +557,54 @@ a.etf-theme-badge:hover { filter: brightness(1.25); }
 .ind-copy-btn:hover  { color: var(--text); border-color: #8b949e; }
 .ind-copy-btn--done  { color: #4ade80; border-color: #4ade80; }
 .ind-copy-btn--inline { padding: 0 4px; font-size: 0.72rem; margin-left: 4px; }
+
+/* ── Setup-Tabs: First Flag / Base Breakout + Stage-Labels ──────────────── */
+.stage-label {
+  display: inline-block; padding: 2px 8px; border-radius: 10px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.3px; white-space: nowrap;
+}
+.stage-pullback   { background: #0d2a0d; color: #39d353; border: 1px solid #1f6f2f; }
+.stage-base_break { background: #0d1f3a; color: #60a5fa; border: 1px solid #1e40af; }
+.stage-trend      { background: #0d2830; color: #56d3d3; border: 1px solid #155e63; }
+.stage-extended   { background: #2a2000; color: #fbbf24; border: 1px solid #8a6d1a; }
+.stage-bounce     { background: #2a0d0d; color: #f87171; border: 1px solid #7f1d1d; }
+.stage-neutral    { background: #21262d; color: #8b949e; border: 1px solid #30363d; }
+.stage-unknown    { background: #1a1a1a; color: #6b7280; border: 1px dashed #4b5563; }
+
+.snap-health {
+  color: var(--text-dim); font-size: 12px; margin-bottom: 14px;
+  padding: 6px 10px; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 6px; display: inline-block;
+}
+.snap-health--warn { color: #fbbf24; border-color: #8a6d1a; }
+.snap-health--none { color: #6b7280; }
+
+.setup-section { margin-bottom: 22px; }
+.setup-section-hdr {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.5px;
+  color: var(--text); margin-bottom: 8px;
+}
+.setup-count { color: var(--text-dim); font-weight: 400; font-size: 12px; }
+.setup-export-btn { margin-left: auto; }
+.setup-empty {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
+  padding: 18px; color: var(--text-dim); font-size: 13px; line-height: 1.6;
+}
+.setup-empty--sub { padding: 10px; text-align: center; }
+
+details.setup-nearmiss { margin-bottom: 22px; }
+details.setup-nearmiss summary { cursor: pointer; list-style: none; user-select: none; }
+details.setup-nearmiss summary::-webkit-details-marker { display: none; }
+details.setup-nearmiss[open] summary { margin-bottom: 8px; }
+
+.seg-cell { font-variant-numeric: tabular-nums; font-size: 12px; color: var(--text-dim); }
+.seg-pos { color: #4ade80; }
+.seg-neg { color: #f87171; }
+.fresh-out { color: #fbbf24; font-weight: 600; }
+.days-green { color: #4ade80; font-weight: 700; }
+.fails-at { color: #fbbf24; font-size: 12px; max-width: 340px; white-space: normal; }
+.nv { color: #6b7280; }
+
+.setup-unknown-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.setup-unknown-item { opacity: 0.55; filter: grayscale(0.7); }
