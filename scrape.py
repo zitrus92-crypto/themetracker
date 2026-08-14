@@ -10,9 +10,10 @@ Fetches Finviz industry data AND Finviz thematic map data in parallel, writes:
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import scraper
+from market_calendar import is_trading_day
 from scores import compute_scores
 from snapshots import write_snapshot
 
@@ -124,6 +125,12 @@ def write_regime(regime_inputs: dict, today: str) -> dict:
 def main():
     DOCS.mkdir(exist_ok=True)
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # An Nicht-Handelstagen keine Zeitreihen fortschreiben: Finviz liefert dann
+    # die Vortagswerte unter neuem Datum, und history/regime/snapshots zählten
+    # Phantom-Tage (belegt: 25.05., 19.06., 03.07.2026 in history.json).
+    trading_day = is_trading_day(date.fromisoformat(today))
+    if not trading_day:
+        print(f"{today} ist kein US-Handelstag — history/regime/snapshots werden nicht fortgeschrieben.")
 
     # ── Parallel fetch ────────────────────────────────────────────────────────
     scored = None
@@ -194,13 +201,15 @@ def main():
         print("  SKIPPED etf_perf.json (fetch failed)")
 
     # ── Write regime.json ─────────────────────────────────────────────────────
-    if regime_inputs is not None:
+    if not trading_day:
+        print("  SKIPPED regime.json (kein Handelstag)")
+    elif regime_inputs is not None:
         write_regime(regime_inputs, today)
     else:
         print("  SKIPPED regime.json (fetch failed)")
 
     # ── Append to history.json ────────────────────────────────────────────────
-    if scored:
+    if scored and trading_day:
         history_path = DOCS / "history.json"
         history = json.loads(history_path.read_text()) if history_path.exists() else []
 
