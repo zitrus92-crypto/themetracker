@@ -111,6 +111,7 @@ const I18N = {
     saTipNoData:   "Breadth-Inputs unvollständig — Zustand nicht berechenbar.",
     saRule:        "Regel: NEON-GRÜN = T2108 ≤ 10 (Vorrang) · GRÜN = beide Ratios > 1,0 und T2108 steigend · ROT = beide < 1,0 und T2108 fallend · sonst GELB.",
     // First Flag / Base Breakout (SPEC-first-flag-base-breakout)
+    tabThemesOverview: "📊 Übersicht",
     tabFirstFlag:  "🚩 First Flag",
     tabBaseBreak:  "📦 Base Breakout",
     ffTitle:       "🚩 First Flag — Revier-Auswahl",
@@ -250,6 +251,7 @@ const I18N = {
     saTipNoData:   "Breadth inputs incomplete — state cannot be computed.",
     saRule:        "Rule: NEON GREEN = T2108 ≤ 10 (takes precedence) · GREEN = both ratios > 1.0 and T2108 rising · RED = both < 1.0 and T2108 falling · else YELLOW.",
     // First Flag / Base Breakout (SPEC-first-flag-base-breakout)
+    tabThemesOverview: "📊 Overview",
     tabFirstFlag:  "🚩 First Flag",
     tabBaseBreak:  "📦 Base Breakout",
     ffTitle:       "🚩 First Flag — hunting grounds",
@@ -1005,45 +1007,48 @@ function showPanel(panelId) {
 
 function initTabs() {
   const subNav = document.getElementById("industry-subnav");
+  const themesSubNav = document.getElementById("themes-subnav");
 
-  // Top-level: Industry | Themes
+  const activeTab = (nav, fallback) =>
+    nav?.querySelector(".sub-btn.active")?.dataset.tab ?? fallback;
+
+  // Top-level: Industry | Themes | ETFs
   document.querySelectorAll(".top-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".top-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       if (btn.dataset.top === "industry") {
         subNav.classList.remove("hidden");
-        const activeSubBtn = document.querySelector(".sub-btn.active");
-        showPanel(activeSubBtn ? activeSubBtn.dataset.tab : "heatmap");
+        themesSubNav.classList.add("hidden");
+        showPanel(activeTab(subNav, "heatmap"));
       } else if (btn.dataset.top === "themes") {
         subNav.classList.add("hidden");
-        showPanel("etfs");
-        if (_etfData) renderEtfTab();
-      } else if (btn.dataset.top === "firstflag") {
-        subNav.classList.add("hidden");
-        showPanel("firstflag");
-        renderSetupTabs();
-      } else if (btn.dataset.top === "basebreak") {
-        subNav.classList.add("hidden");
-        showPanel("basebreak");
-        renderSetupTabs();
+        themesSubNav.classList.remove("hidden");
+        const tab = activeTab(themesSubNav, "etfs");
+        showPanel(tab);
+        if (tab === "etfs" && _etfData) renderEtfTab();
+        else if (tab === "firstflag" || tab === "basebreak") renderSetupTabs();
       } else if (btn.dataset.top === "etfperf") {
         subNav.classList.add("hidden");
+        themesSubNav.classList.add("hidden");
         showPanel("etfperf");
         if (_etfPerfData) renderEtfPerfTab(_etfPerfData);
       }
     });
   });
 
-  // Sub-level: Heatmap | Setup Picks | Top 10
+  // Sub-level (beide Sub-Navs) — active-Zustand bleibt pro Nav erhalten,
+  // damit der Top-Level-Wechsel zum zuletzt gewählten Untertab zurückkehrt.
   document.querySelectorAll(".sub-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".sub-btn").forEach(b => b.classList.remove("active"));
+      btn.closest(".sub-nav").querySelectorAll(".sub-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       showPanel(btn.dataset.tab);
       // Re-render with real measurements — the initial render may have
       // happened while the panel was hidden (autoscale fallback dims).
       if (btn.dataset.tab === "ind-bubble" && _lastIndustries) renderIndustryBubble(_lastIndustries);
+      if (btn.dataset.tab === "etfs" && _etfData) renderEtfTab();
+      if (btn.dataset.tab === "firstflag" || btn.dataset.tab === "basebreak") renderSetupTabs();
     });
   });
 }
