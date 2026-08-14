@@ -110,6 +110,38 @@ const I18N = {
     saTipStale:    "⚠ Breadth-Daten älter als 3 Handelstage — Zustand nicht aktuell.",
     saTipNoData:   "Breadth-Inputs unvollständig — Zustand nicht berechenbar.",
     saRule:        "Regel: NEON-GRÜN = T2108 ≤ 10 (Vorrang) · GRÜN = beide Ratios > 1,0 und T2108 steigend · ROT = beide < 1,0 und T2108 fallend · sonst GELB.",
+    // First Flag / Base Breakout (SPEC-first-flag-base-breakout)
+    tabFirstFlag:  "🚩 First Flag",
+    tabBaseBreak:  "📦 Base Breakout",
+    ffTitle:       "🚩 First Flag — Revier-Auswahl",
+    bbTitle:       "📦 Base Breakout — Revier-Auswahl",
+    ffSubtitle:    "Frische Re-Beschleunigung nach geordneter Korrektur im intakten Trend (Stage PULLBACK). Revier-Auswahl, kein Kaufsignal — die Kaufentscheidung fällt am Einzelchart.",
+    bbSubtitle:    "Ausbruch aus flacher Basis (Stage BASE_BREAK). Revier-Auswahl, kein Kaufsignal — die Kaufentscheidung fällt am Einzelchart.",
+    hintFirstFlag: "Kriterien: Stage = PULLBACK · Accel ≥ +10 · Frische 1W/1M im Band 0,15–0,65.\nDichte/Breite/Konzentration folgen in Phase 2 — bis dahin „n/v“, blockieren nicht.\nSegmente entschachtelt: m4_6 = Monate 4–6, m2_3 = Monate 2–3, m1 = letzter Monat.\nSchwellen kalibriert am 14.08.2026 (ein Datensatz) — Nachkalibrierung nach ~8 Wochen Snapshots.",
+    hintBaseBreak: "Kriterien: Stage = BASE_BREAK · Frische 1W/1M im Band 0,15–0,65 — bewusst OHNE Accel-Kriterium (der Rang-Sprung ist beim Basis-Ausbruch Folge, nicht Vorbedingung).\nDichte/Breite/Konzentration folgen in Phase 2 — bis dahin „n/v“, blockieren nicht.\nSegmente entschachtelt: m4_6 = Monate 4–6, m2_3 = Monate 2–3, m1 = letzter Monat.",
+    colStage:      "Stage",
+    colDensity:    "Dichte",
+    colFreshness:  "Frische",
+    colDays:       "Tage",
+    colSegments:   "m4_6 · m2_3 · m1",
+    colFailsAt:    "Scheitert an",
+    setupQualified: "QUALIFIZIERT",
+    setupNearMiss:  "KNAPP DANEBEN",
+    setupUnknown:   "OHNE KLASSIFIKATION",
+    setupGroups:   (n) => `${n} Gruppe${n === 1 ? "" : "n"}`,
+    setupEmptyFF:  "Diese Woche kein qualifizierter First Flag. Das ist ein Ergebnis, kein Fehler.",
+    setupEmptyBB:  "Diese Woche kein qualifizierter Base Breakout. Das ist ein Ergebnis, kein Fehler.",
+    setupEmptyNear: "→ Beinahe-Treffer stehen unter „Knapp daneben“.",
+    setupFailsFmt: (label, actual, req) => `${label}: ${actual} (Soll: ${req})`,
+    setupUnknownHint: "6M fehlt im Datensatz — Klassifikation nicht möglich.",
+    setupMetricsFail: "Kennzahlen-Modul konnte nicht geladen werden — Tab ohne Funktion.",
+    setupTipDamage: "Schaden (m2_3+m4_6)",
+    setupTipConc:  "Konzentration",
+    setupTipBreadth: "Breite",
+    snapNone:      "Noch keine Snapshot-Historie — „Tage in Stage“ füllt sich ab dem ersten nächtlichen Lauf.",
+    snapLast:      (d, n, g) => `Letzter Snapshot: ${d} · ${n} Zeilen · ${g} Lücke${g === 1 ? "" : "n"} (30 T)`,
+    snapNotSettled: "vorläufig (Intraday-Lauf)",
+    nv:            "n/v",
   },
   en: {
     notLoaded:    "— not yet loaded —",
@@ -217,6 +249,38 @@ const I18N = {
     saTipStale:    "⚠ Breadth data older than 3 trading days — state not current.",
     saTipNoData:   "Breadth inputs incomplete — state cannot be computed.",
     saRule:        "Rule: NEON GREEN = T2108 ≤ 10 (takes precedence) · GREEN = both ratios > 1.0 and T2108 rising · RED = both < 1.0 and T2108 falling · else YELLOW.",
+    // First Flag / Base Breakout (SPEC-first-flag-base-breakout)
+    tabFirstFlag:  "🚩 First Flag",
+    tabBaseBreak:  "📦 Base Breakout",
+    ffTitle:       "🚩 First Flag — hunting grounds",
+    bbTitle:       "📦 Base Breakout — hunting grounds",
+    ffSubtitle:    "Fresh re-acceleration after an orderly correction in an intact trend (stage PULLBACK). Group selection, not a buy signal — the entry decision is made on the individual chart.",
+    bbSubtitle:    "Breakout from a flat base (stage BASE_BREAK). Group selection, not a buy signal — the entry decision is made on the individual chart.",
+    hintFirstFlag: "Criteria: stage = PULLBACK · Accel ≥ +10 · freshness 1W/1M within 0.15–0.65.\nDensity/breadth/concentration arrive in phase 2 — “n/a” until then, never blocking.\nDe-nested segments: m4_6 = months 4–6, m2_3 = months 2–3, m1 = last month.\nThresholds calibrated on 2026-08-14 (a single dataset) — recalibrate after ~8 weeks of snapshots.",
+    hintBaseBreak: "Criteria: stage = BASE_BREAK · freshness 1W/1M within 0.15–0.65 — deliberately WITHOUT the accel criterion (the rank jump follows a base breakout, it does not precede it).\nDensity/breadth/concentration arrive in phase 2 — “n/a” until then, never blocking.\nDe-nested segments: m4_6 = months 4–6, m2_3 = months 2–3, m1 = last month.",
+    colStage:      "Stage",
+    colDensity:    "Density",
+    colFreshness:  "Freshness",
+    colDays:       "Days",
+    colSegments:   "m4_6 · m2_3 · m1",
+    colFailsAt:    "Fails at",
+    setupQualified: "QUALIFIED",
+    setupNearMiss:  "NEAR MISS",
+    setupUnknown:   "UNCLASSIFIED",
+    setupGroups:   (n) => `${n} group${n === 1 ? "" : "s"}`,
+    setupEmptyFF:  "No qualified First Flag this week. That is a result, not an error.",
+    setupEmptyBB:  "No qualified Base Breakout this week. That is a result, not an error.",
+    setupEmptyNear: "→ Near misses are listed under “Near miss”.",
+    setupFailsFmt: (label, actual, req) => `${label}: ${actual} (required: ${req})`,
+    setupUnknownHint: "6M missing from the dataset — classification not possible.",
+    setupMetricsFail: "Metrics module could not be loaded — tab inactive.",
+    setupTipDamage: "Damage (m2_3+m4_6)",
+    setupTipConc:  "Concentration",
+    setupTipBreadth: "Breadth",
+    snapNone:      "No snapshot history yet — “days in stage” fills up from the first nightly run.",
+    snapLast:      (d, n, g) => `Last snapshot: ${d} · ${n} rows · ${g} gap${g === 1 ? "" : "s"} (30 d)`,
+    snapNotSettled: "provisional (intraday run)",
+    nv:            "n/a",
   },
 };
 
@@ -270,6 +334,7 @@ function applyTranslations() {
   if (_lastHistory) renderMovers(_lastHistory, _activePeriodDays);
   if (_etfData) renderEtfTab();
   if (_etfPerfData) renderEtfPerfTab(_etfPerfData);
+  renderSetupTabs();
   renderRegime();
   renderSituational();
 }
@@ -536,8 +601,8 @@ function renderHeatmap(industries) {
         name,
         score: row.composite,
         accel: row.acceleration,
-        ranks: { "1W": row.ranks?.["1W"], "1M": row.ranks?.["1M"], "3M": row.ranks?.["3M"] },
-        perfs: { "1W": row.perfs?.["1W"], "1M": row.perfs?.["1M"], "3M": row.perfs?.["3M"] },
+        ranks: { "1W": row.ranks?.["1W"], "1M": row.ranks?.["1M"], "3M": row.ranks?.["3M"], "6M": row.ranks?.["6M"], "YTD": row.ranks?.["YTD"] },
+        perfs: { "1W": row.perfs?.["1W"], "1M": row.perfs?.["1M"], "3M": row.perfs?.["3M"], "6M": row.perfs?.["6M"], "YTD": row.perfs?.["YTD"] },
         tickers: row.tickers ?? [],
       };
     }).filter(Boolean);
@@ -954,6 +1019,14 @@ function initTabs() {
         subNav.classList.add("hidden");
         showPanel("etfs");
         if (_etfData) renderEtfTab();
+      } else if (btn.dataset.top === "firstflag") {
+        subNav.classList.add("hidden");
+        showPanel("firstflag");
+        renderSetupTabs();
+      } else if (btn.dataset.top === "basebreak") {
+        subNav.classList.add("hidden");
+        showPanel("basebreak");
+        renderSetupTabs();
       } else if (btn.dataset.top === "etfperf") {
         subNav.classList.add("hidden");
         showPanel("etfperf");
@@ -1266,7 +1339,7 @@ function updateThemeSelectionBar() {
 function renderEtfThemes(data) {
   const tbody = document.getElementById("etf-themes-body");
   if (!data || !data.themes) {
-    tbody.innerHTML = `<tr><td colspan="13" class="empty-msg">${t("etfNoData")}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="14" class="empty-msg">${t("etfNoData")}</td></tr>`;
     return;
   }
 
@@ -1293,6 +1366,7 @@ function renderEtfThemes(data) {
     const arrow = isActive ? (_etfThemeSort.dir === 1 ? " ▲" : " ▼") : "";
     if (col === "score") th.innerHTML = t("colScore") + arrow + ` <span class="col-info" title="${t('infoScore')}">i</span>`;
     else if (col === "accel") th.innerHTML = t("etfColAccel") + arrow;
+    else if (col === "stage") th.textContent = t("colStage") + arrow;
     else th.textContent = (col === "theme" ? "Theme" : col) + arrow;
   });
 
@@ -1301,6 +1375,7 @@ function renderEtfThemes(data) {
     if (col === "theme") return dir * na.localeCompare(nb);
     if (col === "score") return dir * (a.score - b.score);
     if (col === "accel") return dir * (themeAccel[na] - themeAccel[nb]);
+    if (col === "stage") return dir * (_themeMetrics?.[na]?.stage ?? "ZZ").localeCompare(_themeMetrics?.[nb]?.stage ?? "ZZ");
     return dir * ((a.perfs[col] ?? -Infinity) - (b.perfs[col] ?? -Infinity));
   });
 
@@ -1345,12 +1420,13 @@ function renderEtfThemes(data) {
       ${perfCells}
       <td>${row.score.toFixed(1)}</td>
       <td class="${accelClass}" title="${accelTooltip}" style="cursor:help;font-weight:700">${accelSign}${accel}</td>
+      <td>${stageLabelHtml(_themeMetrics?.[theme]?.stage)}</td>
       <td style="text-align:left">${chips}</td>
       <td>${renderSparkline(row.perfs, themeAccel[theme] ?? 0)}</td>
     </tr>`;
   });
 
-  tbody.innerHTML = rows.join("") || `<tr><td colspan="13" class="empty-msg">${t("etfNoData")}</td></tr>`;
+  tbody.innerHTML = rows.join("") || `<tr><td colspan="14" class="empty-msg">${t("etfNoData")}</td></tr>`;
 
   // ── Multi-select wiring ───────────────────────────────────────────────────
   const themeHeaderCheck = document.getElementById("theme-select-all");
@@ -1388,6 +1464,7 @@ function renderEtfThemes(data) {
       const name = cb.dataset.key;
       const row  = _etfData?.themes?.[name];
       if (!row) return null;
+      const m = _themeMetrics?.[name];
       return {
         type: "theme",
         name,
@@ -1395,7 +1472,17 @@ function renderEtfThemes(data) {
         accel: _themeAccel[name],
         // Themes only have a single overall rank, not per-timeframe ranks.
         ranks: { overall: row.rank },
-        perfs: { "1W": row.perfs?.["1W"], "1M": row.perfs?.["1M"], "3M": row.perfs?.["3M"] },
+        perfs: { "1W": row.perfs?.["1W"], "1M": row.perfs?.["1M"], "3M": row.perfs?.["3M"], "6M": row.perfs?.["6M"], "YTD": row.perfs?.["YTD"] },
+        // Kennzahlen-Kern (SPEC §4.4) — null, falls das Modul nicht lud.
+        segments: m?.segments ?? null,
+        damage: m?.damage ?? null,
+        freshness: m?.freshness ?? null,
+        stage: m?.stage ?? null,
+        daysInStage: m?.daysInStage ?? null,
+        density: m?.density ?? null,
+        breadth: m?.breadth ?? null,
+        breadthDelta: m?.breadthDelta ?? null,
+        concentration: m?.concentration ?? null,
         tickers: row.tickers ?? [],
       };
     }).filter(Boolean);
@@ -1867,6 +1954,276 @@ function initEtfSortHeaders() {
   });
 }
 
+// ── Setup-Tabs: First Flag / Base Breakout ────────────────────────────────
+// Rechenkern: static/themeMetrics.js (einzige Implementierung der Stage-Logik;
+// Schwellen NUR dort in THRESHOLDS). Snapshot-Shards docs/snapshots/YYYY-MM.json
+// liefern Rohwerte; stage/daysInStage werden hier clientseitig abgeleitet.
+let _TM = null;            // dynamisch importiertes themeMetrics-Modul
+let _themeMetrics = null;  // { themeName: groupMetrics(...) } — einmal pro Datenladung
+let _snapDays = null;      // Snapshot-Tage aufsteigend: {date, gap, settled, rowCount, stages}
+
+async function ensureMetricsModule() {
+  if (_TM) return _TM;
+  try {
+    // import() in klassischen Skripten löst relativ zur Skript-URL auf.
+    _TM = await import("./themeMetrics.js?v=" + Date.now());
+  } catch (e) {
+    console.error("themeMetrics.js konnte nicht geladen werden:", e);
+    _TM = null;
+  }
+  return _TM;
+}
+
+// Die letzten 5 Monats-Shards decken die 90 Handelstage ab, die daysInStage
+// laut SPEC §5 braucht. Fehlende Shards (404, Historienbeginn) sind ok.
+function snapshotShardNames(count = 5) {
+  const names = [];
+  const d = new Date();
+  for (let i = 0; i < count; i++) {
+    names.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    d.setMonth(d.getMonth() - 1, 1);
+  }
+  return names.reverse();
+}
+
+async function loadSnapshots() {
+  const bust = `?t=${Date.now()}`;
+  const shards = await Promise.all(snapshotShardNames().map(async (name) => {
+    try {
+      const res = await fetch(`snapshots/${name}.json${bust}`);
+      return res.ok ? await res.json() : null;
+    } catch { return null; }
+  }));
+  const days = [];
+  for (const shard of shards) {
+    if (!shard) continue;
+    for (const [date, entry] of Object.entries(shard)) {
+      const stages = {};
+      if (_TM) {
+        for (const row of entry.rows) {
+          if (row.type !== "theme") continue;
+          stages[row.name] = _TM.classifyStage(_TM.segments(row.perfs), row.accel);
+        }
+      }
+      days.push({
+        date, gap: entry.gap, settled: entry.settled,
+        fetchedAt: entry.fetched_at, rowCount: entry.rows.length, stages,
+      });
+    }
+  }
+  days.sort((a, b) => a.date.localeCompare(b.date));
+  _snapDays = days;
+}
+
+// DECISIONS §4, Schreibregel 2: erreicht die Zählung ein Loch (gap), ist der
+// Wert null — ein ehrliches Loch statt erfundener Kontinuität.
+function computeDaysInStage(name, liveStage) {
+  if (!_snapDays || !_snapDays.length || !liveStage || liveStage === "UNKNOWN") return null;
+  let count = 0;
+  for (let i = _snapDays.length - 1; i >= 0; i--) {
+    const day = _snapDays[i];
+    const stage = day.stages[name];
+    if (stage === undefined) return count || null;  // Theme fehlt an dem Tag
+    if (stage !== liveStage) return count;
+    count++;
+    if (day.gap === true) return null;
+    if (day.gap === null) return count;             // Beginn der Aufzeichnung
+  }
+  return count;
+}
+
+// Die eine Normalisierungsstelle: groupMetrics() genau einmal pro Datenladung.
+function computeThemeMetrics() {
+  _themeMetrics = null;
+  if (!_TM || !_etfData?.themes) return;
+  const entries = Object.entries(_etfData.themes);
+  const accel = computeAccel(entries);
+  _themeMetrics = {};
+  for (const [name, row] of entries) {
+    const m = _TM.groupMetrics({
+      name, type: "theme", score: row.score, accel: accel[name],
+      perfs: row.perfs, tickers: row.tickers ?? [],
+    });
+    m.rank = row.rank;
+    m.daysInStage = computeDaysInStage(name, m.stage);
+    _themeMetrics[name] = m;
+  }
+}
+
+// Pflicht-Indikator (DECISIONS §4): ein still gestorbener Snapshot-Job ist der
+// wahrscheinlichste Fehlermodus dieses Vorhabens.
+function snapHealthHtml() {
+  if (!_snapDays || !_snapDays.length) {
+    return `<div class="snap-health snap-health--none">${t("snapNone")}</div>`;
+  }
+  const last = _snapDays[_snapDays.length - 1];
+  const gaps = _snapDays.slice(-30).filter(d => d.gap === true).length;
+  const locale = _lang === "de" ? "de-DE" : "en-US";
+  const when = last.fetchedAt ? new Date(last.fetchedAt).toLocaleString(locale) : last.date;
+  const note = last.settled ? "" : ` · ${t("snapNotSettled")}`;
+  const cls = gaps > 0 ? " snap-health--warn" : "";
+  return `<div class="snap-health${cls}">${t("snapLast", when, last.rowCount, gaps)}${note}</div>`;
+}
+
+function stageLabelHtml(stage) {
+  if (!stage) return "—";
+  return `<span class="stage-label stage-${stage.toLowerCase()}">${stage.replace("_", " ")}</span>`;
+}
+
+const fmtOrDash = (v, digits = 2) =>
+  (v === null || v === undefined) ? "—" : v.toFixed(digits);
+
+function segCell(v) {
+  if (v === null || v === undefined) return `<span class="seg-cell">—</span>`;
+  const cls = v > 0 ? "seg-pos" : v < 0 ? "seg-neg" : "";
+  return `<span class="seg-cell ${cls}">${v > 0 ? "+" : ""}${v.toFixed(1)}</span>`;
+}
+
+function buildSetupGroups() {
+  const entries = Object.entries(_etfData.themes);
+  const accel = computeAccel(entries);
+  return entries.map(([name, row]) => ({
+    name, type: "theme", score: row.score, accel: accel[name],
+    perfs: row.perfs, tickers: row.tickers ?? [], rank: row.rank,
+  }));
+}
+
+// Export nach SPEC §4.4: aktive Tab-Auswahl mit vollen Kennzahlen-Feldern.
+function exportSetupJson(result) {
+  const pickPerfs = (name) => {
+    const p = _etfData?.themes?.[name]?.perfs ?? {};
+    return { "1W": p["1W"], "1M": p["1M"], "3M": p["3M"], "6M": p["6M"], "YTD": p["YTD"] };
+  };
+  const rows = [...result.qualified, ...result.nearMiss].map(r => ({
+    type: "theme",
+    name: r.name,
+    score: r.score,
+    accel: r.accel,
+    ranks: { overall: r.rank },
+    perfs: pickPerfs(r.name),
+    segments: r.segments,
+    damage: r.damage,
+    freshness: r.freshness,
+    stage: r.stage,
+    daysInStage: r.daysInStage,
+    density: r.density,
+    breadth: r.breadth,
+    breadthDelta: r.breadthDelta,
+    concentration: r.concentration,
+    qualified: r.qualified,
+    failed: r.failed.map(c => c.key),
+    tickers: _etfData?.themes?.[r.name]?.tickers ?? [],
+  }));
+  exportSelectionJson(rows);
+}
+
+function setupCriterionText(c) {
+  const fmt = (v) => v === null || v === undefined ? t("nv")
+    : typeof v === "number" ? v.toFixed(2) : String(v);
+  return t("setupFailsFmt", c.label, fmt(c.actual), c.required);
+}
+
+function renderSetupTab(tab, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (!_TM || !_themeMetrics || !_etfData?.themes) {
+    container.innerHTML = `<div class="error">${t("setupMetricsFail")}</div>`;
+    return;
+  }
+  const isFF = tab === _TM.TAB.FIRST_FLAG;
+  const result = _TM.buildTab(buildSetupGroups(), tab);
+  [result.qualified, result.nearMiss, result.rejected].forEach(list =>
+    list.forEach(r => { r.daysInStage = _themeMetrics[r.name]?.daysInStage ?? null; }));
+
+  const fBand = _TM.THRESHOLDS.freshness;
+  const unknown = result.rejected.filter(r => r.stage === _TM.STAGE.UNKNOWN);
+
+  const headRow = (extraCol = "") => `<tr>
+    <th>#</th><th style="text-align:left">Theme</th><th data-i18n="colStage">${t("colStage")}</th>
+    <th>${t("colDensity")}</th><th>${t("colAccel")}</th><th>1M</th>
+    <th>${t("colFreshness")}</th><th>${t("colDays")}</th><th>${t("colSegments")}</th>${extraCol}
+  </tr>`;
+
+  const bodyRow = (r, idx, extraCell = "", rowCls = "") => {
+    const accelStr = r.accel === null ? "—" : (r.accel > 0 ? `+${r.accel}` : `${r.accel}`);
+    const accelCls = r.accel > 0 ? "accel-pos" : r.accel < 0 ? "accel-neg" : "accel-neu";
+    const freshOut = r.freshness !== null && (r.freshness < fBand.min || r.freshness > fBand.max);
+    const daysCls = r.daysInStage !== null && r.daysInStage <= 4 ? "days-green" : "";
+    const tip = [
+      `${t("setupTipDamage")}: ${fmtOrDash(r.damage, 1)}`,
+      `${t("setupTipBreadth")}: ${r.breadth === null ? t("nv") : fmtOrDash(r.breadth, 0) + " %"}`,
+      `${t("setupTipConc")}: ${r.concentration === null ? t("nv") : fmtOrDash(r.concentration)}`,
+      `Score: ${fmtOrDash(r.score, 1)}`,
+    ].join(" · ");
+    const density = r.density === null
+      ? `<span class="nv">${t("nv")}</span>`
+      : `${r.density.toFixed(0)} %`;
+    return `<tr class="${rowCls}" title="${esc(tip)}">
+      <td>${idx + 1}</td>
+      <td style="text-align:left">${themeBadge(r.name)}</td>
+      <td>${stageLabelHtml(r.stage)}</td>
+      <td>${density}</td>
+      <td class="${accelCls}">${accelStr}</td>
+      <td class="${perfClass(r.segments.m1)}">${fmtPct(r.segments.m1)}</td>
+      <td class="${freshOut ? "fresh-out" : ""}">${fmtOrDash(r.freshness)}</td>
+      <td class="${daysCls}">${r.daysInStage === null ? "—" : r.daysInStage}</td>
+      <td>${segCell(r.segments.m4_6)} ${segCell(r.segments.m2_3)} ${segCell(r.segments.m1)}</td>
+      ${extraCell}
+    </tr>`;
+  };
+
+  const qualifiedHtml = result.qualified.length
+    ? `<div class="table-scroll"><table class="setup-table">
+        <thead>${headRow()}</thead>
+        <tbody>${result.qualified.map((r, i) => bodyRow(r, i)).join("")}</tbody>
+      </table></div>`
+    : `<div class="setup-empty">${isFF ? t("setupEmptyFF") : t("setupEmptyBB")}
+        ${result.nearMiss.length ? `<br>${t("setupEmptyNear")}` : ""}</div>`;
+
+  const nearMissHtml = result.nearMiss.length
+    ? `<div class="table-scroll"><table class="setup-table">
+        <thead>${headRow(`<th style="text-align:left">${t("colFailsAt")}</th>`)}</thead>
+        <tbody>${result.nearMiss.map((r, i) =>
+          bodyRow(r, i, `<td style="text-align:left" class="fails-at">${esc(setupCriterionText(r.failed[0]))}</td>`)
+        ).join("")}</tbody>
+      </table></div>`
+    : `<div class="setup-empty setup-empty--sub">—</div>`;
+
+  const unknownHtml = unknown.length
+    ? `<div class="setup-section">
+        <div class="setup-section-hdr">${t("setupUnknown")}
+          <span class="setup-count">${t("setupGroups", unknown.length)} · ${t("setupUnknownHint")}</span></div>
+        <div class="setup-unknown-list">${unknown.map(r =>
+          `<span class="setup-unknown-item">${themeBadge(r.name)} ${stageLabelHtml(r.stage)}</span>`).join(" ")}</div>
+      </div>`
+    : "";
+
+  container.innerHTML = `
+    ${snapHealthHtml()}
+    <div class="setup-section">
+      <div class="setup-section-hdr">${t("setupQualified")}
+        <span class="setup-count">${t("setupGroups", result.qualified.length)}</span>
+        <button class="selection-bar__export-btn setup-export-btn">${t("exportJson")}</button>
+      </div>
+      ${qualifiedHtml}
+    </div>
+    <details class="setup-nearmiss"${result.qualified.length ? "" : " open"}>
+      <summary class="setup-section-hdr">▸ ${t("setupNearMiss")}
+        <span class="setup-count">${t("setupGroups", result.nearMiss.length)}</span></summary>
+      ${nearMissHtml}
+    </details>
+    ${unknownHtml}`;
+
+  const exportBtn = container.querySelector(".setup-export-btn");
+  if (exportBtn) exportBtn.onclick = () => exportSetupJson(result);
+}
+
+function renderSetupTabs() {
+  if (!_TM) return;
+  renderSetupTab(_TM.TAB.FIRST_FLAG, "firstflag-container");
+  renderSetupTab(_TM.TAB.BASE_BREAKOUT, "basebreak-container");
+}
+
 // ── Regime-Gate Badge (Modul A) ───────────────────────────────────────────
 // Datenquelle: docs/regime.json (vom Scraper geschrieben, letzter Eintrag zählt).
 // Design: docs/superpowers/plans/2026-07-02-regime-gate-theme-id-empfehlung.md
@@ -2041,7 +2398,13 @@ async function loadData() {
 
     if (etfRes.ok) {
       _etfData = await etfRes.json();
+      // Kennzahlen-Kern + Snapshot-Historie: einmal pro Datenladung, dann
+      // stehen stage/daysInStage für Tabelle, Setup-Tabs und Export bereit.
+      await ensureMetricsModule();
+      await loadSnapshots();
+      computeThemeMetrics();
       renderEtfTab();
+      renderSetupTabs();
     } else {
       document.getElementById("etf-loading").classList.add("hidden");
       document.getElementById("etf-error").textContent = t("etfNoData");

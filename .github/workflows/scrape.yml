@@ -38,6 +38,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      # Guard: broken metric logic must never ship data. themeMetrics.js is the
+      # single implementation of the stage/segment math (client + report).
+      - name: Run metric tests
+        run: node --test docs/static/themeMetrics.test.js
+
+      - name: Run calendar/snapshot tests
+        run: python -m unittest discover -s tests -t . -p "test_*.py"
+
       - name: Run scraper
         run: python scrape.py
 
@@ -45,6 +53,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/data.json docs/etf_data.json docs/etf_perf.json docs/history.json docs/regime.json
+          git add docs/data.json docs/etf_data.json docs/etf_perf.json docs/history.json docs/regime.json docs/snapshots
           git diff --staged --quiet || git commit -m "data: update $(TZ='America/New_York' date '+%Y-%m-%d %H:%M %Z')"
           git push

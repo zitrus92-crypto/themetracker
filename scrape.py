@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 
 import scraper
 from scores import compute_scores
+from snapshots import write_snapshot
 
 DOCS = Path(__file__).parent / "docs"
 MAX_HISTORY = 95  # ~4.5 months of trading days
@@ -223,6 +224,14 @@ def main():
             json.dumps(history, ensure_ascii=False, separators=(",", ":"))
         )
         print(f"  Saved history.json ({len(history)} entries)")
+
+    # ── Snapshot-Shards (Rohwerte beider Universen, docs/snapshots/) ─────────
+    write_snapshot(
+        scored or {},
+        (etf_payload or {}).get("themes") or {},
+        today,
+        datetime.now(timezone.utc),
+    )
 
 
 if __name__ == "__main__":
