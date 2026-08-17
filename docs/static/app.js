@@ -136,6 +136,63 @@ const I18N = {
     setupFailsFmt: (label, actual, req) => `${label}: ${actual} (Soll: ${req})`,
     setupUnknownHint: "6M fehlt im Datensatz — Klassifikation nicht möglich.",
     setupMetricsFail: "Kennzahlen-Modul konnte nicht geladen werden — Tab ohne Funktion.",
+    topWeekend:    "📅 Weekend Prep",
+    weekendTitle:  "📅 Weekend Prep — Wochenplan",
+    hintWeekend:   "Konsolidiert Themes UND Industries zu EINER Revier-Rangfolge.\nStruktur-Score (0–100) = Stage 30 + Frische 25 + Schaden 25 + Accel 20.\nAccel wird als Perzentil innerhalb der eigenen Ebene gewertet — Theme- und Industry-Accel sind absolut nicht vergleichbar.\nHart aussortiert: BOUNCE, EXTENDED, 1M ≤ 0, fehlendes 6M.\nDubletten (gleicher Rohstoff-/Namenskomplex oder >30 % Ticker-Überschneidung) belegen keinen zweiten Fokus-Slot.\nRevier-Auswahl, kein Kaufsignal — die Kaufentscheidung fällt am Einzelchart.",
+    wpFocusTitle:  "WOCHENFOKUS",
+    wpFocusHint:   "max. 3 Reviere · Dubletten übersprungen",
+    wpNoFocus:     "Kein Revier übersteht die harten Filter. Kurze Liste ist dann gewollt.",
+    wpMoreTitle:   "WEITERE REVIERE",
+    wpWatchTitle:  "WATCH — NÄCHSTE WOCHE",
+    wpWatchHint:   "genau ein Kriterium verfehlt",
+    wpExcludedTitle: "AUSSORTIERT",
+    wpExcludedHint:  "harte Vetos — nicht handeln",
+    wpColGroup:    "Gruppe",
+    wpColScore:    "Score",
+    wpColNote:     "Hinweis",
+    wpColReason:   "Grund",
+    wpTypeTheme:   "Theme",
+    wpTypeIndustry:"Industry",
+    wpTickers:     "Ticker",
+    wpScoreTitle:  "Struktur-Score 0–100: Stage + Frische + Schaden + Accel",
+    wpScoreAria:   (n) => `Struktur-Score ${n} von 100`,
+    wpPart_stage:     "Stage",
+    wpPart_freshness: "Frische",
+    wpPart_damage:    "Basis-Gesundheit",
+    wpPart_accel:     "Accel-Perzentil",
+    wpBorderlineTag: "GRENZFALL",
+    wpDuplicate:   (name, why) => `⚠ Gleicher Trade wie „${name}" (${why}) — belegt keinen eigenen Slot.`,
+    wpDupReason_tickers: "Ticker-Überschneidung",
+    wpDupReason_complex: "gleicher Rohstoff-Komplex",
+    wpDupReason_name:    "gleicher Namens-Komplex",
+    wpExcl_bounce:   "BOUNCE — Anstieg aus beschädigter Struktur (Schaden ≤ −15)",
+    wpExcl_extended: "EXTENDED — Bewegung ausgelaufen, Momentum dreht",
+    wpExcl_m1:       "1M ≤ 0 % — Killswitch",
+    wpExcl_unknown:  "6M fehlt — nicht klassifizierbar",
+    wpExcl_noTickers:"keine Ticker im Datensatz",
+    wpWhyStage_pullback:   "Rücksetzer in intaktem Aufwärtstrend — klassischer First-Flag-Aufbau.",
+    wpWhyStage_base_break: "Ausbruch aus flacher 6-Monats-Basis.",
+    wpWhyStage_trend:      "Trend läuft, kein frischer Startpunkt.",
+    wpWhyStage_neutral:    "Kein klares Strukturmuster — trägt sich nur über die anderen Faktoren.",
+    wpWhyStageOther: (s) => `Stage ${s}.`,
+    wpWhyFreshOk:    (v) => `Frische ${v} im Band: Bewegung über den Monat verteilt, Basen wahrscheinlich intakt.`,
+    wpWhyFreshStale: (v) => `Frische ${v} unter dem Band: Der Move ist älter, letzte Woche kam wenig dazu — eher Konsolidierung als frischer Schub.`,
+    wpWhyFreshHot:   (v) => `Frische ${v} über dem Band: Fast der ganze Monatsgewinn kam letzte Woche — viele Einzelwerte dürften extended sein, eher Pullback-Revier.`,
+    wpWhyDamageOk:   (v) => `Basis gesund (Schaden ${v}).`,
+    wpWhyDamageWeak: (v) => `Basis angeschlagen (Schaden ${v}) — knapp über dem Bounce-Veto.`,
+    wpWhyQualFF:     "Qualifiziert zusätzlich im First-Flag-Tab.",
+    wpWhyQualBB:     "Qualifiziert zusätzlich im Base-Breakout-Tab.",
+    wpWhyBorderline: "Verfehlt ein Tab-Kriterium nur um Rundungsbreite.",
+    wpCopyFocus:      "📋 Wochenfokus",
+    wpCopyFocusTitle: "Die Fokus-Reviere als benannte TradingView-Sektionen kopieren",
+    wpCopyWatch:      "📋 Watch-Liste",
+    wpCopyWatchTitle: "Die Watch-Kandidaten für nächste Woche als TradingView-Sektionen kopieren",
+    wpCopyReport:     "📄 Textreport",
+    wpCopyReportTitle:"Kompletten Wochenplan als Text kopieren (Regime, Reviere, Begründungen, Ticker)",
+    wpReportCopied:   "Wochenplan als Text kopiert!",
+    wpRiskFor_RISK_ON:  "1 % Risk/Trade, Add-ons erlaubt",
+    wpRiskFor_NEUTRAL:  "0,5 % Risk/Trade, keine Add-ons",
+    wpRiskFor_RISK_OFF: "keine neuen Entries",
     copyGroupTitle: "Ticker dieser Gruppe kopieren (kommagetrennt)",
     copyAllBtn:     "📋 Alle kopieren",
     copyAllTitle:   "Alle Gruppen dieser Liste als benannte TradingView-Sektionen kopieren (###Gruppe,TICK,…)",
@@ -280,6 +337,63 @@ const I18N = {
     setupFailsFmt: (label, actual, req) => `${label}: ${actual} (required: ${req})`,
     setupUnknownHint: "6M missing from the dataset — classification not possible.",
     setupMetricsFail: "Metrics module could not be loaded — tab inactive.",
+    topWeekend:    "📅 Weekend Prep",
+    weekendTitle:  "📅 Weekend Prep — Weekly Plan",
+    hintWeekend:   "Consolidates themes AND industries into ONE hunting-ground ranking.\nStructure score (0–100) = stage 30 + freshness 25 + damage 25 + accel 20.\nAccel counts as a percentile within its own level — theme and industry accel are not comparable in absolute terms.\nHard-excluded: BOUNCE, EXTENDED, 1M ≤ 0, missing 6M.\nDuplicates (same commodity/name complex or >30 % ticker overlap) never take a second focus slot.\nHunting-ground selection, not a buy signal — the chart decides.",
+    wpFocusTitle:  "WEEKLY FOCUS",
+    wpFocusHint:   "max. 3 grounds · duplicates skipped",
+    wpNoFocus:     "No hunting ground survives the hard filters. A short list is the intended outcome.",
+    wpMoreTitle:   "FURTHER GROUNDS",
+    wpWatchTitle:  "WATCH — NEXT WEEK",
+    wpWatchHint:   "exactly one criterion missed",
+    wpExcludedTitle: "EXCLUDED",
+    wpExcludedHint:  "hard vetoes — do not trade",
+    wpColGroup:    "Group",
+    wpColScore:    "Score",
+    wpColNote:     "Note",
+    wpColReason:   "Reason",
+    wpTypeTheme:   "Theme",
+    wpTypeIndustry:"Industry",
+    wpTickers:     "tickers",
+    wpScoreTitle:  "Structure score 0–100: stage + freshness + damage + accel",
+    wpScoreAria:   (n) => `Structure score ${n} of 100`,
+    wpPart_stage:     "Stage",
+    wpPart_freshness: "Freshness",
+    wpPart_damage:    "Base health",
+    wpPart_accel:     "Accel percentile",
+    wpBorderlineTag: "BORDERLINE",
+    wpDuplicate:   (name, why) => `⚠ Same trade as “${name}” (${why}) — does not take its own slot.`,
+    wpDupReason_tickers: "ticker overlap",
+    wpDupReason_complex: "same commodity complex",
+    wpDupReason_name:    "same name complex",
+    wpExcl_bounce:   "BOUNCE — rising out of damaged structure (damage ≤ −15)",
+    wpExcl_extended: "EXTENDED — move exhausted, momentum rolling over",
+    wpExcl_m1:       "1M ≤ 0 % — killswitch",
+    wpExcl_unknown:  "6M missing — cannot classify",
+    wpExcl_noTickers:"no tickers in the dataset",
+    wpWhyStage_pullback:   "Pullback within an intact uptrend — the classic First Flag setup.",
+    wpWhyStage_base_break: "Breakout from a flat six-month base.",
+    wpWhyStage_trend:      "Trend is running, no fresh starting point.",
+    wpWhyStage_neutral:    "No clear structural pattern — carried by the other factors alone.",
+    wpWhyStageOther: (s) => `Stage ${s}.`,
+    wpWhyFreshOk:    (v) => `Freshness ${v} inside the band: the move is spread across the month, bases likely intact.`,
+    wpWhyFreshStale: (v) => `Freshness ${v} below the band: the move is older, last week added little — consolidation rather than a fresh push.`,
+    wpWhyFreshHot:   (v) => `Freshness ${v} above the band: nearly the whole monthly gain came last week — many names are likely extended, so treat it as pullback territory.`,
+    wpWhyDamageOk:   (v) => `Base is healthy (damage ${v}).`,
+    wpWhyDamageWeak: (v) => `Base is bruised (damage ${v}) — just above the bounce veto.`,
+    wpWhyQualFF:     "Also qualifies in the First Flag tab.",
+    wpWhyQualBB:     "Also qualifies in the Base Breakout tab.",
+    wpWhyBorderline: "Misses a tab criterion by rounding width only.",
+    wpCopyFocus:      "📋 Weekly focus",
+    wpCopyFocusTitle: "Copy the focus grounds as named TradingView sections",
+    wpCopyWatch:      "📋 Watch list",
+    wpCopyWatchTitle: "Copy next week's watch candidates as TradingView sections",
+    wpCopyReport:     "📄 Text report",
+    wpCopyReportTitle:"Copy the full weekly plan as text (regime, grounds, rationale, tickers)",
+    wpReportCopied:   "Weekly plan copied as text!",
+    wpRiskFor_RISK_ON:  "1 % risk/trade, add-ons allowed",
+    wpRiskFor_NEUTRAL:  "0.5 % risk/trade, no add-ons",
+    wpRiskFor_RISK_OFF: "no new entries",
     copyGroupTitle: "Copy this group's tickers (comma-separated)",
     copyAllBtn:     "📋 Copy all",
     copyAllTitle:   "Copy every group in this list as named TradingView sections (###Group,TICK,…)",
@@ -345,6 +459,7 @@ function applyTranslations() {
   if (_etfData) renderEtfTab();
   if (_etfPerfData) renderEtfPerfTab(_etfPerfData);
   renderSetupTabs();
+  renderWeekendPrep();
   renderRegime();
   renderSituational();
 }
@@ -1068,7 +1183,12 @@ function initTabs() {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".top-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-      if (btn.dataset.top === "industry") {
+      if (btn.dataset.top === "weekend") {
+        subNav.classList.add("hidden");
+        themesSubNav.classList.add("hidden");
+        showPanel("weekend");
+        renderWeekendPrep();
+      } else if (btn.dataset.top === "industry") {
         subNav.classList.remove("hidden");
         themesSubNav.classList.add("hidden");
         showPanel(activeTab(subNav, "heatmap"));
@@ -2296,6 +2416,239 @@ function renderSetupTab(tab, containerId) {
       e.preventDefault();
       copyGroupsAsSections(btn, list.map(r => ({ name: r.name, scope: "theme" })));
     };
+  });
+}
+
+// ── Weekend Prep ──────────────────────────────────────────────────────────
+// Konsolidiert Themes UND Industries zu einer Revier-Rangfolge. Die Tabs
+// First Flag / Base Breakout beantworten "qualifiziert ja/nein"; dieser Tab
+// beantwortet "wo jage ich diese Woche" — auch wenn nichts qualifiziert.
+
+// Industry-Universum: Top 40 nach Composite. Ohne Vorfilter stünden 144
+// Industries im Rennen, davon die meisten ohne Momentum.
+const WEEKEND_IND_POOL = 40;
+
+function buildWeekendGroups() {
+  const groups = [];
+  if (_etfData?.themes) {
+    for (const [name, row] of Object.entries(_etfData.themes)) {
+      groups.push({ name, type: "theme", score: row.score, accel: _themeAccel[name] ?? 0,
+                    perfs: row.perfs, tickers: row.tickers ?? [] });
+    }
+  }
+  if (_lastIndustries) {
+    const entries = Object.entries(_lastIndustries);
+    const rank = Object.fromEntries(
+      [...entries].sort(([, a], [, b]) => a.composite - b.composite).map(([n], i) => [n, i + 1])
+    );
+    for (const [name, row] of entries) {
+      if (rank[name] > WEEKEND_IND_POOL) continue;
+      groups.push({ name, type: "industry", score: row.composite, accel: row.acceleration,
+                    perfs: row.perfs, tickers: row.tickers ?? [] });
+    }
+  }
+  return groups;
+}
+
+// Begründung in Klartext — jeder Satz hängt an genau einer Kennzahl,
+// damit nachvollziehbar bleibt, warum die Gruppe hier steht.
+function weekendReason(r) {
+  const out = [];
+  const f = _TM.THRESHOLDS.freshness;
+  out.push(t("wpWhyStage_" + String(r.stage).toLowerCase()) || t("wpWhyStageOther", r.stage));
+  if (r.freshness !== null) {
+    if (r.freshness >= f.min && r.freshness <= f.max) out.push(t("wpWhyFreshOk", r.freshness.toFixed(2)));
+    else if (r.freshness < f.min) out.push(t("wpWhyFreshStale", r.freshness.toFixed(2)));
+    else out.push(t("wpWhyFreshHot", r.freshness.toFixed(2)));
+  }
+  if (r.damage !== null) {
+    out.push(r.damage >= 0 ? t("wpWhyDamageOk", r.damage.toFixed(1)) : t("wpWhyDamageWeak", r.damage.toFixed(1)));
+  }
+  if (r.qualifiesFF) out.push(t("wpWhyQualFF"));
+  if (r.qualifiesBB) out.push(t("wpWhyQualBB"));
+  if (r.borderline)  out.push(t("wpWhyBorderline"));
+  return out.join(" ");
+}
+
+function weekendScoreBar(parts, total) {
+  const w = _TM.WEEKEND.scoreWeights;
+  const seg = (key, cls) =>
+    `<span class="wp-bar__seg ${cls}" style="width:${(parts[key] / (w.stage + w.freshness + w.damage + w.accel)) * 100}%"
+       title="${esc(t("wpPart_" + key))}: ${parts[key].toFixed(1)} / ${w[key]}"></span>`;
+  return `<div class="wp-bar" role="img" aria-label="${esc(t("wpScoreAria", total.toFixed(0)))}">
+    ${seg("stage", "wp-bar--stage")}${seg("freshness", "wp-bar--fresh")}${seg("damage", "wp-bar--dmg")}${seg("accel", "wp-bar--accel")}
+  </div>`;
+}
+
+function weekendCard(r, idx) {
+  const typeLabel = r.type === "theme" ? t("wpTypeTheme") : t("wpTypeIndustry");
+  const dup = r.duplicateOf
+    ? `<div class="wp-dup">${t("wpDuplicate", esc(r.duplicateOf), t("wpDupReason_" + r.duplicateReason))}</div>` : "";
+  return `<div class="wp-card">
+    <div class="wp-card__head">
+      <span class="wp-rank">${idx + 1}</span>
+      <span class="wp-name">${esc(r.name)}</span>
+      <span class="wp-type wp-type--${r.type}">${typeLabel}</span>
+      ${stageLabelHtml(r.stage)}
+      <span class="wp-score" title="${esc(t("wpScoreTitle"))}">${r.score.toFixed(0)}</span>
+      <button class="ind-copy-btn" data-scope="${r.type}" data-key="${esc(r.name)}"
+              title="${esc(t("copyGroupTitle"))}">📋 ${r.tickers.length}</button>
+    </div>
+    ${weekendScoreBar(r.scoreParts, r.score)}
+    <div class="wp-why">${weekendReason(r)}</div>
+    <div class="wp-metrics">
+      <span>${t("colFreshness")} <b class="${r.freshness !== null && (r.freshness < _TM.THRESHOLDS.freshness.min || r.freshness > _TM.THRESHOLDS.freshness.max) ? "fresh-out" : ""}">${fmtOrDash(r.freshness)}</b></span>
+      <span>${t("setupTipDamage")} <b>${fmtOrDash(r.damage, 1)}</b></span>
+      <span>1M <b class="${perfClass(r.segments.m1)}">${fmtPct(r.segments.m1)}</b></span>
+      <span>${t("colSegments")} <b>${segCell(r.segments.m4_6)} ${segCell(r.segments.m2_3)} ${segCell(r.segments.m1)}</b></span>
+    </div>
+    ${dup}
+  </div>`;
+}
+
+// Veraltete Breadth-Daten werden wie NEUTRAL behandelt — dieselbe Regel wie
+// im Header-Badge und in der Routine.
+function effectiveRegime() {
+  const r = _regimeData;
+  if (!r?.state) return null;
+  const stale = r.b1_stale || r.t1 === null || r.t2 === null || r.b1 === null;
+  return { raw: r.state, effective: stale ? "NEUTRAL" : r.state, stale };
+}
+
+// Textreport fürs Journal — bewusst Klartext, nicht JSON.
+function weekendReport(wp) {
+  const L = [];
+  const rg = effectiveRegime();
+  const regime = rg?.effective ?? "?";
+  L.push(`WEEKEND PREP — ${new Date().toLocaleDateString(_lang === "de" ? "de-DE" : "en-US")}`);
+  L.push(`Regime: ${rg ? rg.raw : "?"}${rg?.stale ? " (" + t("regimeStale") + ")" : ""} · ${t("wpRiskFor_" + regime) || ""}`);
+  L.push("");
+  L.push(`${t("wpFocusTitle")}:`);
+  wp.focus.forEach((r, i) => {
+    L.push(`${i + 1}. ${r.name} [${r.type === "theme" ? t("wpTypeTheme") : t("wpTypeIndustry")}] · Score ${r.score.toFixed(0)} · ${r.stage}`);
+    L.push(`   ${weekendReason(r)}`);
+    L.push(`   ${t("colFreshness")} ${fmtOrDash(r.freshness)} · ${t("setupTipDamage")} ${fmtOrDash(r.damage, 1)} · 1M ${fmtPct(r.segments.m1)} · ${r.tickers.length} ${t("wpTickers")}`);
+    L.push(`   ${r.tickers.join(",")}`);
+    L.push("");
+  });
+  if (wp.watch.length) {
+    L.push(`${t("wpWatchTitle")}: ${wp.watch.slice(0, 8).map(r => r.name + (r.borderline ? " (!)" : "")).join(" · ")}`);
+    L.push("");
+  }
+  if (wp.excluded.length) {
+    L.push(`${t("wpExcludedTitle")}: ${wp.excluded.slice(0, 8).map(r => `${r.name} (${t("wpExcl_" + r.exclusion)})`).join(" · ")}`);
+  }
+  return L.join("\n");
+}
+
+function renderWeekendPrep() {
+  const box = document.getElementById("weekend-container");
+  if (!box) return;
+  if (!_TM || !_etfData?.themes) { box.innerHTML = `<div class="error">${t("setupMetricsFail")}</div>`; return; }
+
+  const wp = _TM.buildWeekendPrep(buildWeekendGroups(), { focusSlots: 3 });
+
+  // Label/Effekt spiegeln renderRegime — inkl. "veraltet wird wie NEUTRAL behandelt".
+  const rg = effectiveRegime();
+  const suffix = rg?.effective === "RISK_ON" ? "On" : rg?.effective === "RISK_OFF" ? "Off" : "Neutral";
+  const label = !rg ? t("regimeUnknown")
+    : rg.stale ? t("regimeStale")
+    : rg.raw === "RISK_ON" ? "RISK-ON" : rg.raw === "NEUTRAL" ? "NEUTRAL" : "RISK-OFF";
+  const regimeBlock = `<div class="wp-regime wp-regime--${String(rg?.effective ?? "unknown").toLowerCase()}">
+    <span class="wp-regime__state">${label}</span>
+    <span class="wp-regime__effect">${rg ? t("regimeEffect" + suffix) : ""}</span>
+  </div>`;
+
+  const more = wp.reviere.filter(r => !wp.focus.includes(r)).slice(0, 12);
+  const moreRows = more.map((r, i) => `<tr>
+      <td>${wp.focus.length + i + 1}</td>
+      <td style="text-align:left" class="setup-name-cell">${esc(r.name)}
+        <span class="wp-type wp-type--${r.type}">${r.type === "theme" ? t("wpTypeTheme") : t("wpTypeIndustry")}</span>
+        <button class="ind-copy-btn" data-scope="${r.type}" data-key="${esc(r.name)}" title="${esc(t("copyGroupTitle"))}">📋</button></td>
+      <td>${stageLabelHtml(r.stage)}</td>
+      <td>${r.score.toFixed(0)}</td>
+      <td>${fmtOrDash(r.freshness)}</td>
+      <td>${fmtOrDash(r.damage, 1)}</td>
+      <td class="${perfClass(r.segments.m1)}">${fmtPct(r.segments.m1)}</td>
+      <td style="text-align:left" class="wp-dup-cell">${r.duplicateOf ? t("wpDuplicate", esc(r.duplicateOf), t("wpDupReason_" + r.duplicateReason)) : ""}</td>
+    </tr>`).join("");
+
+  const watchRows = wp.watch.slice(0, 10).map(r => `<tr>
+      <td style="text-align:left" class="setup-name-cell">${esc(r.name)}
+        <span class="wp-type wp-type--${r.type}">${r.type === "theme" ? t("wpTypeTheme") : t("wpTypeIndustry")}</span>
+        <button class="ind-copy-btn" data-scope="${r.type}" data-key="${esc(r.name)}" title="${esc(t("copyGroupTitle"))}">📋</button></td>
+      <td>${stageLabelHtml(r.stage)}</td>
+      <td>${fmtOrDash(r.freshness)}</td>
+      <td style="text-align:left" class="fails-at">
+        <span class="wp-near-tab">${r.nearMissTab === _TM.TAB.FIRST_FLAG ? t("tabFirstFlag") : t("tabBaseBreak")}</span>
+        ${r.borderline ? `<b>${t("wpBorderlineTag")}</b> ` : ""}${r.nearMissCriterion ? esc(setupCriterionText(r.nearMissCriterion)) : "—"}</td>
+    </tr>`).join("");
+
+  const exclRows = wp.excluded.slice(0, 12).map(r => `<tr>
+      <td style="text-align:left">${esc(r.name)}
+        <span class="wp-type wp-type--${r.type}">${r.type === "theme" ? t("wpTypeTheme") : t("wpTypeIndustry")}</span></td>
+      <td>${stageLabelHtml(r.stage)}</td>
+      <td style="text-align:left" class="wp-excl-reason">${t("wpExcl_" + r.exclusion)}</td>
+      <td>${fmtOrDash(r.damage, 1)}</td>
+    </tr>`).join("");
+
+  box.innerHTML = `
+    ${snapHealthHtml()}
+    ${regimeBlock}
+    <div class="wp-toolbar">
+      <button class="setup-copyall-btn wp-copy-focus" title="${esc(t("wpCopyFocusTitle"))}">${t("wpCopyFocus")}</button>
+      <button class="setup-copyall-btn wp-copy-watch" title="${esc(t("wpCopyWatchTitle"))}">${t("wpCopyWatch")}</button>
+      <button class="setup-copyall-btn wp-copy-report" title="${esc(t("wpCopyReportTitle"))}">${t("wpCopyReport")}</button>
+    </div>
+
+    <div class="setup-section-hdr">${t("wpFocusTitle")}
+      <span class="setup-count">${t("wpFocusHint")}</span></div>
+    ${wp.focus.length ? `<div class="wp-cards">${wp.focus.map(weekendCard).join("")}</div>`
+                      : `<div class="setup-empty">${t("wpNoFocus")}</div>`}
+
+    <details class="setup-nearmiss wp-details">
+      <summary class="setup-section-hdr">▸ ${t("wpMoreTitle")}
+        <span class="setup-count">${t("setupGroups", more.length)}</span></summary>
+      <div class="table-scroll"><table class="setup-table">
+        <thead><tr><th>#</th><th style="text-align:left">${t("wpColGroup")}</th><th>${t("colStage")}</th>
+          <th>${t("wpColScore")}</th><th>${t("colFreshness")}</th><th>${t("setupTipDamage")}</th><th>1M</th>
+          <th style="text-align:left">${t("wpColNote")}</th></tr></thead>
+        <tbody>${moreRows || `<tr><td colspan="8" class="empty-msg">—</td></tr>`}</tbody>
+      </table></div>
+    </details>
+
+    <details class="setup-nearmiss wp-details" open>
+      <summary class="setup-section-hdr">▸ ${t("wpWatchTitle")}
+        <span class="setup-count">${t("setupGroups", wp.watch.length)} · ${t("wpWatchHint")}</span></summary>
+      <div class="table-scroll"><table class="setup-table">
+        <thead><tr><th style="text-align:left">${t("wpColGroup")}</th><th>${t("colStage")}</th>
+          <th>${t("colFreshness")}</th><th style="text-align:left">${t("colFailsAt")}</th></tr></thead>
+        <tbody>${watchRows || `<tr><td colspan="4" class="empty-msg">—</td></tr>`}</tbody>
+      </table></div>
+    </details>
+
+    <details class="setup-nearmiss wp-details">
+      <summary class="setup-section-hdr">▸ ${t("wpExcludedTitle")}
+        <span class="setup-count">${t("setupGroups", wp.excluded.length)} · ${t("wpExcludedHint")}</span></summary>
+      <div class="table-scroll"><table class="setup-table">
+        <thead><tr><th style="text-align:left">${t("wpColGroup")}</th><th>${t("colStage")}</th>
+          <th style="text-align:left">${t("wpColReason")}</th><th>${t("setupTipDamage")}</th></tr></thead>
+        <tbody>${exclRows || `<tr><td colspan="4" class="empty-msg">—</td></tr>`}</tbody>
+      </table></div>
+    </details>`;
+
+  wireIndCopyButtons(box);
+
+  const focusBtn = box.querySelector(".wp-copy-focus");
+  focusBtn.onclick = () => copyGroupsAsSections(focusBtn, wp.focus.map(r => ({ name: r.name, scope: r.type })));
+
+  const watchBtn = box.querySelector(".wp-copy-watch");
+  watchBtn.onclick = () => copyGroupsAsSections(watchBtn, wp.watch.slice(0, 10).map(r => ({ name: r.name, scope: r.type })));
+
+  const reportBtn = box.querySelector(".wp-copy-report");
+  reportBtn.onclick = () => navigator.clipboard.writeText(weekendReport(wp)).then(() => {
+    flashDone(reportBtn);
+    showToast(t("wpReportCopied"));
   });
 }
 

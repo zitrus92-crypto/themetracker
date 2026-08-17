@@ -20,6 +20,8 @@
 
 > **Ergebnis:** 2–3 Reviere · A-Liste (Breakout-Ready) mit Pivots · B-Liste (Pullback-Watch) mit Levels · Alerts in TradingView gesetzt.
 
+> **Abkürzung:** Der Tab **📅 Weekend Prep** macht Block A komplett automatisch — er führt Themes und Industries zu einer Rangfolge zusammen, sortiert BOUNCE/EXTENDED hart aus, überspringt Dubletten desselben Komplexes und liefert Wochenfokus, Watch-Liste und Textreport auf einen Klick. Die Schritte 1–6 unten sind der manuelle Weg bzw. die Erklärung, was der Tab rechnet.
+
 ### Block A — Markt & Reviere (≈ 20 Min)
 
 1. **Regime-Badge** im Header ablesen → Risk-Stufe für die Woche notieren. RISK-OFF: Analyse trotzdem machen (Watchlist pflegen), aber keine neuen Orders.
