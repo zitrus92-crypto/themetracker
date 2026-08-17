@@ -31,7 +31,9 @@
 
 ### Block B — Einzelwerte (≈ 40–60 Min, Kern der Wochenendzeit)
 
-7. Pro Revier: Zeile anhaken → **📋 Kopieren** → als Watchlist in TradingView anlegen (Vorwochen-Liste überschreiben).
+7. Ticker holen — zwei Wege, beide ein Klick:
+   - **Eine Watchlist pro Revier:** das **📋** neben dem Theme- bzw. Industry-Namen → kommagetrennte Ticker → in TradingView einfügen (Vorwochen-Liste überschreiben).
+   - **Alles auf einmal:** **📋 Alle kopieren** über der Liste (First Flag, Base Breakout, Setup Picks) → alle Gruppen als benannte TradingView-Sektionen (`###Gruppe,TICK,…`) → eine Watchlist, in der die Revier-Zuordnung als Abschnitt sichtbar bleibt.
 8. **Chart-Triage** — jeder Name kommt in genau eine Schublade:
    - **A — Breakout-Ready:** saubere Base/Flag/Range mit Verengung, Pivot klar definierbar, Kurs nah am Pivot (Faustregel: max. ~1,5 ATR darunter, nicht > 5 % darüber). → Pivot notieren, **TradingView-Alert auf den Pivot**, optional GTC-Buy-Stop knapp darüber.
    - **B — Pullback-Watch:** klarer Leader des Themes, aber extended. → **Alert an 10/20-EMA** bzw. an das alte Ausbruchslevel. Wird erst handelbar, wenn der Rücksetzer konstruktiv ankommt.
