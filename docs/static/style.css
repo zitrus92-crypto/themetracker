@@ -586,7 +586,25 @@ a.etf-theme-badge:hover { filter: brightness(1.25); }
   color: var(--text); margin-bottom: 8px;
 }
 .setup-count { color: var(--text-dim); font-weight: 400; font-size: 12px; }
+
+/* Sammel-Kopie als TradingView-Sektionen — sitzt rechts, vor dem JSON-Export. */
+.setup-copyall-btn {
+  margin-left: auto;
+  background: #3b82f6; color: #fff; border: none;
+  border-radius: 5px; padding: 5px 14px; font-size: 0.82rem; cursor: pointer;
+  font-weight: 600; letter-spacing: 0; white-space: nowrap;
+}
+.setup-copyall-btn:hover { background: #2563eb; }
+.setup-copyall-btn.ind-copy-btn--done { background: #166534; color: #4ade80; }
+/* Zwei Auto-Margins nebeneinander: der Export-Button rutscht direkt daneben. */
+.setup-copyall-btn + .setup-export-btn { margin-left: 0; }
 .setup-export-btn { margin-left: auto; }
+
+.picks-toolbar { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+.picks-toolbar .setup-copyall-btn { margin-left: 0; }
+
+/* Kopier-Button neben dem Theme-Badge nicht umbrechen lassen. */
+.setup-name-cell { white-space: nowrap; }
 .setup-empty {
   background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
   padding: 18px; color: var(--text-dim); font-size: 13px; line-height: 1.6;

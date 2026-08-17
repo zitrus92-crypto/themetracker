@@ -136,6 +136,10 @@ const I18N = {
     setupFailsFmt: (label, actual, req) => `${label}: ${actual} (Soll: ${req})`,
     setupUnknownHint: "6M fehlt im Datensatz — Klassifikation nicht möglich.",
     setupMetricsFail: "Kennzahlen-Modul konnte nicht geladen werden — Tab ohne Funktion.",
+    copyGroupTitle: "Ticker dieser Gruppe kopieren (kommagetrennt)",
+    copyAllBtn:     "📋 Alle kopieren",
+    copyAllTitle:   "Alle Gruppen dieser Liste als benannte TradingView-Sektionen kopieren (###Gruppe,TICK,…)",
+    copiedSections: (g, tk) => `${g} Gruppe${g === 1 ? "" : "n"} · ${tk} Ticker als Sektionen kopiert!`,
     setupTipDamage: "Schaden (m2_3+m4_6)",
     setupTipConc:  "Konzentration",
     setupTipBreadth: "Breite",
@@ -276,6 +280,10 @@ const I18N = {
     setupFailsFmt: (label, actual, req) => `${label}: ${actual} (required: ${req})`,
     setupUnknownHint: "6M missing from the dataset — classification not possible.",
     setupMetricsFail: "Metrics module could not be loaded — tab inactive.",
+    copyGroupTitle: "Copy this group's tickers (comma-separated)",
+    copyAllBtn:     "📋 Copy all",
+    copyAllTitle:   "Copy every group in this list as named TradingView sections (###Group,TICK,…)",
+    copiedSections: (g, tk) => `${g} group${g === 1 ? "" : "s"} · ${tk} tickers copied as sections!`,
     setupTipDamage: "Damage (m2_3+m4_6)",
     setupTipConc:  "Concentration",
     setupTipBreadth: "Breadth",
@@ -889,20 +897,53 @@ function pickPriority(row, accelRankMap, compRankMap, name) {
   return 0.6 * (accelRankMap[name] ?? 999) + 0.4 * (compRankMap[name] ?? 999);
 }
 
-// Wire all .ind-copy-btn inside a container to copy that industry's tickers.
+// Themes und Industries liegen in getrennten Datensätzen; scope wählt die Quelle.
+// Fehlender scope = "industry" (Bestandsbuttons in Setup Picks / Top 10).
+function tickersOf(scope, name) {
+  const list = scope === "theme"
+    ? _etfData?.themes?.[name]?.tickers
+    : _lastIndustries?.[name]?.tickers;
+  return Array.isArray(list) ? list : [];
+}
+
+function flashDone(btn) {
+  const orig = btn.textContent;
+  btn.textContent = "✓";
+  btn.classList.add("ind-copy-btn--done");
+  setTimeout(() => { btn.textContent = orig; btn.classList.remove("ind-copy-btn--done"); }, 2000);
+}
+
+// TradingView-Importformat: "###Sektion,TICK,TICK,###Sektion 2,TICK".
+// Ein Komma im Gruppennamen würde das Format sprengen -> ersetzen.
+function tvSections(groups) {
+  return groups
+    .map(g => [`###${String(g.name).replace(/,/g, " ")}`, ...g.tickers].join(","))
+    .join(",");
+}
+
+// Sammel-Kopie: mehrere Gruppen als benannte TradingView-Sektionen.
+function copyGroupsAsSections(btn, groups) {
+  const withTickers = groups
+    .map(g => ({ name: g.name, tickers: tickersOf(g.scope ?? "theme", g.name) }))
+    .filter(g => g.tickers.length);
+  if (!withTickers.length) return;
+  const total = withTickers.reduce((sum, g) => sum + g.tickers.length, 0);
+  navigator.clipboard.writeText(tvSections(withTickers)).then(() => {
+    flashDone(btn);
+    showToast(t("copiedSections", withTickers.length, total));
+  });
+}
+
+// Wire all .ind-copy-btn inside a container to copy one group's tickers.
 function wireIndCopyButtons(container) {
   container.querySelectorAll(".ind-copy-btn:not([disabled])").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
       e.preventDefault();
-      const name = btn.dataset.key;
-      const tickers = _lastIndustries?.[name]?.tickers;
-      if (!tickers || !tickers.length) return;
+      const tickers = tickersOf(btn.dataset.scope, btn.dataset.key);
+      if (!tickers.length) return;
       navigator.clipboard.writeText(tickers.join(",")).then(() => {
-        const orig = btn.textContent;
-        btn.textContent = "✓";
-        btn.classList.add("ind-copy-btn--done");
-        setTimeout(() => { btn.textContent = orig; btn.classList.remove("ind-copy-btn--done"); }, 2000);
+        flashDone(btn);
         showToast(_lang === "de" ? `${tickers.length} Ticker kopiert!` : `${tickers.length} tickers copied!`);
       });
     });
@@ -969,8 +1010,18 @@ function renderPicks(industries) {
     </div>`;
   }).join("");
 
-  container.innerHTML = `<div class="picks-grid">${header}${cards}</div>`;
+  const copyAll = candidates.some(([name]) => tickersOf("industry", name).length)
+    ? `<div class="picks-toolbar">
+         <button class="setup-copyall-btn" title="${esc(t("copyAllTitle"))}">${t("copyAllBtn")}</button>
+       </div>`
+    : "";
+
+  container.innerHTML = `${copyAll}<div class="picks-grid">${header}${cards}</div>`;
   wireIndCopyButtons(container);
+
+  const copyAllBtn = container.querySelector(".picks-toolbar .setup-copyall-btn");
+  if (copyAllBtn) copyAllBtn.onclick = () =>
+    copyGroupsAsSections(copyAllBtn, candidates.map(([name]) => ({ name, scope: "industry" })));
 }
 
 // --- Render ---
@@ -2149,6 +2200,11 @@ function renderSetupTab(tab, containerId) {
     <th>${t("colFreshness")}</th><th>${t("colDays")}</th><th>${t("colSegments")}</th>${extraCol}
   </tr>`;
 
+  // Kopier-Button nur, wenn die Gruppe überhaupt Ticker mitbringt.
+  const rowCopyBtn = (name) => tickersOf("theme", name).length
+    ? `<button class="ind-copy-btn" data-scope="theme" data-key="${esc(name)}" title="${esc(t("copyGroupTitle"))}">📋</button>`
+    : "";
+
   const bodyRow = (r, idx, extraCell = "", rowCls = "") => {
     const accelStr = r.accel === null ? "—" : (r.accel > 0 ? `+${r.accel}` : `${r.accel}`);
     const accelCls = r.accel > 0 ? "accel-pos" : r.accel < 0 ? "accel-neg" : "accel-neu";
@@ -2165,7 +2221,7 @@ function renderSetupTab(tab, containerId) {
       : `${r.density.toFixed(0)} %`;
     return `<tr class="${rowCls}" title="${esc(tip)}">
       <td>${idx + 1}</td>
-      <td style="text-align:left">${themeBadge(r.name)}</td>
+      <td style="text-align:left" class="setup-name-cell">${themeBadge(r.name)}${rowCopyBtn(r.name)}</td>
       <td>${stageLabelHtml(r.stage)}</td>
       <td>${density}</td>
       <td class="${accelCls}">${accelStr}</td>
@@ -2203,24 +2259,44 @@ function renderSetupTab(tab, containerId) {
       </div>`
     : "";
 
+  // Sammel-Button nur, wenn in der Liste überhaupt etwas zu kopieren ist.
+  const copyAllBtn = (list, cls) => list.some(r => tickersOf("theme", r.name).length)
+    ? `<button class="setup-copyall-btn ${cls}" title="${esc(t("copyAllTitle"))}">${t("copyAllBtn")}</button>`
+    : "";
+
   container.innerHTML = `
     ${snapHealthHtml()}
     <div class="setup-section">
       <div class="setup-section-hdr">${t("setupQualified")}
         <span class="setup-count">${t("setupGroups", result.qualified.length)}</span>
+        ${copyAllBtn(result.qualified, "setup-copyall-btn--qualified")}
         <button class="selection-bar__export-btn setup-export-btn">${t("exportJson")}</button>
       </div>
       ${qualifiedHtml}
     </div>
     <details class="setup-nearmiss"${result.qualified.length ? "" : " open"}>
       <summary class="setup-section-hdr">▸ ${t("setupNearMiss")}
-        <span class="setup-count">${t("setupGroups", result.nearMiss.length)}</span></summary>
+        <span class="setup-count">${t("setupGroups", result.nearMiss.length)}</span>
+        ${copyAllBtn(result.nearMiss, "setup-copyall-btn--nearmiss")}</summary>
       ${nearMissHtml}
     </details>
     ${unknownHtml}`;
 
   const exportBtn = container.querySelector(".setup-export-btn");
   if (exportBtn) exportBtn.onclick = () => exportSetupJson(result);
+
+  wireIndCopyButtons(container);
+
+  // Der Near-Miss-Button sitzt im <summary>; ohne stopPropagation klappt das <details> zu.
+  [[".setup-copyall-btn--qualified", result.qualified],
+   [".setup-copyall-btn--nearmiss", result.nearMiss]].forEach(([sel, list]) => {
+    const btn = container.querySelector(sel);
+    if (btn) btn.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      copyGroupsAsSections(btn, list.map(r => ({ name: r.name, scope: "theme" })));
+    };
+  });
 }
 
 function renderSetupTabs() {
