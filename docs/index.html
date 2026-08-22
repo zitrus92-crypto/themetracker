@@ -22,6 +22,7 @@
     <button class="top-btn" data-top="weekend" data-i18n="topWeekend">&#128197; Weekend Prep</button>
     <button class="top-btn" data-top="industry" data-i18n="topIndustry">Industry</button>
     <button class="top-btn active" data-top="themes" data-i18n="tabEtfs">&#128200; Themes</button>
+    <button class="top-btn" data-top="experimental" data-i18n="topExperimental">&#129514; Experimental</button>
   </nav>
   <nav class="sub-nav hidden" id="industry-subnav">
     <button class="sub-btn active" data-tab="heatmap" data-i18n="tabHeatmap">Heatmap</button>
@@ -265,6 +266,16 @@
         <span class="section-hint" data-hint-key="hintWeekend">i</span>
       </div>
       <div id="weekend-container"></div>
+    </section>
+
+    <!-- Experimental: Finviz-Link-Filter (Stufe 0) + Setup-Screener (Stufe 1) -->
+    <section class="section-exp tab-panel hidden" data-panel="experimental">
+      <div class="heading-group">
+        <h2 data-i18n="expTitle">&#129514; Experimental</h2>
+        <span class="section-hint" data-hint-key="hintExp">i</span>
+      </div>
+      <p class="picks-subtitle" data-i18n="expSubtitle"></p>
+      <div id="exp-container"></div>
     </section>
 
   </main>

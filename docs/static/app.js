@@ -199,6 +199,83 @@ const I18N = {
     snapLast:      (d, n, g) => `Letzter Snapshot: ${d} · ${n} Zeilen · ${g} Lücke${g === 1 ? "" : "n"} (30 T)`,
     snapNotSettled: "vorläufig (Intraday-Lauf)",
     nv:            "n/v",
+
+    // ── Experimental (Stufe 0 + Stufe 1) ──────────────────────────────────
+    topExperimental: "🧪 Experimental",
+    expTitle:      "🧪 Experimental",
+    expSubtitle:   "Zwei unvalidierte Bausteine für Schritt 3 der Tages-Routine: gefilterte Finviz-Links und ein gerechneter Setup-Screener. Nichts hier ersetzt den Chartblick — es sortiert nur vor.",
+    hintExp:       "Stufe 0 verändert die Finviz-Links der ganzen App: statt aller Aktien einer Gruppe nach 4-Wochen-Performance (= extended zuerst) nur die nahe am 20-Tage-Hoch, sortiert nach Nähe zum 50-Tage-Hoch.\nStufe 1 rechnet Base-Verengung, Pivot-Abstand und Volumen aus Tages-OHLCV der stärksten Gruppen — dieselben drei Fragen, die du sonst am Mini-Chart beantwortest.\nAlle Schwellen sind Defaults und NICHT backgetestet.",
+
+    expS0Title:    "Stufe 0 — Finviz-Link-Filter",
+    expS0Desc:     "Gilt für jeden Finviz-Link der App (Heatmap, Picks, Themes, Sub-Themes). Der Standardlink sortiert nach 4-Wochen-Performance und stellt damit die am weitesten gelaufenen Namen nach vorn — genau die, die du überspringst.",
+    expS0Off:      "Aus (Original)",
+    expS0Setup:    "Setup (0–5 %)",
+    expS0Wide:     "Weit (0–10 %)",
+    expS0OffDesc:  "ta_volatility_mo3 · sortiert nach Perf 4W",
+    expS0Strength: "Setup + Stärke",
+    expS0SetupDesc:"0–5 % unter 20-T-Hoch · über SMA50 · Vol > 500K · Kurs > $5 · Volatility 1M > 3 % · sortiert nach Nähe zum 50-T-Hoch",
+    expS0WideDesc: "wie Setup, aber 0–10 % unter dem 20-T-Hoch — mehr Treffer, mehr Arbeit am Chart",
+    expS0StrengthDesc: "wie Setup, zusätzlich 3M-Perf > +20 % — Stärke als Eintrittskarte, Pivot-Nähe bleibt die Reihenfolge (Finviz erlaubt nur einen Sortierschlüssel)",
+    expS0Preview:  "Beispiel-Link (stärkste Industry):",
+    expBaseline:   "Grundbedingung im ganzen Tab: Volatility 1M > 3 % in jedem Link — und ADR ≥ 3 % als Pendant in der Tabelle. Ruhige Titel tauchen hier gar nicht erst auf.",
+
+    expS1Title:    "Stufe 1 — Gerechneter Setup-Screener",
+    expS1Desc:     "Aus Tages-OHLCV der Ticker der stärksten Gruppen. Pivot = höchstes Hoch der letzten 25 Tage ohne die letzten 3. Abstand = Kurs zum Pivot in %.",
+    expS1NoData:   "Noch keine setups.json — die Datei entsteht beim nächsten Scraper-Lauf.",
+    expS1Universe: (tk, ind, th) => `${tk} Ticker aus ${ind} Industries + ${th} Themes`,
+    expUnivTitle:  "Universum — wie die „stärksten Gruppen“ bestimmt werden",
+    expUnivCount:  (i, ip, t2, tp) => `${i} von ${ip} Industries · ${t2} von ${tp} Themes`,
+    expUnivIndRule: (n) => `Industry: die ${n} mit dem niedrigsten Score. Score = Rang1W × 0,20 + Rang1M × 0,70 + Rang3M × 0,10, Ränge über alle Industries (1 = stärkste). Exakt die Zahl aus der Heatmap-Spalte „Score“.`,
+    expUnivThemeRule: (n) => `Theme: die ${n} mit dem niedrigsten Score. Score = Mittelwert der Sub-Node-Scores des Themes, je Sub-Node Rang1M × 0,70 + Rang1W × 0,20 + Rang3M × 0,10 über alle 268 Sub-Nodes. Exakt die Zahl aus der Themes-Tabelle.`,
+    expUnivNotUsed: "Bewusst NICHT geprüft: Accel, INST-Badge, Regime-Gate, Weekend-Prep-Stage. Die Auswahl ist reine Momentan-Stärke über 1W/1M/3M — sie ist NICHT die Aufnahme-Formel der Wochenend-Routine (die zusätzlich Accel ≥ +10 und 1M > 0 % verlangt). Die Accel-Spalte unten steht nur zur Info.",
+    expUnivColRank: "Rang",
+    expUnivColTickers: "Ticker",
+    expUnivFootnote: (tk, bars) => `Aus diesen Gruppen: ${tk} eindeutige Ticker, für ${bars} davon kamen Kursdaten zurück. Danach erst greifen ADR-, Liquiditäts- und Setup-Filter.`,
+    expS1Empty:    "Keine Kandidaten in dieser Ansicht.",
+    expViewTable:  "📋 Tabelle",
+    expViewCharts: "🖼 Mini-Charts",
+    expOnlyReady:  "Nur READY",
+    expTradeable:  "READY + BREAKOUT",
+    expAll:        "Alle",
+    expCopyBtn:    "📋 Ticker kopieren",
+    expTop20:      "Top 20 %",
+    expTop20Title: (min) => `Alle Zeilen der aktuellen Ansicht mit Score ≥ ${min} markieren. Nochmal klicken hebt die Markierung auf. Einzelne Zeilen lassen sich auch direkt anklicken.`,
+    expTop20Marked:(n, min) => `${n} Zeilen mit Score ≥ ${min} markiert`,
+    expSelCount:   (n) => `${n} markiert`,
+    expCopiedSel:  (n) => `${n} markierte Ticker kopiert!`,
+    expCopyTitle:  "Markierte Ticker in die Zwischenablage (kommagetrennt, TradingView-Import) — ohne Markierung die komplette Ansicht",
+    expCopied:     (n) => `${n} Ticker kopiert!`,
+    expChartsHint: "Mini-Charts direkt von Finviz, vorsortiert nach Setup-Score — dieselben Bilder wie im Screener, nur in deiner Reihenfolge.",
+
+    expColTicker:  "Ticker",
+    expColGroup:   "Revier",
+    expColVerdict: "Verdict",
+    expColSetupSc: "Score",
+    expColDist:    "Pivot %",
+    expColBase:    "Base (T)",
+    expColTight:   "Tight",
+    expColDry:     "Dry-Up",
+    expColRvol:    "RVOL",
+    expColAdr:     "ADR %",
+    expCol1M:      "1M %",
+    expColPrice:   "Kurs",
+    expColPivotPx: "Pivot",
+
+    expVerdictREADY:    "READY",
+    expVerdictBREAKOUT: "BREAKOUT",
+    expVerdictWATCH:    "WATCH",
+    expReason_at_pivot:       "Am Pivot, Base verengt",
+    expReason_running:        "Ausbruch läuft bereits",
+    expReason_below_pivot:    "Noch unter dem Pivot",
+    expReason_base_too_short: "Base zu kurz",
+    expReason_no_contraction: "Keine Verengung",
+
+    expTipDist:    "Kurs zum Pivot in %. Negativ = darunter, 0 = am Pivot, positiv = ausgebrochen. Über +8 % gilt als extended und fliegt raus.",
+    expTipTight:   "ATR(5) ÷ ATR(20). Unter 1 = die Bewegung verengt sich — das ist die rechnerische Form von „saubere Base“.",
+    expTipDry:     "Volumen der letzten 5 Tage ÷ 50-Tage-Schnitt. Unter 1 = Volumen trocknet in der Base aus.",
+    expTipRvol:    "Heutiges Volumen ÷ 50-Tage-Schnitt. Über 1 am Pivot = Ausbruch mit Beteiligung.",
+    expTipScore:   "0–100: Pivot-Nähe 40 · Verengung 25 · Dry-Up 15 · Base-Länge 10 · Trend 10. Reine Sortierhilfe, UNVALIDIERT.",
+    expUnvalidated:"UNVALIDIERT — Schwellen sind Defaults, kein Backtest.",
   },
   en: {
     notLoaded:    "— not yet loaded —",
@@ -395,6 +472,83 @@ const I18N = {
     snapLast:      (d, n, g) => `Last snapshot: ${d} · ${n} rows · ${g} gap${g === 1 ? "" : "s"} (30 d)`,
     snapNotSettled: "provisional (intraday run)",
     nv:            "n/a",
+
+    // ── Experimental (stage 0 + stage 1) ──────────────────────────────────
+    topExperimental: "🧪 Experimental",
+    expTitle:      "🧪 Experimental",
+    expSubtitle:   "Two unvalidated building blocks for step 3 of the daily routine: filtered Finviz links and a computed setup screener. Neither replaces the chart check — they only pre-sort it.",
+    hintExp:       "Stage 0 changes every Finviz link in the app: instead of all stocks of a group sorted by 4-week performance (= most extended first), only those near their 20-day high, sorted by proximity to the 50-day high.\nStage 1 computes base contraction, pivot distance and volume from daily OHLCV of the strongest groups — the same three questions you normally answer on the mini chart.\nAll thresholds are defaults and NOT backtested.",
+
+    expS0Title:    "Stage 0 — Finviz link filter",
+    expS0Desc:     "Applies to every Finviz link in the app (heatmap, picks, themes, sub-themes). The default link sorts by 4-week performance and therefore puts the most extended names first — exactly the ones you skip.",
+    expS0Off:      "Off (original)",
+    expS0Setup:    "Setup (0–5%)",
+    expS0Wide:     "Wide (0–10%)",
+    expS0OffDesc:  "ta_volatility_mo3 · sorted by perf 4W",
+    expS0Strength: "Setup + strength",
+    expS0SetupDesc:"0–5% below 20-day high · above SMA50 · vol > 500K · price > $5 · volatility 1M > 3% · sorted by proximity to the 50-day high",
+    expS0WideDesc: "like Setup but 0–10% below the 20-day high — more hits, more chart work",
+    expS0StrengthDesc: "like Setup plus 3M perf > +20% — strength as the entry ticket, pivot proximity stays the ordering (Finviz allows only one sort key)",
+    expS0Preview:  "Sample link (strongest industry):",
+    expBaseline:   "Baseline across the whole tab: volatility 1M > 3% in every link — and ADR ≥ 3% as its counterpart in the table. Quiet names never show up here.",
+
+    expS1Title:    "Stage 1 — Computed setup screener",
+    expS1Desc:     "From daily OHLCV of the tickers in the strongest groups. Pivot = highest high of the last 25 days excluding the last 3. Distance = price to pivot in %.",
+    expS1NoData:   "No setups.json yet — the file appears after the next scraper run.",
+    expS1Universe: (tk, ind, th) => `${tk} tickers from ${ind} industries + ${th} themes`,
+    expUnivTitle:  "Universe — how the “strongest groups” are picked",
+    expUnivCount:  (i, ip, t2, tp) => `${i} of ${ip} industries · ${t2} of ${tp} themes`,
+    expUnivIndRule: (n) => `Industry: the ${n} with the lowest score. Score = rank1W × 0.20 + rank1M × 0.70 + rank3M × 0.10, ranks across all industries (1 = strongest). Exactly the number in the heatmap’s “Score” column.`,
+    expUnivThemeRule: (n) => `Theme: the ${n} with the lowest score. Score = average of the theme’s sub-node scores, each sub-node rank1M × 0.70 + rank1W × 0.20 + rank3M × 0.10 across all 268 sub-nodes. Exactly the number in the themes table.`,
+    expUnivNotUsed: "Deliberately NOT checked: accel, INST badge, regime gate, weekend-prep stage. The pick is pure current strength over 1W/1M/3M — it is NOT the weekend routine’s inclusion formula (which also requires accel ≥ +10 and 1M > 0%). The accel column below is informational only.",
+    expUnivColRank: "Rank",
+    expUnivColTickers: "Tickers",
+    expUnivFootnote: (tk, bars) => `From these groups: ${tk} unique tickers, price data returned for ${bars} of them. Only then do the ADR, liquidity and setup filters apply.`,
+    expS1Empty:    "No candidates in this view.",
+    expViewTable:  "📋 Table",
+    expViewCharts: "🖼 Mini charts",
+    expOnlyReady:  "READY only",
+    expTradeable:  "READY + BREAKOUT",
+    expAll:        "All",
+    expCopyBtn:    "📋 Copy tickers",
+    expTop20:      "Top 20%",
+    expTop20Title: (min) => `Mark every row of the current view with score ≥ ${min}. Click again to clear. Single rows can be clicked directly too.`,
+    expTop20Marked:(n, min) => `${n} rows with score ≥ ${min} marked`,
+    expSelCount:   (n) => `${n} marked`,
+    expCopiedSel:  (n) => `${n} marked tickers copied!`,
+    expCopyTitle:  "Copy marked tickers to the clipboard (comma-separated, TradingView import) — without a selection, the whole view",
+    expCopied:     (n) => `${n} tickers copied!`,
+    expChartsHint: "Mini charts straight from Finviz, pre-sorted by setup score — the same images as in the screener, just in your order.",
+
+    expColTicker:  "Ticker",
+    expColGroup:   "Group",
+    expColVerdict: "Verdict",
+    expColSetupSc: "Score",
+    expColDist:    "Pivot %",
+    expColBase:    "Base (d)",
+    expColTight:   "Tight",
+    expColDry:     "Dry-up",
+    expColRvol:    "RVOL",
+    expColAdr:     "ADR %",
+    expCol1M:      "1M %",
+    expColPrice:   "Price",
+    expColPivotPx: "Pivot",
+
+    expVerdictREADY:    "READY",
+    expVerdictBREAKOUT: "BREAKOUT",
+    expVerdictWATCH:    "WATCH",
+    expReason_at_pivot:       "At pivot, base contracting",
+    expReason_running:        "Breakout already running",
+    expReason_below_pivot:    "Still below the pivot",
+    expReason_base_too_short: "Base too short",
+    expReason_no_contraction: "No contraction",
+
+    expTipDist:    "Price to pivot in %. Negative = below, 0 = at pivot, positive = broken out. Above +8% counts as extended and drops out.",
+    expTipTight:   "ATR(5) ÷ ATR(20). Below 1 = the move is contracting — the computed form of “clean base”.",
+    expTipDry:     "Volume of the last 5 days ÷ 50-day average. Below 1 = volume drying up in the base.",
+    expTipRvol:    "Today's volume ÷ 50-day average. Above 1 at the pivot = breakout with participation.",
+    expTipScore:   "0–100: pivot proximity 40 · contraction 25 · dry-up 15 · base length 10 · trend 10. A sorting aid only, UNVALIDATED.",
+    expUnvalidated:"UNVALIDATED — thresholds are defaults, no backtest.",
   },
 };
 
@@ -449,6 +603,7 @@ function applyTranslations() {
   if (_etfData) renderEtfTab();
   renderSetupTabs();
   renderWeekendPrep();
+  renderExperimental();
   renderRegime();
   renderSituational();
 }
@@ -462,12 +617,68 @@ function instTag() {
 }
 
 // --- Finviz link ---
-// Same filter + sort as the Themes links (f=theme_<slug>,ta_volatility_mo3&o=-perf4w),
-// just with the industry group filter instead of the theme filter.
-// ta_volatility_mo3 = Volatility (1 Month) > 3%.
+// Alle Finviz-Screener-Links der App laufen über fvScreenerUrl(), damit der
+// Experimental-Schalter (Stufe 0) sie an EINER Stelle umstellen kann.
+//
+// "off" = Bestand: alle Aktien der Gruppe, sortiert nach 4-Wochen-Performance.
+//         Das stellt die am weitesten gelaufenen Namen nach vorn — genau die,
+//         die in Schritt 3 der Tages-Routine als extended aussortiert werden.
+// "setup"/"wide" = der gespeicherte Vorfilter direkt im Link, sortiert nach
+//         Nähe zum 50-Tage-Hoch (o=-high50d, Werte sind negativ = Abstand nach
+//         unten, absteigend heißt also "am nächsten am Hoch zuerst").
+//
+// Filtercodes gegen die Finviz-Filterliste verifiziert (ft=4-Seite):
+//   ta_highlow20d_b0to5h  = "0-5% below High" (20-Tage-Hoch)
+//   ta_highlow20d_b0to10h = "0-10% below High"
+//   ta_sma50_pa           = "Price above SMA50"
+//   sh_avgvol_o500        = "Over 500K"
+//   sh_price_o5           = "Over $5"
+//   ta_volatility_mo3     = "Month - Over 3%"
+//   ta_perf_13w20o        = "Quarter +20%"
+//
+// ta_volatility_mo3 ist Grundbedingung in JEDEM Modus: ohne Bewegungsbreite
+// trägt kein Ausbruch. Das Tabellen-Pendant dazu ist MIN_ADR in setups.py.
+//
+// "strength" ergänzt 3M-Perf > +20 % als Filter statt als Sortierung: Finviz
+// erlaubt nur einen Sortierschlüssel, und -perf13w und -high50d messen
+// verschiedene Achsen (gemessen an 118 Kandidaten: Spearman 0,11, Top-10-
+// Überschneidung 1/10). Stärke wird deshalb zur Eintrittskarte, die
+// Reihenfolge bleibt die Pivot-Nähe.
+const FV_BASE = "ta_volatility_mo3";
+const FV_MODES = {
+  off:      { filters: FV_BASE, sort: "-perf4w" },
+  setup:    { filters: `ta_highlow20d_b0to5h,ta_sma50_pa,sh_avgvol_o500,sh_price_o5,${FV_BASE}`, sort: "-high50d" },
+  wide:     { filters: `ta_highlow20d_b0to10h,ta_sma50_pa,sh_avgvol_o500,sh_price_o5,${FV_BASE}`, sort: "-high50d" },
+  strength: { filters: `ta_highlow20d_b0to5h,ta_sma50_pa,sh_avgvol_o500,sh_price_o5,ta_perf_13w20o,${FV_BASE}`, sort: "-high50d" },
+};
+let _fvMode = "off";
+try { _fvMode = localStorage.getItem("fvMode") || "off"; } catch (e) { /* Private Mode */ }
+if (!FV_MODES[_fvMode]) _fvMode = "off";
+
+// groupFilter: "ind_<slug>" | "theme_<slug>" | "subtheme_<key>"
+function fvScreenerUrl(groupFilter) {
+  if (!groupFilter) return "";
+  const mode = FV_MODES[_fvMode] || FV_MODES.off;
+  const f = encodeURIComponent(`${groupFilter},${mode.filters}`);
+  return `https://finviz.com/screener.ashx?v=211&f=${f}&o=${mode.sort}`;
+}
+
 function finvizUrl(ticker) {
-  if (!ticker) return "";
-  return `https://finviz.com/screener.ashx?v=211&f=ind_${ticker}%2Cta_volatility_mo3&o=-perf4w`;
+  return ticker ? fvScreenerUrl(`ind_${ticker}`) : "";
+}
+
+// Einzelchart wie im Screener (v=211), nur für einen Ticker — Tagesbasis,
+// Candles, SMA50/SMA200. Ohne Referrer, damit der Hotlink nicht am
+// Referer-Check hängen bleibt (siehe renderExpCharts).
+function finvizChartUrl(ticker, scale = 1) {
+  const w = 466 * scale, h = 219 * scale;
+  return `https://charts2-node.finviz.com/chart?w=${w}&h=${h}&bw=1&bm=1&bb=1&t=${encodeURIComponent(ticker)}`
+       + `&tf=d&s=linear&pm=240&am=1200&tl=1&ct=candle_stick&tm=d`
+       + `&o[0][ot]=sma&o[0][op]=50&o[0][oc]=FF8F33C6&o[1][ot]=sma&o[1][op]=200&o[1][oc]=DCB3326D`;
+}
+
+function finvizQuoteUrl(ticker) {
+  return `https://finviz.com/quote.ashx?t=${encodeURIComponent(ticker)}`;
 }
 
 // --- Color helpers ---
@@ -1177,6 +1388,11 @@ function initTabs() {
         themesSubNav.classList.add("hidden");
         showPanel("weekend");
         renderWeekendPrep();
+      } else if (btn.dataset.top === "experimental") {
+        subNav.classList.add("hidden");
+        themesSubNav.classList.add("hidden");
+        showPanel("experimental");
+        renderExperimental();
       } else if (btn.dataset.top === "industry") {
         subNav.classList.remove("hidden");
         themesSubNav.classList.add("hidden");
@@ -1273,7 +1489,7 @@ const THEME_SLUG_OVERRIDES = {
 
 function themeScreenerUrl(theme) {
   const slug = THEME_SLUG_OVERRIDES[theme] ?? theme.toLowerCase().replace(/[^a-z0-9]/g, "");
-  return `https://finviz.com/screener.ashx?v=211&f=theme_${slug}%2Cta_volatility_mo3&o=-perf4w`;
+  return fvScreenerUrl(`theme_${slug}`);
 }
 
 function themeBadge(theme) {
@@ -1434,7 +1650,7 @@ function renderEtfThemes(data) {
     const chips = (row.top3 || []).map(nodeKey => {
       const sub = data.subnodes?.[nodeKey];
       const label = sub ? sub.label : nodeKey;
-      const url = `https://finviz.com/screener.ashx?v=211&f=subtheme_${nodeKey}%2Cta_volatility_mo3&o=-perf4w`;
+      const url = fvScreenerUrl(`subtheme_${nodeKey}`);
       return `<a class="etf-ticker-chip etf-ticker-chip--link" href="${url}" target="_blank" rel="noopener" title="${label} → Finviz Screener">${label}</a>`;
     }).join(" ");
 
@@ -1594,7 +1810,7 @@ function renderEtfList(data) {
     const perfCells = ETF_TIMEFRAMES.map(tf =>
       `<td class="${perfClass(row.perfs[tf])}">${fmtPct(row.perfs[tf])}</td>`
     ).join("");
-    const subUrl = `https://finviz.com/screener.ashx?v=211&f=subtheme_${key}%2Cta_volatility_mo3&o=-perf4w`;
+    const subUrl = fvScreenerUrl(`subtheme_${key}`);
     const accel = subAccel[key] ?? 0;
     const accelSign = accel > 0 ? "+" : "";
     const accelClass = accel >= 20 ? "accel-fresh" : accel <= -20 ? "accel-extended" : accel >= 8 ? "accel-fresh-mild" : "accel-neutral";
@@ -2520,6 +2736,319 @@ function renderWeekendPrep() {
   });
 }
 
+// ── Experimental Tab ──────────────────────────────────────────────────────
+// Stufe 0 = Finviz-Link-Filter (fvScreenerUrl oben, wirkt app-weit).
+// Stufe 1 = gerechneter Setup-Screener aus docs/setups.json (setups.py).
+// Beides bewusst getrennt vom Rest: hier stehen unvalidierte Schwellen.
+
+let _setupsData = null;
+let _expView    = "table";     // "table" | "charts"
+let _expScope   = "trade";     // "ready" | "trade" | "all"
+let _expSort    = { col: "score", dir: -1 };
+
+const EXP_MAX_CHARTS = 48;     // Mini-Charts pro Ansicht (Ladezeit/Finviz-Last)
+
+// Markierung für den Clipboard-Export. Der Top-20%-Button markiert alles mit
+// Score >= 80 — gemessen an der READY+BREAKOUT-Ansicht sind das aktuell 18 von
+// 90 Zeilen (20 %); in "Alle" sind es 13 %, in "Nur READY" 26 %. Die Grenze ist
+// also ein fester Score-Schwellwert, kein gerechnetes Perzentil.
+const EXP_TOP20_MIN = 80;
+let _expSelected = new Set();
+
+const EXP_COLS = [
+  { col: "t",         key: "expColTicker",  left: true },
+  { col: "verdict",   key: "expColVerdict", left: true },
+  { col: "score",     key: "expColSetupSc", tip: "expTipScore" },
+  { col: "dist",      key: "expColDist",    tip: "expTipDist" },
+  { col: "base_days", key: "expColBase" },
+  { col: "tight",     key: "expColTight",   tip: "expTipTight" },
+  { col: "dryup",     key: "expColDry",     tip: "expTipDry" },
+  { col: "rvol",      key: "expColRvol",    tip: "expTipRvol" },
+  { col: "adr",       key: "expColAdr" },
+  { col: "perf1m",    key: "expCol1M" },
+  { col: "price",     key: "expColPrice" },
+  { col: "groups",    key: "expColGroup",   left: true, nosort: true },
+];
+
+function expRows() {
+  const rows = _setupsData?.rows ?? [];
+  const scoped = _expScope === "ready" ? rows.filter(r => r.verdict === "READY")
+    : _expScope === "trade" ? rows.filter(r => r.verdict === "READY" || r.verdict === "BREAKOUT")
+    : rows;
+  const { col, dir } = _expSort;
+  return [...scoped].sort((a, b) => {
+    const x = a[col], y = b[col];
+    if (typeof x === "string" || typeof y === "string") {
+      return String(x ?? "").localeCompare(String(y ?? "")) * dir;
+    }
+    return ((x ?? -Infinity) - (y ?? -Infinity)) * dir;
+  });
+}
+
+function expGroupsHtml(groups) {
+  return (groups ?? []).slice(0, 2).map(g => {
+    // Industry-Slug steht in data.json (ticker), Theme-Slug leitet
+    // themeScreenerUrl selbst ab — beide Badges sind damit klickbar.
+    const url = g.type === "theme"
+      ? themeScreenerUrl(g.name)
+      : finvizUrl(_lastIndustries?.[g.name]?.ticker ?? "");
+    const label = `<span class="wp-type wp-type--${g.type}">${esc(g.name)}</span>`;
+    return url ? `<a href="${url}" target="_blank" rel="noopener">${label}</a>` : label;
+  }).join(" ");
+}
+
+function expStage0Html() {
+  const strongest = Object.entries(_lastIndustries ?? {})
+    .sort((a, b) => a[1].composite - b[1].composite)[0];
+  const sample = strongest ? finvizUrl(strongest[1].ticker) : "";
+  const btn = (mode, label, desc) => `
+    <button class="exp-mode-btn${_fvMode === mode ? " exp-mode-btn--active" : ""}"
+            data-fvmode="${mode}" title="${esc(desc)}">${label}</button>`;
+  const modeKey = { off: "Off", setup: "Setup", wide: "Wide", strength: "Strength" }[_fvMode] ?? "Off";
+
+  return `
+    <div class="exp-block">
+      <div class="setup-section-hdr">${t("expS0Title")}
+        <span class="setup-count">${t("expUnvalidated")}</span></div>
+      <p class="exp-desc">${t("expS0Desc")}</p>
+      <div class="exp-modes">
+        ${btn("off",      t("expS0Off"),      t("expS0OffDesc"))}
+        ${btn("setup",    t("expS0Setup"),    t("expS0SetupDesc"))}
+        ${btn("wide",     t("expS0Wide"),     t("expS0WideDesc"))}
+        ${btn("strength", t("expS0Strength"), t("expS0StrengthDesc"))}
+      </div>
+      <p class="exp-mode-desc">${t("expS0" + modeKey + "Desc")}</p>
+      ${sample ? `<p class="exp-sample">${t("expS0Preview")}
+        <a href="${sample}" target="_blank" rel="noopener">${esc(strongest[0])} →</a>
+        <code>${esc(sample.replace("https://finviz.com/screener.ashx?", ""))}</code></p>` : ""}
+      <p class="exp-note">${t("expBaseline")}</p>
+    </div>`;
+}
+
+// Offenlegung der Universums-Auswahl: welche Gruppen mit welchen Zahlen
+// hineingekommen sind — und was dabei bewusst NICHT geprüft wird.
+function expUniverseHtml() {
+  const u = _setupsData?.universe;
+  if (!u) return "";
+  const cfg = _setupsData?.config ?? {};
+  const ind = u.industries ?? [], thm = u.themes ?? [];
+  const pool = u.pool ?? {};
+
+  const row = (g, type) => `<tr>
+      <td class="exp-th-left"><span class="wp-type wp-type--${type}">${type === "theme" ? t("wpTypeTheme") : t("wpTypeIndustry")}</span>
+        ${esc(g.name)}</td>
+      <td><b>${fmtOrDash(g.score, 2)}</b></td>
+      <!-- Industry und Theme haben verschiedene Ränge: Industry = Perf-Rang 1M
+           unter allen Industries, Theme = Score-Rang unter den 40 Themes.
+           Deshalb steht die Bedeutung in der Zelle, nicht nur im Kopf. -->
+      <td class="exp-univ-rank">${type === "theme"
+        ? (g.rank ? `${t("colScore")} #${g.rank}` : "—")
+        : (g.ranks?.["1M"] ? `1M #${g.ranks["1M"]}` : "—")}</td>
+      <td>${g.accel === undefined || g.accel === null ? "—" : (g.accel > 0 ? "+" : "") + g.accel}</td>
+      <td class="${perfClass(g.perf1m)}">${fmtPct(g.perf1m)}</td>
+      <td>${g.tickers}</td>
+    </tr>`;
+
+  return `
+    <details class="setup-nearmiss wp-details exp-universe">
+      <summary class="setup-section-hdr">▸ ${t("expUnivTitle")}
+        <span class="setup-count">${t("expUnivCount", ind.length, pool.industries ?? 0, thm.length, pool.themes ?? 0)}</span></summary>
+      <p class="exp-desc">${t("expUnivIndRule", cfg.N_INDUSTRIES ?? 0)}</p>
+      <p class="exp-desc">${t("expUnivThemeRule", cfg.N_THEMES ?? 0)}</p>
+      <p class="exp-note exp-univ-warn">${t("expUnivNotUsed")}</p>
+      <div class="table-scroll"><table class="setup-table exp-table">
+        <thead><tr>
+          <th class="exp-th-left">${t("expColGroup")}</th>
+          <th>${t("colScore")}</th><th>${t("expUnivColRank")}</th>
+          <th>${t("colAccel")}</th><th>${t("expCol1M")}</th><th>${t("expUnivColTickers")}</th>
+        </tr></thead>
+        <tbody>
+          ${ind.map(g => row(g, "industry")).join("")}
+          ${thm.map(g => row(g, "theme")).join("")}
+        </tbody>
+      </table></div>
+      <p class="exp-note">${t("expUnivFootnote", u.tickers ?? 0, u.with_bars ?? 0)}</p>
+    </details>`;
+}
+
+function expStage1Html() {
+  const hdr = `<div class="setup-section-hdr">${t("expS1Title")}
+      <span class="setup-count">${t("expUnvalidated")}</span></div>
+    <p class="exp-desc">${t("expS1Desc")}</p>
+    <p class="exp-note">${t("expBaseline")}</p>`;
+
+  if (!_setupsData) return `<div class="exp-block">${hdr}<div class="setup-empty">${t("expS1NoData")}</div></div>`;
+
+  const u = _setupsData.universe ?? {};
+  const c = _setupsData.counts ?? {};
+  const stamp = _setupsData.fetched_at
+    ? new Date(_setupsData.fetched_at).toLocaleString(_lang === "de" ? "de-DE" : "en-US")
+    : "—";
+  const chip = (v) => `<span class="exp-chip exp-chip--${v.toLowerCase()}">${v} ${c[v] ?? 0}</span>`;
+  const scopeBtn = (scope, label) => `
+    <button class="exp-scope-btn${_expScope === scope ? " exp-scope-btn--active" : ""}"
+            data-expscope="${scope}">${label}</button>`;
+  const viewBtn = (view, label) => `
+    <button class="exp-scope-btn${_expView === view ? " exp-scope-btn--active" : ""}"
+            data-expview="${view}">${label}</button>`;
+
+  const rows = expRows();
+  const body = _expView === "charts" ? expChartsHtml(rows) : expTableHtml(rows);
+  // Nur markierte Zeilen zählen, die in der aktuellen Ansicht auch sichtbar
+  // sind — kopiert wird später genau diese Schnittmenge.
+  const selCount = rows.filter(r => _expSelected.has(r.t)).length;
+
+  return `
+    <div class="exp-block">
+      ${hdr}
+      <div class="exp-meta">
+        <span>${t("updated")}${stamp}</span>
+        <span>${t("expS1Universe", u.tickers ?? 0, (u.industries ?? []).length, (u.themes ?? []).length)}</span>
+        ${chip("READY")}${chip("BREAKOUT")}${chip("WATCH")}${chip("EXTENDED")}
+      </div>
+      ${expUniverseHtml()}
+      <div class="exp-toolbar">
+        ${scopeBtn("ready", t("expOnlyReady"))}${scopeBtn("trade", t("expTradeable"))}${scopeBtn("all", t("expAll"))}
+        <span class="exp-toolbar-sep"></span>
+        ${viewBtn("table", t("expViewTable"))}${viewBtn("charts", t("expViewCharts"))}
+        <button class="exp-top20-btn${selCount ? " exp-top20-btn--active" : ""}"
+                title="${esc(t("expTop20Title", EXP_TOP20_MIN))}">★ ${t("expTop20")}</button>
+        ${selCount ? `<span class="exp-selcount">${t("expSelCount", selCount)}</span>` : ""}
+        <button class="setup-copyall-btn exp-copy-btn" title="${esc(t("expCopyTitle"))}">${t("expCopyBtn")}</button>
+      </div>
+      ${body}
+    </div>`;
+}
+
+function expTableHtml(rows) {
+  if (!rows.length) return `<div class="setup-empty">${t("expS1Empty")}</div>`;
+
+  const head = EXP_COLS.map(c => {
+    const active = _expSort.col === c.col ? (_expSort.dir === 1 ? " ▲" : " ▼") : "";
+    const info = c.tip ? ` <span class="col-info" title="${esc(t(c.tip))}">i</span>` : "";
+    const cls = `${c.left ? "exp-th-left" : ""}${c.nosort ? "" : " exp-th-sort"}`.trim();
+    const attr = c.nosort ? "" : ` data-expcol="${c.col}"`;
+    return `<th class="${cls}"${attr}>${t(c.key)}${active}${info}</th>`;
+  }).join("");
+
+  const body = rows.map(r => `
+    <tr class="exp-row${_expSelected.has(r.t) ? " exp-row--selected" : ""}" data-exprow="${esc(r.t)}">
+      <td class="exp-th-left"><a class="exp-ticker" href="${finvizQuoteUrl(r.t)}" target="_blank" rel="noopener">${esc(r.t)}</a></td>
+      <td class="exp-th-left"><span class="exp-chip exp-chip--${r.verdict.toLowerCase()}">${t("expVerdict" + r.verdict)}</span>
+        <span class="exp-reason">${t("expReason_" + r.reason)}</span></td>
+      <td><b>${r.score}</b></td>
+      <td class="${r.dist > 0 ? "perf-2" : ""}">${r.dist > 0 ? "+" : ""}${fmtOrDash(r.dist, 1)}</td>
+      <td>${r.base_days}</td>
+      <td>${fmtOrDash(r.tight)}</td>
+      <td>${fmtOrDash(r.dryup)}</td>
+      <td>${fmtOrDash(r.rvol)}</td>
+      <td>${fmtOrDash(r.adr, 1)}</td>
+      <td class="${perfClass(r.perf1m)}">${fmtPct(r.perf1m)}</td>
+      <td>${fmtOrDash(r.price)}</td>
+      <td class="exp-th-left">${expGroupsHtml(r.groups)}</td>
+    </tr>`).join("");
+
+  return `<div class="table-scroll"><table class="setup-table exp-table">
+    <thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+function expChartsHtml(rows) {
+  if (!rows.length) return `<div class="setup-empty">${t("expS1Empty")}</div>`;
+  const shown = rows.slice(0, EXP_MAX_CHARTS);
+
+  // referrerpolicy="no-referrer": Finviz liefert die Chart-PNGs an einen
+  // normalen Browser aus, ein fremder Referer kann geblockt werden. Schlägt
+  // ein Bild trotzdem fehl, bleibt die Karte mit Link zum Chart stehen.
+  const cards = shown.map(r => `
+    <figure class="exp-chart${_expSelected.has(r.t) ? " exp-chart--selected" : ""}" data-exprow="${esc(r.t)}">
+      <figcaption>
+        <a class="exp-ticker" href="${finvizQuoteUrl(r.t)}" target="_blank" rel="noopener">${esc(r.t)}</a>
+        <span class="exp-chip exp-chip--${r.verdict.toLowerCase()}">${t("expVerdict" + r.verdict)}</span>
+        <span class="exp-chart-nums">${r.score} · ${r.dist > 0 ? "+" : ""}${fmtOrDash(r.dist, 1)}% · ${r.base_days}T</span>
+      </figcaption>
+      <a href="${finvizQuoteUrl(r.t)}" target="_blank" rel="noopener">
+        <img src="${finvizChartUrl(r.t)}" alt="${esc(r.t)}" loading="lazy" referrerpolicy="no-referrer"
+             onerror="this.closest('.exp-chart').classList.add('exp-chart--failed')">
+      </a>
+    </figure>`).join("");
+
+  const more = rows.length > shown.length
+    ? `<p class="exp-note">+${rows.length - shown.length} ${_lang === "de" ? "weitere in der Tabellenansicht" : "more in the table view"}</p>`
+    : "";
+  return `<p class="exp-note">${t("expChartsHint")}</p><div class="exp-charts">${cards}</div>${more}`;
+}
+
+function renderExperimental() {
+  const box = document.getElementById("exp-container");
+  if (!box) return;
+  box.innerHTML = expStage0Html() + expStage1Html();
+
+  // Stufe-0-Schalter: wirkt app-weit, also alles neu zeichnen, was Links baut.
+  box.querySelectorAll("[data-fvmode]").forEach(btn => {
+    btn.onclick = () => {
+      _fvMode = btn.dataset.fvmode;
+      try { localStorage.setItem("fvMode", _fvMode); } catch (e) { /* Private Mode */ }
+      if (_lastPayload) renderAll(_lastPayload);
+      if (_etfData) renderEtfTab();
+      renderSetupTabs();
+      renderWeekendPrep();
+      renderExperimental();
+    };
+  });
+
+  box.querySelectorAll("[data-expscope]").forEach(btn => {
+    btn.onclick = () => { _expScope = btn.dataset.expscope; renderExperimental(); };
+  });
+  box.querySelectorAll("[data-expview]").forEach(btn => {
+    btn.onclick = () => { _expView = btn.dataset.expview; renderExperimental(); };
+  });
+  box.querySelectorAll("[data-expcol]").forEach(th => {
+    th.onclick = () => {
+      const col = th.dataset.expcol;
+      _expSort = _expSort.col === col
+        ? { col, dir: -_expSort.dir }
+        : { col, dir: col === "t" ? 1 : -1 };
+      renderExperimental();
+    };
+  });
+
+  // Zeile anklicken = markieren. Klick auf einen Link (Ticker, Revier-Badge)
+  // bleibt Navigation und markiert nicht.
+  box.querySelectorAll("[data-exprow]").forEach(el => {
+    el.onclick = (ev) => {
+      if (ev.target.closest("a")) return;
+      const tk = el.dataset.exprow;
+      if (_expSelected.has(tk)) _expSelected.delete(tk); else _expSelected.add(tk);
+      renderExperimental();
+    };
+  });
+
+  // Top 20 % = alles mit Score >= EXP_TOP20_MIN in der aktuellen Ansicht.
+  // Sind die schon alle markiert, hebt ein zweiter Klick die Markierung auf.
+  const topBtn = box.querySelector(".exp-top20-btn");
+  if (topBtn) topBtn.onclick = () => {
+    const hits = expRows().filter(r => r.score >= EXP_TOP20_MIN);
+    const allSet = hits.length > 0 && hits.every(r => _expSelected.has(r.t));
+    if (allSet) hits.forEach(r => _expSelected.delete(r.t));
+    else hits.forEach(r => _expSelected.add(r.t));
+    renderExperimental();
+    if (!allSet) showToast(t("expTop20Marked", hits.length, EXP_TOP20_MIN));
+  };
+
+  // Kopiert die Markierung (Schnittmenge mit der Ansicht); ohne Markierung
+  // die komplette Ansicht. Format: kommagetrennt = TradingView-Import.
+  const copyBtn = box.querySelector(".exp-copy-btn");
+  if (copyBtn) copyBtn.onclick = () => {
+    const rows = expRows();
+    const sel = rows.filter(r => _expSelected.has(r.t));
+    const tickers = (sel.length ? sel : rows).map(r => r.t);
+    navigator.clipboard.writeText(tickers.join(",")).then(() => {
+      flashDone(copyBtn);
+      showToast(t(sel.length ? "expCopiedSel" : "expCopied", tickers.length));
+    });
+  };
+}
+
 function renderSetupTabs() {
   if (!_TM) return;
   renderSetupTab(_TM.TAB.FIRST_FLAG, "firstflag-container");
@@ -2678,11 +3207,12 @@ async function loadData() {
   const bust = `?t=${Date.now()}`;
 
   try {
-    const [dataRes, histRes, etfRes, regimeRes] = await Promise.all([
+    const [dataRes, histRes, etfRes, regimeRes, setupsRes] = await Promise.all([
       fetch("data.json" + bust),        // → dataRes   (index 0)
       fetch("history.json" + bust),     // → histRes   (index 1)
       fetch("etf_data.json" + bust),    // → etfRes    (index 2)
       fetch("regime.json" + bust),      // → regimeRes (index 3)
+      fetch("setups.json" + bust),      // → setupsRes (index 4)
     ]);
 
     if (!dataRes.ok) throw new Error(`data.json: HTTP ${dataRes.status}`);
@@ -2709,6 +3239,13 @@ async function loadData() {
       document.getElementById("etf-loading").classList.add("hidden");
       document.getElementById("etf-error").textContent = t("etfNoData");
       document.getElementById("etf-error").classList.remove("hidden");
+    }
+
+    if (setupsRes.ok) {
+      // setups.json existiert erst nach dem ersten Scraper-Lauf — 404 ist ok,
+      // der Experimental-Tab zeigt dann den Hinweis statt einer Tabelle.
+      _setupsData = await setupsRes.json();
+      renderExperimental();
     }
 
     if (regimeRes.ok) {

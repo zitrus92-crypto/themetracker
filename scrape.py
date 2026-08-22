@@ -6,6 +6,7 @@ Fetches Finviz industry data AND Finviz thematic map data in parallel, writes:
   docs/etf_perf.json    — ETF performance snapshot (ETFs tab)
   docs/history.json     — compact daily history (Movers tab)
   docs/regime.json      — daily Regime-Gate states (header badge)
+  docs/setups.json      — Einzelaktien-Setups der stärksten Gruppen (Experimental-Tab)
 """
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -13,6 +14,7 @@ from pathlib import Path
 from datetime import date, datetime, timedelta, timezone
 
 import scraper
+import setups
 from market_calendar import is_trading_day
 from scores import compute_scores
 from snapshots import write_snapshot
@@ -199,6 +201,27 @@ def main():
         print(f"  Saved etf_perf.json ({len(etf_perf_payload)} ETFs)")
     else:
         print("  SKIPPED etf_perf.json (fetch failed)")
+
+    # ── Write setups.json (Experimental — Stufe 1) ────────────────────────────
+    # Braucht beide Universen (Industries + Themes) und läuft deshalb erst hier.
+    # Scheitert der Lauf, bleibt die letzte gute Datei liegen — der Tab zeigt
+    # dann den alten Stand mit seinem eigenen Zeitstempel.
+    if scored and etf_payload:
+        try:
+            setups_payload = setups.build_setups(scored, etf_payload.get("themes") or {})
+            # encoding explizit: ensure_ascii=False schreibt Umlaute/Gedankenstriche
+            # als UTF-8-Bytes, write_text nimmt sonst das Locale (auf Windows cp1252).
+            (DOCS / "setups.json").write_text(
+                json.dumps(setups_payload, ensure_ascii=False, separators=(",", ":")),
+                encoding="utf-8",
+            )
+            c = setups_payload["counts"]
+            print(f"  Saved setups.json (READY {c['READY']} · BREAKOUT {c['BREAKOUT']} · "
+                  f"WATCH {c['WATCH']} · EXTENDED {c['EXTENDED']})")
+        except Exception as e:
+            print(f"  WARNING: setups.json nicht aktualisiert ({e}) — alte Datei bleibt.")
+    else:
+        print("  SKIPPED setups.json (Industry- oder Theme-Daten fehlen)")
 
     # ── Write regime.json ─────────────────────────────────────────────────────
     if not trading_day:
