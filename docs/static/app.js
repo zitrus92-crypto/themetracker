@@ -221,7 +221,9 @@ const I18N = {
 
     expS1Title:    "Stufe 1 — Gerechneter Setup-Screener",
     expS1Desc:     "Aus Tages-OHLCV der Ticker der stärksten Gruppen. Pivot = höchstes Hoch der letzten 25 Tage ohne die letzten 3. Abstand = Kurs zum Pivot in %.",
-    expS1NoData:   "Noch keine setups.json — die Datei entsteht beim nächsten Scraper-Lauf.",
+    expS1NoData:   "Noch keine setups.json — die Datei entsteht beim nächsten Post-Close-Lauf.",
+    expEod:        "EOD",
+    expEodNote:    "Wird einmal pro Handelstag nach US-Close gerechnet (Post-Close-Lauf ab 21:30 UTC) — der Rest der App aktualisiert stündlich. Untertags bleibt dieser Stand bewusst stehen: Base, Pivot-Abstand und Volumen brauchen fertige Tageskerzen.",
     expS1Universe: (tk, ind, th) => `${tk} Ticker aus ${ind} Industries + ${th} Themes`,
     expUnivTitle:  "Universum — wie die „stärksten Gruppen“ bestimmt werden",
     expUnivCount:  (i, ip, t2, tp) => `${i} von ${ip} Industries · ${t2} von ${tp} Themes`,
@@ -494,7 +496,9 @@ const I18N = {
 
     expS1Title:    "Stage 1 — Computed setup screener",
     expS1Desc:     "From daily OHLCV of the tickers in the strongest groups. Pivot = highest high of the last 25 days excluding the last 3. Distance = price to pivot in %.",
-    expS1NoData:   "No setups.json yet — the file appears after the next scraper run.",
+    expS1NoData:   "No setups.json yet — the file appears after the next post-close run.",
+    expEod:        "EOD",
+    expEodNote:    "Computed once per trading day after the US close (post-close run from 21:30 UTC) — the rest of the app refreshes hourly. It deliberately stays put during the session: base, pivot distance and volume need settled daily candles.",
     expS1Universe: (tk, ind, th) => `${tk} tickers from ${ind} industries + ${th} themes`,
     expUnivTitle:  "Universe — how the “strongest groups” are picked",
     expUnivCount:  (i, ip, t2, tp) => `${i} of ${ip} industries · ${t2} of ${tp} themes`,
@@ -2903,6 +2907,7 @@ function expStage1Html() {
       ${hdr}
       <div class="exp-meta">
         <span>${t("updated")}${stamp}</span>
+        <span class="exp-chip exp-chip--eod" title="${esc(t("expEodNote"))}">${t("expEod")}</span>
         <span>${t("expS1Universe", u.tickers ?? 0, (u.industries ?? []).length, (u.themes ?? []).length)}</span>
         ${chip("READY")}${chip("BREAKOUT")}${chip("WATCH")}${chip("EXTENDED")}
       </div>

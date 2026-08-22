@@ -349,8 +349,12 @@ def build_setups(scored: dict, themes: dict, cfg: dict = SETUP_CONFIG) -> dict:
     keep = ready + watch
     keep.sort(key=lambda r: -r["score"])
 
+    now = datetime.now(timezone.utc)
     return {
-        "fetched_at": datetime.now(timezone.utc).isoformat(),
+        "fetched_at": now.isoformat(),
+        # Handelstag, fuer den gerechnet wurde. scrape.py nutzt das Feld, um
+        # pro Tag genau einen Lauf zuzulassen (Post-Close statt stuendlich).
+        "date": now.strftime("%Y-%m-%d"),
         "config": cfg,
         "universe": {**meta, "tickers": len(tickers), "with_bars": len(bars)},
         "counts": counts,

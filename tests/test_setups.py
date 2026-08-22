@@ -1,5 +1,7 @@
 import unittest
+from datetime import datetime, timezone
 
+from scrape import setups_due
 from setups import (
     SETUP_CONFIG,
     analyze_series,
@@ -177,6 +179,47 @@ class TestUniverse(unittest.TestCase):
         tickers, groups, _ = build_universe(scored, {}, cfg)
         self.assertEqual(len(tickers), 10)
         self.assertEqual(len(groups), 10)
+
+
+class TestSetupsDue(unittest.TestCase):
+    """Der Experimental-Tab läuft einmal pro Handelstag nach US-Close."""
+
+    TODAY = "2026-08-20"
+
+    def at(self, hour, minute=0):
+        return datetime(2026, 8, 20, hour, minute, tzinfo=timezone.utc)
+
+    def test_intraday_runs_do_not_recompute(self):
+        # Die stündlichen Läufe 14–21 UTC lassen setups.json in Ruhe.
+        for hour in range(14, 21):
+            due, why = setups_due(self.at(hour), self.TODAY, True, None)
+            self.assertFalse(due, f"{hour}:00 UTC")
+            self.assertEqual(why, "vor US-Close")
+
+    def test_post_close_run_computes(self):
+        due, _ = setups_due(self.at(22), self.TODAY, True, None)
+        self.assertTrue(due)
+
+    def test_boundary_is_2130_utc(self):
+        self.assertFalse(setups_due(self.at(21, 29), self.TODAY, True, None)[0])
+        self.assertTrue(setups_due(self.at(21, 30), self.TODAY, True, None)[0])
+
+    def test_second_late_run_does_not_recompute(self):
+        # GitHub startet Läufe verspätet — der zweite nach Close fällt aus,
+        # weil der Tageseintrag schon steht.
+        existing = {"date": self.TODAY}
+        due, why = setups_due(self.at(23, 15), self.TODAY, True, existing)
+        self.assertFalse(due)
+        self.assertEqual(why, "heute bereits gerechnet")
+
+    def test_yesterdays_file_does_not_block_today(self):
+        existing = {"date": "2026-08-19"}
+        self.assertTrue(setups_due(self.at(22), self.TODAY, True, existing)[0])
+
+    def test_non_trading_day_never_computes(self):
+        due, why = setups_due(self.at(22), self.TODAY, False, None)
+        self.assertFalse(due)
+        self.assertEqual(why, "kein Handelstag")
 
 
 if __name__ == "__main__":

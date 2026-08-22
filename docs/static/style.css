@@ -722,6 +722,8 @@ details.wp-details { margin-bottom: 18px; }
 .exp-chip--breakout { border-color: #3b82f6; color: #93c5fd; }
 .exp-chip--watch    { border-color: #8b5cf6; color: #c4b5fd; }
 .exp-chip--extended { border-color: var(--red-4); color: var(--red-2); }
+/* EOD-Marke: erklärt, warum dieser Block untertags stehen bleibt. */
+.exp-chip--eod { border-style: dashed; cursor: help; }
 
 .exp-universe { margin-bottom: 14px; }
 .exp-universe .exp-desc { margin-bottom: 6px; }

@@ -63,6 +63,38 @@ def _trading_days_between(d1: str, d2: str) -> int:
 
 B1_STALE_TRADING_DAYS = 3  # ältere Breadth-Zeile ⇒ Badge "DATEN VERALTET"
 
+# ── Setup-Screener: einmal pro Handelstag nach US-Close ───────────────────────
+# Der Workflow feuert stündlich 14–21 UTC plus 22 UTC. Der Experimental-Tab
+# braucht settled Tageskerzen, deshalb rechnet nur der Post-Close-Lauf.
+# 21:30 UTC liegt in BEIDEN Zeitzonen nach dem Close (EDT 17:30, EST 16:30) und
+# trifft damit den 22-UTC-Slot, auch wenn GitHub ihn verspätet startet.
+# Wall-Clock allein reicht nicht — verspätete Läufe können mehrfach nach 21:30
+# landen —, deshalb zusätzlich die Idempotenz über das Datum in setups.json.
+SETUPS_AFTER_UTC_MINUTE = 21 * 60 + 30
+
+
+def setups_due(now_utc: datetime, today: str, trading_day: bool, existing: dict | None):
+    """Soll setups.json in diesem Lauf neu gerechnet werden? (bool, Grund)."""
+    if not trading_day:
+        return False, "kein Handelstag"
+    if (existing or {}).get("date") == today:
+        return False, "heute bereits gerechnet"
+    if now_utc.hour * 60 + now_utc.minute < SETUPS_AFTER_UTC_MINUTE:
+        return False, "vor US-Close"
+    return True, ""
+
+
+def _load_existing_setups() -> dict | None:
+    """Letzten setups.json-Stand lesen; unlesbar = wie nicht vorhanden."""
+    path = DOCS / "setups.json"
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"  WARNING: setups.json nicht lesbar ({e}) — wird neu gerechnet.")
+        return None
+
 
 def write_regime(regime_inputs: dict, today: str) -> dict:
     """Regime-Zustand aus den Inputs berechnen und in docs/regime.json anhängen.
@@ -206,7 +238,14 @@ def main():
     # Braucht beide Universen (Industries + Themes) und läuft deshalb erst hier.
     # Scheitert der Lauf, bleibt die letzte gute Datei liegen — der Tab zeigt
     # dann den alten Stand mit seinem eigenen Zeitstempel.
-    if scored and etf_payload:
+    due, why = setups_due(
+        datetime.now(timezone.utc), today, trading_day, _load_existing_setups()
+    )
+    if not (scored and etf_payload):
+        print("  SKIPPED setups.json (Industry- oder Theme-Daten fehlen)")
+    elif not due:
+        print(f"  SKIPPED setups.json ({why}) — letzter Stand bleibt liegen")
+    else:
         try:
             setups_payload = setups.build_setups(scored, etf_payload.get("themes") or {})
             # encoding explizit: ensure_ascii=False schreibt Umlaute/Gedankenstriche
@@ -220,8 +259,6 @@ def main():
                   f"WATCH {c['WATCH']} · EXTENDED {c['EXTENDED']})")
         except Exception as e:
             print(f"  WARNING: setups.json nicht aktualisiert ({e}) — alte Datei bleibt.")
-    else:
-        print("  SKIPPED setups.json (Industry- oder Theme-Daten fehlen)")
 
     # ── Write regime.json ─────────────────────────────────────────────────────
     if not trading_day:
