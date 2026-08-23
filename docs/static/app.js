@@ -207,11 +207,11 @@ const I18N = {
     hintExp:       "Stufe 0 verändert die Finviz-Links der ganzen App: statt aller Aktien einer Gruppe nach 4-Wochen-Performance (= extended zuerst) nur die nahe am 20-Tage-Hoch, sortiert nach Nähe zum 50-Tage-Hoch.\nStufe 1 rechnet Base-Verengung, Pivot-Abstand und Volumen aus Tages-OHLCV der stärksten Gruppen — dieselben drei Fragen, die du sonst am Mini-Chart beantwortest.\nAlle Schwellen sind Defaults und NICHT backgetestet.",
 
     expS0Title:    "Stufe 0 — Finviz-Link-Filter",
-    expS0Desc:     "Gilt für jeden Finviz-Link der App (Heatmap, Picks, Themes, Sub-Themes). Der Standardlink sortiert nach 4-Wochen-Performance und stellt damit die am weitesten gelaufenen Namen nach vorn — genau die, die du überspringst.",
-    expS0Off:      "Aus (Original)",
+    expS0Desc:     "Gilt für jeden Finviz-Link der App (Heatmap, Picks, Themes, Sub-Themes). Zwei Fragen, zwei Einstellungen: „Ganzes Revier“ + 3M-Perf beantwortet „wer führt dieses Revier an?“ — „Setup“ + Pivot-Nähe beantwortet „was ist heute kaufbar, ohne extended zu sein?“",
+    expS0Off:      "Ganzes Revier",
     expS0Setup:    "Setup (0–5 %)",
     expS0Wide:     "Weit (0–10 %)",
-    expS0OffDesc:  "ta_volatility_mo3 · sortiert nach Perf 4W",
+    expS0OffDesc:  "Keine Setup-Vorauswahl — alle Namen der Gruppe mit Volatility 1M > 3 %. Beantwortet „wer führt dieses Revier an?“",
     expS0Strength: "Setup + Stärke",
     expSortLabel:  "Sortierung:",
     expSortPivot:  "Pivot-Nähe",
@@ -489,11 +489,11 @@ const I18N = {
     hintExp:       "Stage 0 changes every Finviz link in the app: instead of all stocks of a group sorted by 4-week performance (= most extended first), only those near their 20-day high, sorted by proximity to the 50-day high.\nStage 1 computes base contraction, pivot distance and volume from daily OHLCV of the strongest groups — the same three questions you normally answer on the mini chart.\nAll thresholds are defaults and NOT backtested.",
 
     expS0Title:    "Stage 0 — Finviz link filter",
-    expS0Desc:     "Applies to every Finviz link in the app (heatmap, picks, themes, sub-themes). The default link sorts by 4-week performance and therefore puts the most extended names first — exactly the ones you skip.",
-    expS0Off:      "Off (original)",
+    expS0Desc:     "Applies to every Finviz link in the app (heatmap, picks, themes, sub-themes). Two questions, two settings: “Whole group” + 3M perf answers “who leads this group?” — “Setup” + pivot proximity answers “what is buyable today without being extended?”",
+    expS0Off:      "Whole group",
     expS0Setup:    "Setup (0–5%)",
     expS0Wide:     "Wide (0–10%)",
-    expS0OffDesc:  "ta_volatility_mo3 · sorted by perf 4W",
+    expS0OffDesc:  "No setup pre-selection — every name in the group with volatility 1M > 3%. Answers “who leads this group?”",
     expS0Strength: "Setup + strength",
     expSortLabel:  "Sort:",
     expSortPivot:  "Pivot proximity",
@@ -664,7 +664,13 @@ function instTag() {
 // Reihenfolge bleibt die Pivot-Nähe.
 const FV_BASE = "ta_volatility_mo3";
 const FV_MODES = {
-  off:      { filters: FV_BASE, sort: "perf4w" },
+  // Standardmodus: ganzes Revier, keine Setup-Vorauswahl. Standardsortierung
+  // 3M-Perf, weil dieser Modus die Frage "wer fuehrt dieses Revier an?"
+  // beantwortet. Gemessen an 13 Gruppen x 24 Stichtagen (556 Ticker, 2 Jahre):
+  // ein 3M-Ranking laeuft der Gruppe im Folgemonat um +0,89 % voraus, ein
+  // 1M-Ranking nur um +0,15 %; von den Top-3 nach 1M sind einen Monat spaeter
+  // nur 19 % noch Top-3 (3M: 53 %) - 1M-Fuehrerschaft ist ueberwiegend Rauschen.
+  off:      { filters: FV_BASE, sort: "perf13w" },
   setup:    { filters: `ta_highlow20d_b0to5h,ta_sma50_pa,sh_avgvol_o500,sh_price_o5,${FV_BASE}`, sort: "high50d" },
   wide:     { filters: `ta_highlow20d_b0to10h,ta_sma50_pa,sh_avgvol_o500,sh_price_o5,${FV_BASE}`, sort: "high50d" },
   strength: { filters: `ta_highlow20d_b0to5h,ta_sma50_pa,sh_avgvol_o500,sh_price_o5,ta_perf_13w20o,${FV_BASE}`, sort: "high50d" },
