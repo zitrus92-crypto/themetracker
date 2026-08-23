@@ -213,6 +213,13 @@ const I18N = {
     expS0Wide:     "Weit (0–10 %)",
     expS0OffDesc:  "ta_volatility_mo3 · sortiert nach Perf 4W",
     expS0Strength: "Setup + Stärke",
+    expSortLabel:  "Sortierung:",
+    expSortPivot:  "Pivot-Nähe",
+    expSort3M:     "3M-Perf ↓",
+    expSort4W:     "4W-Perf ↓",
+    expSortPivotDesc: "o=-high50d — am nächsten am 50-Tage-Hoch zuerst. Sortiert nach ORT (wo steht der Kurs jetzt), nicht nach Weg.",
+    expSort3MDesc:    "o=-perf13w — stärkste 3-Monats-Performance zuerst. Sortiert nach WEG: die am weitesten Gelaufenen stehen vorn. Mit Spearman 0,11 gegenüber der Pivot-Nähe praktisch unkorreliert — anderer Blickwinkel, kein Ersatz.",
+    expSort4WDesc:    "o=-perf4w — die Bestandssortierung. Stärkste 4-Wochen-Performance zuerst, also die am weitesten gelaufenen Namen ganz oben.",
     expS0SetupDesc:"0–5 % unter 20-T-Hoch · über SMA50 · Vol > 500K · Kurs > $5 · Volatility 1M > 3 % · sortiert nach Nähe zum 50-T-Hoch",
     expS0WideDesc: "wie Setup, aber 0–10 % unter dem 20-T-Hoch — mehr Treffer, mehr Arbeit am Chart",
     expS0StrengthDesc: "wie Setup, zusätzlich 3M-Perf > +20 % — Stärke als Eintrittskarte, Pivot-Nähe bleibt die Reihenfolge (Finviz erlaubt nur einen Sortierschlüssel)",
@@ -488,6 +495,13 @@ const I18N = {
     expS0Wide:     "Wide (0–10%)",
     expS0OffDesc:  "ta_volatility_mo3 · sorted by perf 4W",
     expS0Strength: "Setup + strength",
+    expSortLabel:  "Sort:",
+    expSortPivot:  "Pivot proximity",
+    expSort3M:     "3M perf ↓",
+    expSort4W:     "4W perf ↓",
+    expSortPivotDesc: "o=-high50d — closest to the 50-day high first. Sorts by POSITION (where price stands now), not by distance travelled.",
+    expSort3MDesc:    "o=-perf13w — strongest 3-month performance first. Sorts by DISTANCE TRAVELLED: the furthest-run names come first. Practically uncorrelated with pivot proximity (Spearman 0.11) — a different angle, not a substitute.",
+    expSort4WDesc:    "o=-perf4w — the legacy sort. Strongest 4-week performance first, i.e. the furthest-run names on top.",
     expS0SetupDesc:"0–5% below 20-day high · above SMA50 · vol > 500K · price > $5 · volatility 1M > 3% · sorted by proximity to the 50-day high",
     expS0WideDesc: "like Setup but 0–10% below the 20-day high — more hits, more chart work",
     expS0StrengthDesc: "like Setup plus 3M perf > +20% — strength as the entry ticket, pivot proximity stays the ordering (Finviz allows only one sort key)",
@@ -650,21 +664,58 @@ function instTag() {
 // Reihenfolge bleibt die Pivot-Nähe.
 const FV_BASE = "ta_volatility_mo3";
 const FV_MODES = {
-  off:      { filters: FV_BASE, sort: "-perf4w" },
-  setup:    { filters: `ta_highlow20d_b0to5h,ta_sma50_pa,sh_avgvol_o500,sh_price_o5,${FV_BASE}`, sort: "-high50d" },
-  wide:     { filters: `ta_highlow20d_b0to10h,ta_sma50_pa,sh_avgvol_o500,sh_price_o5,${FV_BASE}`, sort: "-high50d" },
-  strength: { filters: `ta_highlow20d_b0to5h,ta_sma50_pa,sh_avgvol_o500,sh_price_o5,ta_perf_13w20o,${FV_BASE}`, sort: "-high50d" },
+  off:      { filters: FV_BASE, sort: "perf4w" },
+  setup:    { filters: `ta_highlow20d_b0to5h,ta_sma50_pa,sh_avgvol_o500,sh_price_o5,${FV_BASE}`, sort: "high50d" },
+  wide:     { filters: `ta_highlow20d_b0to10h,ta_sma50_pa,sh_avgvol_o500,sh_price_o5,${FV_BASE}`, sort: "high50d" },
+  strength: { filters: `ta_highlow20d_b0to5h,ta_sma50_pa,sh_avgvol_o500,sh_price_o5,ta_perf_13w20o,${FV_BASE}`, sort: "high50d" },
 };
-let _fvMode = "off";
-try { _fvMode = localStorage.getItem("fvMode") || "off"; } catch (e) { /* Private Mode */ }
+
+// Sortierung ist von der Filterwahl getrennt — Finviz erlaubt genau einen
+// Sortierschlüssel, und die drei messen verschiedene Dinge:
+//   high50d = Ort (Abstand zum 50-Tage-Hoch, absteigend = am Hoch zuerst)
+//   perf13w = Weg über 3 Monate, absteigend
+//   perf4w  = Weg über 4 Wochen, absteigend (der Bestandslink)
+// Gemessen an 118 Kandidaten: high50d und perf13w korrelieren praktisch nicht
+// (Spearman 0,11) — sie sind kein Ersatz füreinander, sondern zwei Blickwinkel.
+const FV_SORTS = {
+  high50d: { o: "-high50d", labelKey: "expSortPivot", descKey: "expSortPivotDesc" },
+  perf13w: { o: "-perf13w", labelKey: "expSort3M",    descKey: "expSort3MDesc" },
+  perf4w:  { o: "-perf4w",  labelKey: "expSort4W",    descKey: "expSort4WDesc" },
+};
+
+// --- Einstellungs-Speicher (Cookie, localStorage als Rückfall) ---
+// Cookie: funktionale Einstellung, die der Nutzer selbst gesetzt hat, ein Jahr
+// haltbar. localStorage wird weiter gelesen, damit früher gesetzte Auswahlen
+// nicht verlorengehen, und mitgeschrieben, falls Cookies blockiert sind.
+function prefSet(key, value) {
+  try {
+    document.cookie = `${key}=${encodeURIComponent(value)}; max-age=31536000; path=/; SameSite=Lax`;
+  } catch (e) { /* Cookies blockiert */ }
+  try { localStorage.setItem(key, value); } catch (e) { /* Private Mode */ }
+}
+function prefGet(key) {
+  const hit = document.cookie.match(new RegExp(`(?:^|; )${key}=([^;]*)`));
+  if (hit) return decodeURIComponent(hit[1]);
+  try { return localStorage.getItem(key); } catch (e) { return null; }
+}
+
+let _fvMode = prefGet("fvMode") || "off";
 if (!FV_MODES[_fvMode]) _fvMode = "off";
+// "auto" = die zum Modus gehörende Standardsortierung. Sobald der Nutzer eine
+// Sortierung explizit wählt, bleibt sie über den Moduswechsel hinweg stehen.
+let _fvSort = prefGet("fvSort") || "auto";
+if (_fvSort !== "auto" && !FV_SORTS[_fvSort]) _fvSort = "auto";
+
+function fvActiveSort() {
+  return _fvSort === "auto" ? (FV_MODES[_fvMode] || FV_MODES.off).sort : _fvSort;
+}
 
 // groupFilter: "ind_<slug>" | "theme_<slug>" | "subtheme_<key>"
 function fvScreenerUrl(groupFilter) {
   if (!groupFilter) return "";
   const mode = FV_MODES[_fvMode] || FV_MODES.off;
   const f = encodeURIComponent(`${groupFilter},${mode.filters}`);
-  return `https://finviz.com/screener.ashx?v=211&f=${f}&o=${mode.sort}`;
+  return `https://finviz.com/screener.ashx?v=211&f=${f}&o=${FV_SORTS[fvActiveSort()].o}`;
 }
 
 function finvizUrl(ticker) {
@@ -2822,6 +2873,13 @@ function expStage0Html() {
         ${btn("strength", t("expS0Strength"), t("expS0StrengthDesc"))}
       </div>
       <p class="exp-mode-desc">${t("expS0" + modeKey + "Desc")}</p>
+      <div class="exp-modes exp-sorts">
+        <span class="exp-sort-label">${t("expSortLabel")}</span>
+        ${Object.entries(FV_SORTS).map(([key, s]) => `
+          <button class="exp-mode-btn${fvActiveSort() === key ? " exp-mode-btn--active" : ""}"
+                  data-fvsort="${key}" title="${esc(t(s.descKey))}">${t(s.labelKey)}</button>`).join("")}
+      </div>
+      <p class="exp-mode-desc">${t(FV_SORTS[fvActiveSort()].descKey)}</p>
       ${sample ? `<p class="exp-sample">${t("expS0Preview")}
         <a href="${sample}" target="_blank" rel="noopener">${esc(strongest[0])} →</a>
         <code>${esc(sample.replace("https://finviz.com/screener.ashx?", ""))}</code></p>` : ""}
@@ -2989,15 +3047,27 @@ function renderExperimental() {
   box.innerHTML = expStage0Html() + expStage1Html();
 
   // Stufe-0-Schalter: wirkt app-weit, also alles neu zeichnen, was Links baut.
+  const rerenderLinkViews = () => {
+    if (_lastPayload) renderAll(_lastPayload);
+    if (_etfData) renderEtfTab();
+    renderSetupTabs();
+    renderWeekendPrep();
+    renderExperimental();
+  };
+
   box.querySelectorAll("[data-fvmode]").forEach(btn => {
     btn.onclick = () => {
       _fvMode = btn.dataset.fvmode;
-      try { localStorage.setItem("fvMode", _fvMode); } catch (e) { /* Private Mode */ }
-      if (_lastPayload) renderAll(_lastPayload);
-      if (_etfData) renderEtfTab();
-      renderSetupTabs();
-      renderWeekendPrep();
-      renderExperimental();
+      prefSet("fvMode", _fvMode);
+      rerenderLinkViews();
+    };
+  });
+
+  box.querySelectorAll("[data-fvsort]").forEach(btn => {
+    btn.onclick = () => {
+      _fvSort = btn.dataset.fvsort;
+      prefSet("fvSort", _fvSort);
+      rerenderLinkViews();
     };
   });
 
