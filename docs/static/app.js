@@ -63,7 +63,6 @@ const I18N = {
     regimeEffectOn:      "Volle Size (1% Risk/Trade). Add-ons erlaubt.",
     regimeEffectNeutral: "Neue Trades nur mit 0,5% Risk statt 1%. Keine Add-ons.",
     regimeEffectOff:     "Keine neuen Entries. Bereits platzierte GTC-Orders bleiben. Nur Verwaltung offener Positionen.",
-    regimeBannerOff:  "🔴 RISK_OFF — keine neuen Entries. Nur Verwaltung offener Positionen.",
     regimeTipTitle:   (d) => `Regime-Gate (QQQ + T2108) — Stand ${d}`,
     regimeTipBreadth: (d) => `Stand ${d}`,
     regimeTipStale:   "⚠ Breadth-Daten älter als 3 Handelstage — Zustand eingefroren.",
@@ -273,7 +272,6 @@ const I18N = {
     regimeEffectOn:      "Full size (1% risk/trade). Add-ons allowed.",
     regimeEffectNeutral: "New trades at 0.5% risk instead of 1%. No add-ons.",
     regimeEffectOff:     "No new entries. Existing GTC orders remain untouched. Manage open positions only.",
-    regimeBannerOff:  "🔴 RISK_OFF — no new entries. Manage open positions only.",
     regimeTipTitle:   (d) => `Regime gate (QQQ + T2108) — as of ${d}`,
     regimeTipBreadth: (d) => `as of ${d}`,
     regimeTipStale:   "⚠ Breadth data older than 3 trading days — state frozen.",
@@ -2655,13 +2653,11 @@ function fmtSma(v) {
 }
 
 function renderRegime() {
-  const badge  = document.getElementById("regime-badge");
-  const banner = document.getElementById("regime-banner");
+  const badge = document.getElementById("regime-badge");
   if (!badge) return;
   const r = _regimeData;
   if (!r) {
     badge.classList.add("hidden");
-    if (banner) banner.classList.add("hidden");
     return;
   }
 
@@ -2695,16 +2691,6 @@ function renderRegime() {
   badge.className = "regime-badge " + cls;
   badge.textContent = label;
   badge.title = lines.join("\n");
-
-  // Banner immer bei RISK_OFF — auch eingefroren gilt: keine neuen Entries.
-  if (banner) {
-    if (state === "RISK_OFF") {
-      banner.textContent = t("regimeBannerOff");
-      banner.classList.remove("hidden");
-    } else {
-      banner.classList.add("hidden");
-    }
-  }
 }
 
 // ── Situational-Awareness-Ampel (Stockbee) ────────────────────────────────
