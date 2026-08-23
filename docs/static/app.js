@@ -11,7 +11,6 @@ const I18N = {
     noData:       "Keine Daten.",
     topIndustry:  "Industry",
     tabHeatmap:   "Heatmap",
-    tabPicks:     "★ Setup Picks",
     tabTop10:     "Top 10",
     tabIndBubble: "🔵 Bubble",
     indBubbleTitle: "🔵 Industry Bubble Chart",
@@ -21,19 +20,7 @@ const I18N = {
     colAccel:     "Accel",
     colTrend:     "Trend",
     exportJson:   "📤 JSON kopieren",
-    picksTitle:   "★ Setup Picks — First Flag",
-    picksSubtitle:"Industries mit positivem Momentum-Profil für den First-Flag-Breakout-Trade.",
-    picksColReason: "Setup-Begründung",
-    picksEmpty:   "Aktuell keine Industries mit First-Flag-Profil gefunden.",
     top10Title:   "Top 10 per Zeitraum",
-    tagHot:       "HOT",
-    tagAccel:     "ACCEL ▲",
-    tagFresh:     "FRISCH",
-    reasonFresh:  (p3m, p1m) => `Schwache 3M-Basis (${p3m}%) aber 1M stark → erster Leg, nicht extended.`,
-    reasonSolid:  ()         => `3M solide, 1W beschleunigt weiter → Trend intakt, Momentum nimmt zu.`,
-    reasonSteady: ()         => `Gleichmäßig stark über 1W/1M — konsistentes Sektoren-Momentum.`,
-    reasonAccel:  (acc)      => `Starke Beschleunigung (Accel +${acc}) deutet auf frisches institutionelles Interesse hin.`,
-    reasonIntraday: (p1d)    => `Intraday +${p1d}% — Breakout läuft heute bereits.`,
     moversTitle:  "Where is the Puck going?",
     moversSubtitle: "Rank-Veränderung seit dem gewählten Zeitraum. Je größer der Sprung, desto stärker das Momentum.",
     moversRising: "Rising — Puck kommt hier an",
@@ -46,7 +33,6 @@ const I18N = {
     infoScore:    "Gewichteter Rang-Score: 1M×70% + 1W×20% + 3M×10%. Niedriger = besser (Rang 1 = stärkstes).",
     infoAccel:    "Accel = 3M-Rang minus 1W-Rang. Hoch positiv = war vor 3M noch schwach, jetzt stark = erster Leg, nicht extended. Ideal fuer First-Flag-Setups.",
     hintHeatmap:  "Score sortieren: Marktüberblick — welche Industries aktuell führen.\nAccel sortieren: First Flag Suche — frisches Momentum (3M schwach + 1W stark = erster Leg, nicht extended).\nINST-Filter: zeigt nur institutionell bestätigte Industries (Top 40 in 1M und 3M).\nKlick auf Spaltenkopf = sortieren, nochmal klicken = umkehren.",
-    hintPicks:    "Vorgefilterter First-Flag-Kandidatenliste: Score Top 40 + positiver Accel + 1W > 1% + 1M > 0%.\nSortierung: 60% Accel-Gewicht + 40% Score — frischeste Bewegungen zuerst.\nINST-Badge = institutionelles Kapital bestätigt die Industry = höchste Konfluenz.\nKlick auf Industry-Name öffnet Finviz-Screener mit passenden Filtern.",
     hintIndBubble:"X-Achse: 3M-Performance, Y-Achse: 1M-Performance.\nGröße = Stärke (Score) — starke Industries bleiben groß, egal ob beschleunigend oder konsolidierend.\nFarbe = Accel (stabiler Rang3M−Rang1M): grün = beschleunigt, grau = konsolidiert, rot = fällt ab.\nINST-Filter (Heatmap-Toggle) wirkt auch hier. Klick auf Bubble öffnet Finviz-Screener.",
     hintTop10:    "Top 10 Performer pro Zeitraum — zeigt aktuelle Marktführer.\nKarten: kompakte Übersicht pro Zeitraum.\nBalken: alle Industries sortiert nach 1M und 3M Performance.\nINST-Badge zeigt institutionelles Interesse.",
     hintMovers:   "Rang-Veränderung seit dem gewählten Zeitraum.\nRising: Industries die am stärksten gestiegen sind — frisches Kapital fließt ein. Hier suchen!\nFading: Industries die Ränge verloren haben — Kapital verlässt diesen Bereich. Meiden.\nZeitraum wählen: 1W / 2W / 1M / 3M (ausgegraut = noch nicht genug Daten).",
@@ -231,12 +217,13 @@ const I18N = {
     expS1NoData:   "Noch keine setups.json — die Datei entsteht beim nächsten Post-Close-Lauf.",
     expEod:        "EOD",
     expEodNote:    "Wird einmal pro Handelstag nach US-Close gerechnet (Post-Close-Lauf ab 21:30 UTC) — der Rest der App aktualisiert stündlich. Untertags bleibt dieser Stand bewusst stehen: Base, Pivot-Abstand und Volumen brauchen fertige Tageskerzen.",
-    expS1Universe: (tk, ind, th) => `${tk} Ticker aus ${ind} Industries + ${th} Themes`,
-    expUnivTitle:  "Universum — wie die „stärksten Gruppen“ bestimmt werden",
-    expUnivCount:  (i, ip, t2, tp) => `${i} von ${ip} Industries · ${t2} von ${tp} Themes`,
-    expUnivIndRule: (n) => `Industry: die ${n} mit dem niedrigsten Score. Score = Rang1W × 0,20 + Rang1M × 0,70 + Rang3M × 0,10, Ränge über alle Industries (1 = stärkste). Exakt die Zahl aus der Heatmap-Spalte „Score“.`,
-    expUnivThemeRule: (n) => `Theme: die ${n} mit dem niedrigsten Score. Score = Mittelwert der Sub-Node-Scores des Themes, je Sub-Node Rang1M × 0,70 + Rang1W × 0,20 + Rang3M × 0,10 über alle 268 Sub-Nodes. Exakt die Zahl aus der Themes-Tabelle.`,
-    expUnivNotUsed: "Bewusst NICHT geprüft: Accel, INST-Badge, Regime-Gate, Weekend-Prep-Stage. Die Auswahl ist reine Momentan-Stärke über 1W/1M/3M — sie ist NICHT die Aufnahme-Formel der Wochenend-Routine (die zusätzlich Accel ≥ +10 und 1M > 0 % verlangt). Die Accel-Spalte unten steht nur zur Info.",
+    expS1Universe: (tk, th) => `${tk} Ticker aus ${th} Themes`,
+    expUnivTitle:  "Universum — wie die „stärksten Themes“ bestimmt werden",
+    expUnivCount:  (n, pool) => `${n} von ${pool} Themes`,
+    expUnivColVia: "qualifiziert über",
+    expColTheme:   "Theme",
+    expUnivThemeRule: (n, tfs) => `Je Zeitraum (${tfs}) die ${n} Themes mit der höchsten Performance, danach vereinigt — Überschneidungen zählen einmal. Gerankt wird nach tatsächlicher Performance (Mittelwert der Sub-Nodes), NICHT nach dem Score der Themes-Tabelle: der ist ein gewichteter Rang über alle drei Zeiträume und würde die Zeitraum-Frage gerade verwischen. Industries spielen keine Rolle mehr.`,
+    expUnivNotUsed: "Bewusst NICHT geprüft: Accel, INST-Badge, Regime-Gate, Weekend-Prep-Stage. Die Auswahl ist reine Momentan-Stärke über 1W/1M/3M — sie ist NICHT die Aufnahme-Formel der Wochenend-Routine (die zusätzlich Accel ≥ +10 und 1M > 0 % verlangt).",
     expUnivColRank: "Rang",
     expUnivColTickers: "Ticker",
     expUnivFootnote: (tk, bars) => `Aus diesen Gruppen: ${tk} eindeutige Ticker, für ${bars} davon kamen Kursdaten zurück. Danach erst greifen ADR-, Liquiditäts- und Setup-Filter.`,
@@ -293,7 +280,6 @@ const I18N = {
     noData:       "No data.",
     topIndustry:  "Industry",
     tabHeatmap:   "Heatmap",
-    tabPicks:     "★ Setup Picks",
     tabTop10:     "Top 10",
     tabIndBubble: "🔵 Bubble",
     indBubbleTitle: "🔵 Industry Bubble Chart",
@@ -303,19 +289,7 @@ const I18N = {
     colAccel:     "Accel",
     colTrend:     "Trend",
     exportJson:   "📤 Copy JSON",
-    picksTitle:   "★ Setup Picks — First Flag",
-    picksSubtitle:"Industries with positive momentum profile for First Flag breakout trades.",
-    picksColReason: "Setup Rationale",
-    picksEmpty:   "No industries with First Flag profile found.",
     top10Title:   "Top 10 per Timeframe",
-    tagHot:       "HOT",
-    tagAccel:     "ACCEL ▲",
-    tagFresh:     "FRESH",
-    reasonFresh:  (p3m, p1m) => `Weak 3M base (${p3m}%) but 1M strong → first leg confirmed, not extended.`,
-    reasonSolid:  ()         => `3M solid, 1W accelerating further → trend intact, momentum building.`,
-    reasonSteady: ()         => `Consistently strong across 1W/1M — steady sector momentum.`,
-    reasonAccel:  (acc)      => `Strong acceleration (Accel +${acc}) suggests fresh institutional interest.`,
-    reasonIntraday: (p1d)    => `Intraday +${p1d}% — breakout already running today.`,
     moversTitle:  "Where is the Puck going?",
     moversSubtitle: "Rank change since the selected period. The bigger the jump, the stronger the momentum.",
     moversRising: "Rising — Puck heading here",
@@ -328,7 +302,6 @@ const I18N = {
     infoScore:    "Weighted rank score: 1M×70% + 1W×20% + 3M×10%. Lower = better (rank 1 = strongest).",
     infoAccel:    "Accel = 3M rank minus 1W rank. High positive = was weak 3M ago, now strong = first leg, not extended. Ideal for First Flag setups.",
     hintHeatmap:  "Sort by Score: market overview — which industries are currently leading.\nSort by Accel: First Flag search — fresh momentum (weak 3M + strong 1W = first leg, not extended).\nINST filter: shows only institutionally confirmed industries (Top 40 in 1M and 3M).\nClick any column header to sort, click again to reverse.",
-    hintPicks:    "Pre-filtered First Flag candidate list: Score Top 40 + positive Accel + 1W > 1% + 1M > 0%.\nSorted by: 60% Accel weight + 40% Score — freshest moves first.\nINST badge = institutional capital confirms the industry = highest confluence.\nClick any industry name to open Finviz screener with matching filters.",
     hintIndBubble:"X-axis: 3M performance, Y-axis: 1M performance.\nSize = strength (Score) — strong industries stay big regardless of accelerating or consolidating.\nColor = Accel (stable Rank3M−Rank1M): green = accelerating, gray = consolidating, red = fading.\nThe INST filter (Heatmap toggle) applies here too. Click a bubble to open the Finviz screener.",
     hintTop10:    "Top 10 performers per timeframe — shows current market leaders.\nCards: compact overview per timeframe.\nBar chart: all industries sorted by 1M and 3M performance.\nINST badge shows institutional interest.",
     hintMovers:   "Rank change since the selected period.\nRising: industries that climbed most in ranking — fresh capital flowing in. Look here!\nFading: industries that lost ranks — capital leaving. Avoid.\nSelect period: 1W / 2W / 1M / 3M (greyed out = not enough data yet).",
@@ -513,12 +486,13 @@ const I18N = {
     expS1NoData:   "No setups.json yet — the file appears after the next post-close run.",
     expEod:        "EOD",
     expEodNote:    "Computed once per trading day after the US close (post-close run from 21:30 UTC) — the rest of the app refreshes hourly. It deliberately stays put during the session: base, pivot distance and volume need settled daily candles.",
-    expS1Universe: (tk, ind, th) => `${tk} tickers from ${ind} industries + ${th} themes`,
-    expUnivTitle:  "Universe — how the “strongest groups” are picked",
-    expUnivCount:  (i, ip, t2, tp) => `${i} of ${ip} industries · ${t2} of ${tp} themes`,
-    expUnivIndRule: (n) => `Industry: the ${n} with the lowest score. Score = rank1W × 0.20 + rank1M × 0.70 + rank3M × 0.10, ranks across all industries (1 = strongest). Exactly the number in the heatmap’s “Score” column.`,
-    expUnivThemeRule: (n) => `Theme: the ${n} with the lowest score. Score = average of the theme’s sub-node scores, each sub-node rank1M × 0.70 + rank1W × 0.20 + rank3M × 0.10 across all 268 sub-nodes. Exactly the number in the themes table.`,
-    expUnivNotUsed: "Deliberately NOT checked: accel, INST badge, regime gate, weekend-prep stage. The pick is pure current strength over 1W/1M/3M — it is NOT the weekend routine’s inclusion formula (which also requires accel ≥ +10 and 1M > 0%). The accel column below is informational only.",
+    expS1Universe: (tk, th) => `${tk} tickers from ${th} themes`,
+    expUnivTitle:  "Universe — how the “strongest themes” are picked",
+    expUnivCount:  (n, pool) => `${n} of ${pool} themes`,
+    expUnivColVia: "qualified via",
+    expColTheme:   "Theme",
+    expUnivThemeRule: (n, tfs) => `Per timeframe (${tfs}) the ${n} themes with the highest performance, then unioned — overlaps count once. Ranked by actual performance (average of the sub-nodes), NOT by the themes table’s score: that is a weighted rank across all three timeframes and would blur the per-timeframe question. Industries no longer play a role.`,
+    expUnivNotUsed: "Deliberately NOT checked: accel, INST badge, regime gate, weekend-prep stage. The pick is pure current strength over 1W/1M/3M — it is NOT the weekend routine’s inclusion formula (which also requires accel ≥ +10 and 1M > 0%).",
     expUnivColRank: "Rank",
     expUnivColTickers: "Tickers",
     expUnivFootnote: (tk, bars) => `From these groups: ${tk} unique tickers, price data returned for ${bars} of them. Only then do the ADR, liquidity and setup filters apply.`,
@@ -1244,34 +1218,7 @@ function initPeriodSelector() {
 }
 
 // --- Setup Picks ---
-function buildReason(perfs, accel) {
-  const tags = [];
-  const lines = [];
-  const p1d = perfs["1D"] ?? 0;
-  const p1w = perfs["1W"] ?? 0;
-  const p1m = perfs["1M"] ?? 0;
-  const p3m = perfs["3M"] ?? 0;
 
-  if (p1w >= 3 && p1m >= 5) tags.push(`<span class="pick-tag tag-hot">${t("tagHot")}</span>`);
-  if (accel >= 20)           tags.push(`<span class="pick-tag tag-accel">${t("tagAccel")}</span>`);
-  if (p3m < 5 && p1w >= 2 && p1m >= 3) tags.push(`<span class="pick-tag tag-fresh">${t("tagFresh")}</span>`);
-  // INST: institutional confirmation — top 40 in both 1M and 3M (Ariel criterion)
-  if ((perfs._rank1M ?? 999) <= 40 && (perfs._rank3M ?? 999) <= 40)
-    tags.push(`<span class="pick-tag tag-inst">${t("tagInst")}</span>`);
-
-  if (p3m < 5 && p1m >= 3)        lines.push(t("reasonFresh", (p3m >= 0 ? "+" : "") + p3m.toFixed(1), p1m.toFixed(1)));
-  else if (p3m >= 5 && accel >= 10) lines.push(t("reasonSolid"));
-  else                               lines.push(t("reasonSteady"));
-
-  if (accel >= 30) lines.push(t("reasonAccel", accel));
-  if (p1d >= 1)    lines.push(t("reasonIntraday", p1d.toFixed(2)));
-
-  return `${tags.join("")}<br><span>${lines.join(" ")}</span>`;
-}
-
-function pickPriority(row, accelRankMap, compRankMap, name) {
-  return 0.6 * (accelRankMap[name] ?? 999) + 0.4 * (compRankMap[name] ?? 999);
-}
 
 // Themes und Industries liegen in getrennten Datensätzen; scope wählt die Quelle.
 // Fehlender scope = "industry" (Bestandsbuttons in Setup Picks / Top 10).
@@ -1326,80 +1273,6 @@ function wireIndCopyButtons(container) {
   });
 }
 
-function renderPicks(industries) {
-  const container = document.getElementById("picks-container");
-  const entries = Object.entries(industries);
-
-  const scoreRankMap = Object.fromEntries(
-    [...entries].sort(([, a], [, b]) => a.composite - b.composite).map(([n], i) => [n, i + 1])
-  );
-
-  const filtered = entries.filter(([name, row]) => {
-    const p1w = row.perfs["1W"] ?? 0;
-    const p1m = row.perfs["1M"] ?? 0;
-    return scoreRankMap[name] <= 40 && row.acceleration > 0 && p1w > 1 && p1m > 0;
-  });
-
-  const byAccel = [...filtered].sort(([, a], [, b]) => b.acceleration - a.acceleration);
-  const byComp  = [...filtered].sort(([, a], [, b]) => a.composite - b.composite);
-  const accelRankMap = Object.fromEntries(byAccel.map(([n], i) => [n, i + 1]));
-  const compRankMap  = Object.fromEntries(byComp.map(([n], i)  => [n, i + 1]));
-
-  const candidates = filtered
-    .sort(([na, a], [nb, b]) =>
-      pickPriority(a, accelRankMap, compRankMap, na) -
-      pickPriority(b, accelRankMap, compRankMap, nb)
-    )
-    .slice(0, 15);
-
-  if (!candidates.length) {
-    container.innerHTML = `<p class="pick-empty">${t("picksEmpty")}</p>`;
-    return;
-  }
-
-  const header = `<div class="pick-card" style="background:var(--bg3);font-size:11px;color:var(--text-dim);font-weight:600;">
-    <div>${t("colIndustry")}</div><div style="text-align:right">1D</div><div style="text-align:right">1W</div>
-    <div style="text-align:right">1M</div><div style="text-align:right">3M</div><div style="text-align:right">${t("colAccel")}</div>
-    <div style="padding-left:12px">${t("picksColReason")}</div></div>`;
-
-  const cards = candidates.map(([name, row]) => {
-    // Attach 1M/3M ranks so buildReason can detect INST badge
-    const p = { ...row.perfs, _rank1M: row.ranks["1M"], _rank3M: row.ranks["3M"] };
-    const acc = row.acceleration;
-    const accelCls = acc > 0 ? "accel-pos" : "accel-neg";
-    const accelStr = acc > 0 ? `+${acc}` : `${acc}`;
-    const stat = tf => `<div class="pick-stat ${perfClass(p[tf])}"><span>${tf}</span>${fmtPct(p[tf])}</div>`;
-    const url = finvizUrl(row.ticker);
-    const nameEl = url
-      ? `<a class="pick-name pick-link" href="${url}" target="_blank" rel="noopener">${name} ↗</a>`
-      : `<div class="pick-name">${name}</div>`;
-    const hasTk = row.tickers && row.tickers.length > 0;
-    const copyBtn = hasTk
-      ? `<button class="ind-copy-btn" data-key="${esc(name)}" title="${_lang === 'de' ? 'Ticker dieser Industry kopieren' : "Copy this industry's tickers"}">📋</button>`
-      : '';
-
-    return `<div class="pick-card">
-      ${nameEl}${copyBtn}
-      ${stat("1D")}${stat("1W")}${stat("1M")}${stat("3M")}
-      <div class="pick-stat ${accelCls}"><span>${t("colAccel")}</span>${accelStr}</div>
-      <div class="pick-reason">${buildReason(p, acc)}</div>
-    </div>`;
-  }).join("");
-
-  const copyAll = candidates.some(([name]) => tickersOf("industry", name).length)
-    ? `<div class="picks-toolbar">
-         <button class="setup-copyall-btn" title="${esc(t("copyAllTitle"))}">${t("copyAllBtn")}</button>
-       </div>`
-    : "";
-
-  container.innerHTML = `${copyAll}<div class="picks-grid">${header}${cards}</div>`;
-  wireIndCopyButtons(container);
-
-  const copyAllBtn = container.querySelector(".picks-toolbar .setup-copyall-btn");
-  if (copyAllBtn) copyAllBtn.onclick = () =>
-    copyGroupsAsSections(copyAllBtn, candidates.map(([name]) => ({ name, scope: "industry" })));
-}
-
 // --- Render ---
 function updateTimestamp(iso) {
   const el = document.getElementById("fetch-time");
@@ -1415,7 +1288,6 @@ function renderAll(payload) {
   _lastIndustries = payload.industries;
   renderHeatmap(payload.industries);
   renderTop10(payload.industries);
-  renderPicks(payload.industries);
   renderIndustryBubble(payload.industries);
   updateTimestamp(payload.fetched_at);
 }
@@ -2899,41 +2771,35 @@ function expUniverseHtml() {
   const u = _setupsData?.universe;
   if (!u) return "";
   const cfg = _setupsData?.config ?? {};
-  const ind = u.industries ?? [], thm = u.themes ?? [];
+  const thm = u.themes ?? [];
   const pool = u.pool ?? {};
+  const tfs = cfg.THEME_TIMEFRAMES ?? ["1W", "1M", "3M"];
 
-  const row = (g, type) => `<tr>
-      <td class="exp-th-left"><span class="wp-type wp-type--${type}">${type === "theme" ? t("wpTypeTheme") : t("wpTypeIndustry")}</span>
-        ${esc(g.name)}</td>
-      <td><b>${fmtOrDash(g.score, 2)}</b></td>
-      <!-- Industry und Theme haben verschiedene Ränge: Industry = Perf-Rang 1M
-           unter allen Industries, Theme = Score-Rang unter den 40 Themes.
-           Deshalb steht die Bedeutung in der Zelle, nicht nur im Kopf. -->
-      <td class="exp-univ-rank">${type === "theme"
-        ? (g.rank ? `${t("colScore")} #${g.rank}` : "—")
-        : (g.ranks?.["1M"] ? `1M #${g.ranks["1M"]}` : "—")}</td>
-      <td>${g.accel === undefined || g.accel === null ? "—" : (g.accel > 0 ? "+" : "") + g.accel}</td>
-      <td class="${perfClass(g.perf1m)}">${fmtPct(g.perf1m)}</td>
+  const row = (g) => `<tr>
+      <td class="exp-th-left">
+        <a href="${themeScreenerUrl(g.name)}" target="_blank" rel="noopener">
+          <span class="wp-type wp-type--theme">${esc(g.name)}</span></a></td>
+      <td class="exp-th-left exp-univ-tfs">${(g.tfs ?? [])
+        .map(tf => `<span class="exp-univ-tf">${tf}</span>`).join("")}</td>
+      ${tfs.map(tf => `<td class="${perfClass(g.perfs?.[tf])}">${fmtPct(g.perfs?.[tf])}</td>`).join("")}
+      <td>${fmtOrDash(g.score, 2)}</td>
       <td>${g.tickers}</td>
     </tr>`;
 
   return `
     <details class="setup-nearmiss wp-details exp-universe">
       <summary class="setup-section-hdr">▸ ${t("expUnivTitle")}
-        <span class="setup-count">${t("expUnivCount", ind.length, pool.industries ?? 0, thm.length, pool.themes ?? 0)}</span></summary>
-      <p class="exp-desc">${t("expUnivIndRule", cfg.N_INDUSTRIES ?? 0)}</p>
-      <p class="exp-desc">${t("expUnivThemeRule", cfg.N_THEMES ?? 0)}</p>
+        <span class="setup-count">${t("expUnivCount", thm.length, pool.themes ?? 0)}</span></summary>
+      <p class="exp-desc">${t("expUnivThemeRule", cfg.N_THEMES_PER_TF ?? 5, tfs.join(" · "))}</p>
       <p class="exp-note exp-univ-warn">${t("expUnivNotUsed")}</p>
       <div class="table-scroll"><table class="setup-table exp-table">
         <thead><tr>
-          <th class="exp-th-left">${t("expColGroup")}</th>
-          <th>${t("colScore")}</th><th>${t("expUnivColRank")}</th>
-          <th>${t("colAccel")}</th><th>${t("expCol1M")}</th><th>${t("expUnivColTickers")}</th>
+          <th class="exp-th-left">${t("expColTheme")}</th>
+          <th class="exp-th-left">${t("expUnivColVia")}</th>
+          ${tfs.map(tf => `<th>${tf}</th>`).join("")}
+          <th>${t("colScore")}</th><th>${t("expUnivColTickers")}</th>
         </tr></thead>
-        <tbody>
-          ${ind.map(g => row(g, "industry")).join("")}
-          ${thm.map(g => row(g, "theme")).join("")}
-        </tbody>
+        <tbody>${thm.map(row).join("")}</tbody>
       </table></div>
       <p class="exp-note">${t("expUnivFootnote", u.tickers ?? 0, u.with_bars ?? 0)}</p>
     </details>`;
@@ -2972,7 +2838,7 @@ function expStage1Html() {
       <div class="exp-meta">
         <span>${t("updated")}${stamp}</span>
         <span class="exp-chip exp-chip--eod" title="${esc(t("expEodNote"))}">${t("expEod")}</span>
-        <span>${t("expS1Universe", u.tickers ?? 0, (u.industries ?? []).length, (u.themes ?? []).length)}</span>
+        <span>${t("expS1Universe", u.tickers ?? 0, (u.themes ?? []).length)}</span>
         ${chip("READY")}${chip("BREAKOUT")}${chip("WATCH")}${chip("EXTENDED")}
       </div>
       ${expUniverseHtml()}

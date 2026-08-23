@@ -19,17 +19,13 @@ from datetime import datetime, timezone
 
 SETUP_CONFIG = {
     # -- Universum ------------------------------------------------------------
-    # 20 statt 10 Industries: gemessen am Lauf vom 22.08.2026 steuern die
-    # Industries 11-20 sechs der Top-20-Kandidaten nach Score bei, darunter der
-    # beste des ganzen Laufs (CORT, Score 96, aus Biotechnology auf Platz 12).
-    # Kosten: 1536 statt 618 Ticker, ~30 s statt ~8 s - fuer einen Lauf pro
-    # Handelstag nach Close vertretbar.
-    "N_INDUSTRIES":   20,      # staerkste Industries nach composite (niedrig = stark)
-    "N_THEMES":        5,      # staerkste Themes nach score
-    # Reissleine gegen Ausreisser, kein Filter: Industry-Groessen schwanken
-    # extrem (Coking Coal 4 Ticker, Biotechnology 599). Die Grenze muss klar
-    # ueber dem Normalfall liegen, sonst kappt sie still den Theme-Teil weg -
-    # Themes werden nach den Industries eingesammelt.
+    # Universum = nur Themes, keine Industries. Je Zeitraum die 5 besten nach
+    # tatsaechlicher Performance, dann vereinigt: ein Theme kann ueber einen,
+    # zwei oder alle drei Zeitraeume hineinkommen. 1W faengt frische Drehungen,
+    # 3M die etablierte Fuehrung, 1M liegt dazwischen.
+    "THEME_TIMEFRAMES": ["1W", "1M", "3M"],
+    "N_THEMES_PER_TF":  5,     # je Zeitraum, Ueberschneidungen zaehlen einmal
+    # Reissleine gegen Ausreisser, kein Filter: greift im Normalfall nicht.
     "MAX_TICKERS":  2000,      # harte Obergrenze fuer den yfinance-Lauf
     "CHUNK":         150,      # Ticker pro yfinance-Bulk-Request
     "PERIOD":      "6mo",
@@ -70,87 +66,73 @@ VERDICTS = ("READY", "BREAKOUT", "WATCH", "EXTENDED", "OUT")
 
 # -- Universum ----------------------------------------------------------------
 
-def build_universe(scored: dict, themes: dict, cfg: dict = SETUP_CONFIG):
-    """Ticker der staerksten Gruppen einsammeln.
+def build_universe(themes: dict, cfg: dict = SETUP_CONFIG):
+    """Ticker der staerksten Themes einsammeln - Industries spielen keine Rolle.
 
-    "Staerkste Gruppe" heisst hier AUSSCHLIESSLICH: bester Score der App, also
-    dieselbe Zahl, die in Heatmap und Themes-Tabelle steht.
+    Regel, bewusst simpel: je Zeitraum aus THEME_TIMEFRAMES die N_THEMES_PER_TF
+    Themes mit der hoechsten TATSAECHLICHEN Performance (themes[x]["perfs"][tf],
+    Mittelwert ueber die Sub-Nodes des Themes), danach die Vereinigung.
+    Ueberschneidungen zaehlen einmal, ein Theme kann also ueber einen, zwei oder
+    alle drei Zeitraeume qualifiziert sein.
 
-      Industry: composite = Rang1W x 0,20 + Rang1M x 0,70 + Rang3M x 0,10
-                Raenge laufen ueber alle Industries (1 = staerkste). Quelle:
-                scores.py/compute_scores. Aufsteigend sortiert, die N kleinsten.
-      Theme:    score = Mittelwert der Sub-Node-Scores des Themes, je Sub-Node
-                Rang1M x 0,70 + Rang1W x 0,20 + Rang3M x 0,10 ueber alle
-                Sub-Nodes. Quelle: scraper.py/fetch_themes_data. Aufsteigend,
-                die N kleinsten.
+    Gerankt wird nach Performance, NICHT nach dem Score der Themes-Tabelle - der
+    ist ein gewichteter Rang ueber alle drei Zeitraeume und wuerde die Frage
+    "wer war in DIESEM Zeitraum am staerksten" gerade verwischen.
 
     BEWUSST NICHT verwendet: Accel, INST-Badge, Regime-Gate, Weekend-Prep-Stage.
-    Die Auswahl ist damit reine Momentan-Staerke ueber 1W/1M/3M und NICHT
-    identisch mit der Aufnahme-Formel der Wochenend-Routine (die zusaetzlich
-    Accel >= +10 und 1M > 0 % verlangt).
+    Die Auswahl ist damit reine Momentan-Staerke und NICHT identisch mit der
+    Aufnahme-Formel der Wochenend-Routine (die zusaetzlich Accel >= +10
+    und 1M > 0 % verlangt).
 
-    scored: {industry: {composite, tickers, ...}} - niedriger composite = staerker.
-    themes: {theme:   {score, tickers, ...}}      - niedriger score = staerker.
+    themes: {theme: {perfs: {...}, score, rank, tickers, ...}}
     Returns (tickers, groups, meta):
       tickers = eindeutige Symbole (gekappt auf MAX_TICKERS)
-      groups  = {ticker: [{"name":..., "type":"industry"|"theme"}, ...]}
-      meta    = {"industries": [{name, score, ...}], "themes": [...]}
-                je Gruppe die Zahlen, die zur Aufnahme gefuehrt haben, damit
-                die Auswahl im Tab nachvollziehbar ist.
+      groups  = {ticker: [{"name":..., "type":"theme"}, ...]}
+      meta    = {"themes": [{name, tfs, perfs, score, rank, tickers}], "pool": ...}
+                je Theme die Zahlen, die zur Aufnahme gefuehrt haben, damit die
+                Auswahl im Tab nachvollziehbar ist.
     """
-    top_ind = sorted(
-        (kv for kv in scored.items() if kv[1].get("composite") is not None),
-        key=lambda kv: kv[1]["composite"],
-    )[: cfg["N_INDUSTRIES"]]
-    top_thm = sorted(
-        (kv for kv in themes.items() if kv[1].get("score") is not None),
-        key=lambda kv: kv[1]["score"],
-    )[: cfg["N_THEMES"]]
+    picked: dict = {}   # theme -> Liste der Zeitraeume, ueber die es reinkam
+    order: list = []    # Reihenfolge der Aufnahme (1W zuerst, dann 1M, dann 3M)
+
+    for tf in cfg["THEME_TIMEFRAMES"]:
+        ranked = sorted(
+            (kv for kv in themes.items() if (kv[1].get("perfs") or {}).get(tf) is not None),
+            key=lambda kv: kv[1]["perfs"][tf],
+            reverse=True,
+        )[: cfg["N_THEMES_PER_TF"]]
+        for name, _row in ranked:
+            if name not in picked:
+                picked[name] = []
+                order.append(name)
+            picked[name].append(tf)
 
     groups: dict = {}
-    ind_order: list = []
-    thm_order: list = []
-
-    def _add(name, row, kind, order):
-        for tk in row.get("tickers") or []:
+    tk_order: list = []
+    for name in order:
+        for tk in themes[name].get("tickers") or []:
             if tk not in groups:
                 groups[tk] = []
-                order.append(tk)
-            groups[tk].append({"name": name, "type": kind})
+                tk_order.append(tk)
+            groups[tk].append({"name": name, "type": "theme"})
 
-    for name, row in top_ind:
-        _add(name, row, "industry", ind_order)
-    for name, row in top_thm:
-        _add(name, row, "theme", thm_order)
-
-    # Themes sind die zweite, unabhaengige Achse und duerfen von der Reissleine
-    # nicht verdraengt werden: erst Platz fuer sie reservieren, dann die
-    # Industry-Liste kappen. Sonst frisst eine einzige Riesen-Industry
-    # (Biotechnology: 599 Ticker) den kompletten Theme-Teil auf.
-    room = max(0, cfg["MAX_TICKERS"] - len(thm_order))
-    tickers = (ind_order[:room] + thm_order)[: cfg["MAX_TICKERS"]]
-    dropped = (len(ind_order) + len(thm_order)) - len(tickers)
-    if dropped:
+    tickers = tk_order[: cfg["MAX_TICKERS"]]
+    if len(tk_order) > len(tickers):
         # Kappung wird nie stillschweigend hingenommen.
-        print(f"    WARNUNG: Universum auf {len(tickers)} Ticker gekappt "
-              f"(MAX_TICKERS) — {dropped} Industry-Ticker fallen weg.")
+        print(f"    WARNUNG: Universum auf {len(tickers)} von {len(tk_order)} "
+              f"Tickern gekappt (MAX_TICKERS) — der Rest faellt weg.")
+
     meta = {
-        "industries": [{
-            "name":    n,
-            "score":   r.get("composite"),
-            "accel":   r.get("acceleration"),
-            "ranks":   r.get("ranks") or {},
-            "perf1m":  (r.get("perfs") or {}).get("1M"),
-            "tickers": len(r.get("tickers") or []),
-        } for n, r in top_ind],
         "themes": [{
             "name":    n,
-            "score":   r.get("score"),
-            "rank":    r.get("rank"),
-            "perf1m":  (r.get("perfs") or {}).get("1M"),
-            "tickers": len(r.get("tickers") or []),
-        } for n, r in top_thm],
-        "pool": {"industries": len(scored), "themes": len(themes)},
+            "tfs":     picked[n],
+            "perfs":   {tf: (themes[n].get("perfs") or {}).get(tf)
+                        for tf in cfg["THEME_TIMEFRAMES"]},
+            "score":   themes[n].get("score"),
+            "rank":    themes[n].get("rank"),
+            "tickers": len(themes[n].get("tickers") or []),
+        } for n in order],
+        "pool": {"themes": len(themes)},
     }
     return tickers, {tk: groups[tk] for tk in tickers}, meta
 
@@ -337,11 +319,12 @@ def fetch_bars(tickers: list, cfg: dict = SETUP_CONFIG) -> dict:
 
 # -- Payload ------------------------------------------------------------------
 
-def build_setups(scored: dict, themes: dict, cfg: dict = SETUP_CONFIG) -> dict:
+def build_setups(themes: dict, cfg: dict = SETUP_CONFIG) -> dict:
     """Kompletter Stufe-1-Lauf -> Payload fuer docs/setups.json."""
-    tickers, groups, meta = build_universe(scored, themes, cfg)
+    tickers, groups, meta = build_universe(themes, cfg)
     print(f"    Setup-Screener: {len(tickers)} Ticker aus "
-          f"{len(meta['industries'])} Industries + {len(meta['themes'])} Themes...")
+          f"{len(meta['themes'])} Themes "
+          f"(Top {cfg['N_THEMES_PER_TF']} je {'/'.join(cfg['THEME_TIMEFRAMES'])})...")
 
     bars = fetch_bars(tickers, cfg)
     print(f"    Kursdaten: {len(bars)}/{len(tickers)} Ticker geliefert.")

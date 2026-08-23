@@ -26,7 +26,6 @@
   </nav>
   <nav class="sub-nav hidden" id="industry-subnav">
     <button class="sub-btn active" data-tab="heatmap" data-i18n="tabHeatmap">Heatmap</button>
-    <button class="sub-btn" data-tab="picks" data-i18n="tabPicks">&#9733; Setup Picks</button>
     <button class="sub-btn" data-tab="top10" data-i18n="tabTop10">Top 10</button>
     <button class="sub-btn" data-tab="ind-bubble" data-i18n="tabIndBubble">&#128309; Bubble</button>
   </nav>
@@ -50,6 +49,7 @@
           <button id="inst-toggle" class="inst-toggle-btn">🏛 INST only</button>
         </div>
       </div>
+      <div id="regime-banner" class="regime-banner hidden"></div>
       <div id="loading" class="loading" data-i18n="loading">Daten werden geladen…</div>
       <div id="error-msg" class="error hidden"></div>
       <div id="ind-selection-bar" class="selection-bar hidden">
@@ -81,16 +81,6 @@
           <tbody id="heatmap-body"></tbody>
         </table>
       </div>
-    </section>
-
-    <section class="section-picks tab-panel hidden" data-panel="picks">
-      <div class="heading-group">
-        <h2 data-i18n="picksTitle">&#9733; Setup Picks — First Flag</h2>
-        <span class="section-hint" data-hint-key="hintPicks">i</span>
-      </div>
-      <p class="picks-subtitle" data-i18n="picksSubtitle">Industries mit positivem Momentum-Profil für den First-Flag-Breakout-Trade.</p>
-      <div id="regime-banner" class="regime-banner hidden"></div>
-      <div id="picks-container"></div>
     </section>
 
     <section class="section-top10 tab-panel hidden" data-panel="top10">

@@ -137,62 +137,79 @@ class TestScore(unittest.TestCase):
         self.assertGreaterEqual(setup_score(worst), 0)
 
 
-class TestUniverse(unittest.TestCase):
-    def test_takes_strongest_groups_and_dedupes(self):
-        scored = {
-            "Strong": {"composite": 1.0, "acceleration": 12, "perfs": {"1M": 8.0},
-                       "tickers": ["AAA", "BBB"]},
-            "Weak":   {"composite": 99.0, "tickers": ["ZZZ"]},
-        }
-        themes = {"Hot": {"score": 2.0, "rank": 1, "perfs": {"1M": 5.0},
-                          "tickers": ["BBB", "CCC"]}}
-        cfg = dict(SETUP_CONFIG, N_INDUSTRIES=1, N_THEMES=1)
-        tickers, groups, meta = build_universe(scored, themes, cfg)
+def theme(name_perfs, tickers, score=10.0, rank=1):
+    p1w, p1m, p3m = name_perfs
+    return {"perfs": {"1W": p1w, "1M": p1m, "3M": p3m},
+            "score": score, "rank": rank, "tickers": tickers}
 
-        self.assertEqual(tickers, ["AAA", "BBB", "CCC"])
-        self.assertEqual([g["name"] for g in meta["industries"]], ["Strong"])
-        self.assertEqual([g["name"] for g in meta["themes"]], ["Hot"])
-        self.assertEqual(meta["pool"], {"industries": 2, "themes": 1})
-        # BBB steckt in beiden Gruppen — beide Herkünfte bleiben erhalten.
-        self.assertEqual(
-            groups["BBB"],
-            [{"name": "Strong", "type": "industry"}, {"name": "Hot", "type": "theme"}],
-        )
+
+class TestUniverse(unittest.TestCase):
+    """Universum = Top 5 Themes je 1W/1M/3M, vereinigt. Keine Industries."""
+
+    def test_takes_the_best_per_timeframe_and_unions_them(self):
+        themes = {
+            "Woche":  theme((30.0, 0.0, 0.0), ["W1"]),
+            "Monat":  theme((0.0, 30.0, 0.0), ["M1"]),
+            "Quartal": theme((0.0, 0.0, 30.0), ["Q1"]),
+            "Lahm":   theme((-9.0, -9.0, -9.0), ["ZZZ"]),
+        }
+        cfg = dict(SETUP_CONFIG, N_THEMES_PER_TF=1)
+        tickers, groups, meta = build_universe(themes, cfg)
+
+        self.assertEqual(tickers, ["W1", "M1", "Q1"])
+        self.assertEqual([g["name"] for g in meta["themes"]], ["Woche", "Monat", "Quartal"])
+        self.assertEqual(meta["pool"], {"themes": 4})
+        self.assertEqual(groups["W1"], [{"name": "Woche", "type": "theme"}])
+
+    def test_overlap_counts_once_and_records_every_timeframe(self):
+        themes = {
+            "Ueberall": theme((50.0, 50.0, 50.0), ["AAA", "BBB"]),
+            "NurWoche": theme((40.0, -1.0, -1.0), ["BBB", "CCC"]),
+        }
+        cfg = dict(SETUP_CONFIG, N_THEMES_PER_TF=1)
+        tickers, groups, meta = build_universe(themes, cfg)
+
+        self.assertEqual(tickers, ["AAA", "BBB"])          # BBB nur einmal
+        self.assertEqual(meta["themes"][0]["tfs"], ["1W", "1M", "3M"])
+        self.assertEqual(len(meta["themes"]), 1)
+
+    def test_ranks_by_performance_not_by_score(self):
+        # Der Score der Themes-Tabelle ist ein gewichteter Rang über alle drei
+        # Zeiträume — er darf die Zeitraum-Frage nicht überstimmen.
+        themes = {
+            "GuterScore": theme((1.0, 1.0, 1.0), ["AAA"], score=1.0),
+            "BesserePerf": theme((99.0, 99.0, 99.0), ["BBB"], score=99.0),
+        }
+        cfg = dict(SETUP_CONFIG, N_THEMES_PER_TF=1)
+        tickers, _, meta = build_universe(themes, cfg)
+        self.assertEqual(tickers, ["BBB"])
+        self.assertEqual(meta["themes"][0]["name"], "BesserePerf")
+
+    def test_missing_timeframe_does_not_crash(self):
+        themes = {"Halb": {"perfs": {"1W": 5.0}, "tickers": ["AAA"]}}
+        tickers, _, meta = build_universe(themes, dict(SETUP_CONFIG, N_THEMES_PER_TF=1))
+        self.assertEqual(tickers, ["AAA"])
+        self.assertEqual(meta["themes"][0]["tfs"], ["1W"])
 
     def test_meta_carries_the_numbers_that_caused_the_pick(self):
-        # Die Auswahl muss im Tab nachvollziehbar sein, nicht nur der Name.
-        scored = {"Strong": {"composite": 4.2, "acceleration": 17,
-                             "ranks": {"1W": 3, "1M": 2, "3M": 40},
-                             "perfs": {"1M": 9.5}, "tickers": ["AAA"]}}
-        cfg = dict(SETUP_CONFIG, N_INDUSTRIES=1, N_THEMES=0)
-        _, _, meta = build_universe(scored, {}, cfg)
-        row = meta["industries"][0]
-        self.assertEqual(row["score"], 4.2)
-        self.assertEqual(row["accel"], 17)
-        self.assertEqual(row["perf1m"], 9.5)
-        self.assertEqual(row["tickers"], 1)
-        self.assertEqual(row["ranks"]["1M"], 2)
+        themes = {"T": theme((12.5, 8.0, 3.0), ["AAA", "BBB"], score=42.0, rank=3)}
+        _, _, meta = build_universe(themes, dict(SETUP_CONFIG, N_THEMES_PER_TF=1))
+        row = meta["themes"][0]
+        self.assertEqual(row["perfs"], {"1W": 12.5, "1M": 8.0, "3M": 3.0})
+        self.assertEqual(row["score"], 42.0)
+        self.assertEqual(row["rank"], 3)
+        self.assertEqual(row["tickers"], 2)
 
     def test_max_tickers_caps_the_run(self):
-        scored = {"S": {"composite": 1.0, "tickers": [f"T{i}" for i in range(50)]}}
-        cfg = dict(SETUP_CONFIG, N_INDUSTRIES=1, N_THEMES=0, MAX_TICKERS=10)
-        tickers, groups, _ = build_universe(scored, {}, cfg)
+        themes = {"Gross": theme((1.0, 1.0, 1.0), [f"T{i}" for i in range(50)])}
+        cfg = dict(SETUP_CONFIG, MAX_TICKERS=10)
+        tickers, groups, _ = build_universe(themes, cfg)
         self.assertEqual(len(tickers), 10)
         self.assertEqual(len(groups), 10)
 
-    def test_cap_is_wide_enough_for_the_configured_group_count(self):
-        # Die Reissleine darf im Normalfall nicht greifen — sonst kappt sie
-        # still die Themes weg, die nach den Industries eingesammelt werden.
-        # 20 Industries + 5 Themes lagen am 22.08.2026 bei 1536 Tickern.
+    def test_cap_is_wide_enough_for_the_normal_case(self):
+        # Bis zu 15 Themes à ~100 Ticker — die Reissleine darf nicht filtern.
         self.assertGreaterEqual(SETUP_CONFIG["MAX_TICKERS"], 2000)
-
-    def test_themes_survive_a_large_industry_universe(self):
-        scored = {f"I{g}": {"composite": float(g), "tickers": [f"A{g}_{i}" for i in range(100)]}
-                  for g in range(20)}
-        themes = {"Hot": {"score": 1.0, "tickers": ["THEME1", "THEME2"]}}
-        tickers, groups, _ = build_universe(scored, themes, SETUP_CONFIG)
-        self.assertIn("THEME1", tickers)
-        self.assertIn("THEME2", tickers)
 
 
 class TestSetupsDue(unittest.TestCase):

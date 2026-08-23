@@ -728,6 +728,11 @@ details.wp-details { margin-bottom: 18px; }
 .exp-chip--eod { border-style: dashed; cursor: help; }
 
 .exp-universe { margin-bottom: 14px; }
+.exp-univ-tfs { white-space: nowrap; }
+.exp-univ-tf {
+  display: inline-block; margin-right: 4px; padding: 0 6px; border-radius: 3px;
+  background: var(--bg3); color: var(--text-dim); font-size: 10.5px;
+}
 .exp-universe .exp-desc { margin-bottom: 6px; }
 .exp-univ-warn { color: #fbbf24; font-style: normal; margin: 8px 0 10px; }
 

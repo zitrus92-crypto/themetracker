@@ -235,19 +235,19 @@ def main():
         print("  SKIPPED etf_perf.json (fetch failed)")
 
     # ── Write setups.json (Experimental — Stufe 1) ────────────────────────────
-    # Braucht beide Universen (Industries + Themes) und läuft deshalb erst hier.
+    # Universum sind die stärksten Themes (Top 5 je 1W/1M/3M), deshalb erst hier.
     # Scheitert der Lauf, bleibt die letzte gute Datei liegen — der Tab zeigt
     # dann den alten Stand mit seinem eigenen Zeitstempel.
     due, why = setups_due(
         datetime.now(timezone.utc), today, trading_day, _load_existing_setups()
     )
-    if not (scored and etf_payload):
-        print("  SKIPPED setups.json (Industry- oder Theme-Daten fehlen)")
+    if not (etf_payload and etf_payload.get("themes")):
+        print("  SKIPPED setups.json (Theme-Daten fehlen)")
     elif not due:
         print(f"  SKIPPED setups.json ({why}) — letzter Stand bleibt liegen")
     else:
         try:
-            setups_payload = setups.build_setups(scored, etf_payload.get("themes") or {})
+            setups_payload = setups.build_setups(etf_payload["themes"])
             # encoding explizit: ensure_ascii=False schreibt Umlaute/Gedankenstriche
             # als UTF-8-Bytes, write_text nimmt sonst das Locale (auf Windows cp1252).
             (DOCS / "setups.json").write_text(
