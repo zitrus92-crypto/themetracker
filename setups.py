@@ -19,9 +19,18 @@ from datetime import datetime, timezone
 
 SETUP_CONFIG = {
     # -- Universum ------------------------------------------------------------
-    "N_INDUSTRIES":   10,      # staerkste Industries nach composite (niedrig = stark)
+    # 20 statt 10 Industries: gemessen am Lauf vom 22.08.2026 steuern die
+    # Industries 11-20 sechs der Top-20-Kandidaten nach Score bei, darunter der
+    # beste des ganzen Laufs (CORT, Score 96, aus Biotechnology auf Platz 12).
+    # Kosten: 1536 statt 618 Ticker, ~30 s statt ~8 s - fuer einen Lauf pro
+    # Handelstag nach Close vertretbar.
+    "N_INDUSTRIES":   20,      # staerkste Industries nach composite (niedrig = stark)
     "N_THEMES":        5,      # staerkste Themes nach score
-    "MAX_TICKERS":   800,      # harte Obergrenze fuer den yfinance-Lauf
+    # Reissleine gegen Ausreisser, kein Filter: Industry-Groessen schwanken
+    # extrem (Coking Coal 4 Ticker, Biotechnology 599). Die Grenze muss klar
+    # ueber dem Normalfall liegen, sonst kappt sie still den Theme-Teil weg -
+    # Themes werden nach den Industries eingesammelt.
+    "MAX_TICKERS":  2000,      # harte Obergrenze fuer den yfinance-Lauf
     "CHUNK":         150,      # Ticker pro yfinance-Bulk-Request
     "PERIOD":      "6mo",
     "MIN_BARS":       60,      # weniger Bars -> Ticker wird uebersprungen
@@ -99,9 +108,10 @@ def build_universe(scored: dict, themes: dict, cfg: dict = SETUP_CONFIG):
     )[: cfg["N_THEMES"]]
 
     groups: dict = {}
-    order: list = []
+    ind_order: list = []
+    thm_order: list = []
 
-    def _add(name, row, kind):
+    def _add(name, row, kind, order):
         for tk in row.get("tickers") or []:
             if tk not in groups:
                 groups[tk] = []
@@ -109,11 +119,21 @@ def build_universe(scored: dict, themes: dict, cfg: dict = SETUP_CONFIG):
             groups[tk].append({"name": name, "type": kind})
 
     for name, row in top_ind:
-        _add(name, row, "industry")
+        _add(name, row, "industry", ind_order)
     for name, row in top_thm:
-        _add(name, row, "theme")
+        _add(name, row, "theme", thm_order)
 
-    tickers = order[: cfg["MAX_TICKERS"]]
+    # Themes sind die zweite, unabhaengige Achse und duerfen von der Reissleine
+    # nicht verdraengt werden: erst Platz fuer sie reservieren, dann die
+    # Industry-Liste kappen. Sonst frisst eine einzige Riesen-Industry
+    # (Biotechnology: 599 Ticker) den kompletten Theme-Teil auf.
+    room = max(0, cfg["MAX_TICKERS"] - len(thm_order))
+    tickers = (ind_order[:room] + thm_order)[: cfg["MAX_TICKERS"]]
+    dropped = (len(ind_order) + len(thm_order)) - len(tickers)
+    if dropped:
+        # Kappung wird nie stillschweigend hingenommen.
+        print(f"    WARNUNG: Universum auf {len(tickers)} Ticker gekappt "
+              f"(MAX_TICKERS) — {dropped} Industry-Ticker fallen weg.")
     meta = {
         "industries": [{
             "name":    n,

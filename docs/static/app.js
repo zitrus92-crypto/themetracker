@@ -2810,9 +2810,9 @@ let _expSort    = { col: "score", dir: -1 };
 const EXP_MAX_CHARTS = 48;     // Mini-Charts pro Ansicht (Ladezeit/Finviz-Last)
 
 // Markierung für den Clipboard-Export. Der Top-20%-Button markiert alles mit
-// Score >= 80 — gemessen an der READY+BREAKOUT-Ansicht sind das aktuell 18 von
-// 90 Zeilen (20 %); in "Alle" sind es 13 %, in "Nur READY" 26 %. Die Grenze ist
-// also ein fester Score-Schwellwert, kein gerechnetes Perzentil.
+// Score >= 80 — gemessen an der READY+BREAKOUT-Ansicht sind das 27 von 150
+// Zeilen (18 %), bei 10 statt 20 Industries waren es 18 von 90 (20 %). Die
+// Grenze ist ein fester Score-Schwellwert, kein gerechnetes Perzentil.
 const EXP_TOP20_MIN = 80;
 let _expSelected = new Set();
 

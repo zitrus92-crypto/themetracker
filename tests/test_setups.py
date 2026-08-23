@@ -180,6 +180,20 @@ class TestUniverse(unittest.TestCase):
         self.assertEqual(len(tickers), 10)
         self.assertEqual(len(groups), 10)
 
+    def test_cap_is_wide_enough_for_the_configured_group_count(self):
+        # Die Reissleine darf im Normalfall nicht greifen — sonst kappt sie
+        # still die Themes weg, die nach den Industries eingesammelt werden.
+        # 20 Industries + 5 Themes lagen am 22.08.2026 bei 1536 Tickern.
+        self.assertGreaterEqual(SETUP_CONFIG["MAX_TICKERS"], 2000)
+
+    def test_themes_survive_a_large_industry_universe(self):
+        scored = {f"I{g}": {"composite": float(g), "tickers": [f"A{g}_{i}" for i in range(100)]}
+                  for g in range(20)}
+        themes = {"Hot": {"score": 1.0, "tickers": ["THEME1", "THEME2"]}}
+        tickers, groups, _ = build_universe(scored, themes, SETUP_CONFIG)
+        self.assertIn("THEME1", tickers)
+        self.assertIn("THEME2", tickers)
+
 
 class TestSetupsDue(unittest.TestCase):
     """Der Experimental-Tab läuft einmal pro Handelstag nach US-Close."""
