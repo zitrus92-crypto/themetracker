@@ -2542,6 +2542,9 @@ function expChartsHtml(rows) {
         <span class="exp-chip exp-chip--${r.verdict.toLowerCase()}">${t("expVerdict" + r.verdict)}</span>
         <span class="exp-chart-nums">${r.score} · ${r.dist > 0 ? "+" : ""}${fmtOrDash(r.dist, 1)}% · ${r.base_days}T</span>
       </figcaption>
+      <!-- Theme-Herkunft wie in der Tabellenspalte "Revier", damit die
+           Chart-Ansicht dieselbe Zuordnung zeigt. Badges sind klickbar. -->
+      <div class="exp-chart-groups">${expGroupsHtml(r.groups)}</div>
       <a href="${finvizQuoteUrl(r.t)}" target="_blank" rel="noopener">
         <img src="${finvizChartUrl(r.t)}" alt="${esc(r.t)}" loading="lazy" referrerpolicy="no-referrer"
              onerror="this.closest('.exp-chart').classList.add('exp-chart--failed')">

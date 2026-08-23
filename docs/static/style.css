@@ -695,6 +695,12 @@ details.wp-details { margin-bottom: 18px; }
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 6px;
 }
 .exp-chart-nums { color: var(--text-dim); font-size: 11px; margin-left: auto; }
+/* Theme-Herkunft der Karte — eine Zeile, bei mehreren Themes umbrechend. */
+.exp-chart-groups {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px;
+}
+.exp-chart-groups .wp-type { font-size: 10px; }
+.exp-chart-groups a { text-decoration: none; }
 .exp-chart img { width: 100%; height: auto; display: block; border-radius: 4px; }
 /* Finviz liefert das Bild nicht aus -> Karte bleibt als Link stehen. */
 .exp-chart--failed img { display: none; }
