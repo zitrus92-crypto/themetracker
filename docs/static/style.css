@@ -439,6 +439,20 @@ a.etf-theme-badge:hover { filter: brightness(1.25); }
 }
 .bubble-legend-item { display: flex; align-items: center; gap: 5px; }
 
+/* RRG-Hover: aktives Theme bleibt voll sichtbar, der Rest tritt zurück.
+   Ohne .rrg-hover am SVG greift keine der Regeln — im Ruhezustand also
+   exakt die Darstellung von vorher. */
+#etf-rrg-view svg [data-rrg] { transition: opacity .12s ease; }
+#etf-rrg-view svg.rrg-hover [data-rrg] { opacity: 0.12; }
+#etf-rrg-view svg.rrg-hover [data-rrg].rrg-on { opacity: 1; }
+/* Die unsichtbare Trefferfläche behält ihre Breite — würde sie beim
+   Hervorheben schrumpfen, verlöre die Maus die Linie und es flackert. */
+#etf-rrg-view svg.rrg-hover path.rrg-on:not(.rrg-hit) { stroke-opacity: 0.95; stroke-width: 2.2; }
+#etf-rrg-view svg.rrg-hover text.rrg-on { font-size: 10px; font-weight: 600; }
+/* Die Tail-Knoten liegen im Ruhezustand bewusst weit unten — beim Hervorheben
+   müssen sie mit, sonst bliebe die aktive Kurve ohne sichtbare Tagespunkte. */
+#etf-rrg-view svg.rrg-hover circle.rrg-node.rrg-on { fill-opacity: 0.85; }
+
 /* Momentum Matrix */
 .momentum-matrix {
   display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
@@ -509,6 +523,8 @@ a.etf-theme-badge:hover { filter: brightness(1.25); }
   white-space: nowrap;
 }
 .top20-btn:hover { background: #2b3648; border-color: #fbbf24; }
+/* Aktiv nur im RRG, wo die beiden Schnittmengen-Buttons als Filter wirken. */
+.top20-btn.active { background: #a16207; color: #fde68a; border-color: #fbbf24; }
 
 /* ── Industry single-copy button (Setup Picks + Top 10) ──────────────────── */
 .ind-copy-btn {

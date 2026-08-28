@@ -27,6 +27,7 @@
     <button class="sub-btn active" data-tab="heatmap" data-i18n="tabHeatmap">Heatmap</button>
     <button class="sub-btn" data-tab="top10" data-i18n="tabTop10">Top 10</button>
     <button class="sub-btn" data-tab="ind-bubble" data-i18n="tabIndBubble">&#128309; Bubble</button>
+    <button class="sub-btn" data-tab="ind-rrg" data-i18n="tabIndRrg">&#128260; RRG</button>
   </nav>
   <nav class="sub-nav" id="themes-subnav">
     <button class="sub-btn active" data-tab="etfs" data-i18n="tabThemesOverview">&#128202; Übersicht</button>
@@ -132,6 +133,20 @@
       <div id="ind-bubble-view"></div>
     </section>
 
+    <section class="section-ind-rrg tab-panel hidden" data-panel="ind-rrg">
+      <div class="heatmap-header">
+        <div class="heading-group">
+          <h2 data-i18n="indRrgTitle">&#128260; Industry RRG</h2>
+          <span class="section-hint" data-hint-key="hintIndRrg">i</span>
+        </div>
+        <div class="heatmap-header-actions">
+          <button id="ind-rrg-f1-btn" class="top20-btn" title="Nur die Schnittmenge der Top 20% nach 1W und 1M zeigen">&#9733; 1W&#8745;1M</button>
+          <button id="ind-rrg-f2-btn" class="top20-btn" title="Nur die Schnittmenge der Top 20% nach 1M und 3M zeigen">&#9733; 1M&#8745;3M</button>
+        </div>
+      </div>
+      <div id="ind-rrg-view"></div>
+    </section>
+
     <!-- ETF Themes tab -->
     <section class="section-etfs tab-panel" data-panel="etfs">
       <div class="etf-header">
@@ -154,12 +169,14 @@
           <button class="viz-btn" data-vizview="table">📋 Tabelle</button>
           <button class="viz-btn active" data-vizview="bubble">🔵 Bubble</button>
           <button class="viz-btn" data-vizview="matrix">⊞ Matrix</button>
+          <button class="viz-btn" data-vizview="rrg">🔄 RRG</button>
           <button id="theme-top20-btn" class="top20-btn" title="Top 20% der aktuellen Sortierung markieren (zum Kopieren)">★ Top 20%</button>
           <button id="theme-top20i-btn" class="top20-btn" title="Schnittmenge der Top 20% nach 1W und 1M (nur die stärksten)">★ 1W∩1M</button>
           <button id="theme-top20i2-btn" class="top20-btn" title="Schnittmenge der Top 20% nach 1M und 3M (nur die stärksten)">★ 1M∩3M</button>
         </div>
         <div id="etf-bubble-view" class="hidden"></div>
         <div id="etf-matrix-view" class="hidden"></div>
+        <div id="etf-rrg-view" class="hidden"></div>
         <div id="theme-selection-bar" class="selection-bar hidden">
           <span class="selection-bar__info"></span>
           <div class="selection-bar__actions">

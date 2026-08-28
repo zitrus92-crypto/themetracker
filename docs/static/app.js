@@ -14,6 +14,8 @@ const I18N = {
     tabTop10:     "Top 10",
     tabIndBubble: "🔵 Bubble",
     indBubbleTitle: "🔵 Industry Bubble Chart",
+    tabIndRrg:    "🔄 RRG",
+    indRrgTitle:  "🔄 Industry RRG",
     heatmapTitle: "Industry Heatmap",
     colIndustry:  "Industry",
     colScore:     "Score",
@@ -34,6 +36,7 @@ const I18N = {
     infoAccel:    "Accel = 3M-Rang minus 1W-Rang. Hoch positiv = war vor 3M noch schwach, jetzt stark = erster Leg, nicht extended. Ideal fuer First-Flag-Setups.",
     hintHeatmap:  "Score sortieren: Marktüberblick — welche Industries aktuell führen.\nAccel sortieren: First Flag Suche — frisches Momentum (3M schwach + 1W stark = erster Leg, nicht extended).\nINST-Filter: zeigt nur institutionell bestätigte Industries (Top 40 in 1M und 3M).\nKlick auf Spaltenkopf = sortieren, nochmal klicken = umkehren.",
     hintIndBubble:"X-Achse: 3M-Performance, Y-Achse: 1M-Performance.\nGröße = Stärke (Score) — starke Industries bleiben groß, egal ob beschleunigend oder konsolidierend.\nFarbe = Accel (stabiler Rang3M−Rang1M): grün = beschleunigt, grau = konsolidiert, rot = fällt ab.\nINST-Filter (Heatmap-Toggle) wirkt auch hier. Klick auf Bubble öffnet Finviz-Screener.",
+    hintIndRrg:   "X-Achse: RS-Ratio (3M relativ zum Industry-Schnitt), Y-Achse: RS-Momentum.\nRechts oben Leading, links oben Improving, links unten Lagging, rechts unten Weakening.\nTail = die letzten 10 Handelstage aus den Snapshots, Kopfpunkt = Live-Daten.\nBenchmark ist der Gleichgewichts-Schnitt aller Industries — ein Index liegt nicht mit Historie vor.\nDie beiden Buttons filtern auf die Top-20-%-Schnittmengen; beide aktiv = Vereinigung.\nMaus über eine Industry hebt sie samt Pfad hervor, Klick öffnet den Finviz-Screener.",
     hintTop10:    "Top 10 Performer pro Zeitraum — zeigt aktuelle Marktführer.\nKarten: kompakte Übersicht pro Zeitraum.\nBalken: alle Industries sortiert nach 1M und 3M Performance.\nINST-Badge zeigt institutionelles Interesse.",
     hintMovers:   "Rang-Veränderung seit dem gewählten Zeitraum.\nRising: Industries die am stärksten gestiegen sind — frisches Kapital fließt ein. Hier suchen!\nFading: Industries die Ränge verloren haben — Kapital verlässt diesen Bereich. Meiden.\nZeitraum wählen: 1W / 2W / 1M / 3M (ausgegraut = noch nicht genug Daten).",
     tabEtfs:      "📈 Themes",
@@ -211,6 +214,24 @@ const I18N = {
     expReason_no_contraction: "Keine Verengung",
     vizBubble:      "🔵 Bubble",
     vizMatrix:      "⊞ Matrix",
+    vizRrg:         "🔄 RRG",
+    rrgQ1:          "🚀 Improving",
+    rrgQ2:          "⚡ Leading",
+    rrgQ3:          "💤 Lagging",
+    rrgQ4:          "🔻 Weakening",
+    rrgAxisX:       "RS-Ratio: 3M relativ zum Theme-Schnitt →",
+    rrgAxisXInd:    "RS-Ratio: 3M relativ zum Industry-Schnitt →",
+    rrgAxisY:       "RS-Momentum ↑",
+    rrgLegendBench: "Benchmark = Gleichgewichts-Schnitt aller Themes",
+    rrgLegendBenchInd: "Benchmark = Gleichgewichts-Schnitt aller Industries",
+    rrgLegendSize:  "Größe = Stärke (Score)",
+    rrgLegendTail:  (n) => `Tail = letzte ${n} Tage (Snapshots + live)`,
+    rrgNoHistory:   "Noch keine Snapshot-Historie — nur Positionen, keine Tails.",
+    rrgFilterNote:  (labels, n, total, noun) => `Filter: ${labels} — ${n} von ${total} ${noun}`,
+    rrgFilterEmpty: "Kein Theme erfüllt den gewählten Filter.",
+    rrgTip2:        (rs, mom, p1, p3) =>
+      `RS-Ratio: ${rs}  |  RS-Momentum: ${mom}
+1M: ${p1}%  3M: ${p3}%`,
     expUnvalidated:"UNVALIDIERT — Schwellen sind Defaults, kein Backtest.",
   },
   en: {
@@ -223,6 +244,8 @@ const I18N = {
     tabTop10:     "Top 10",
     tabIndBubble: "🔵 Bubble",
     indBubbleTitle: "🔵 Industry Bubble Chart",
+    tabIndRrg:    "🔄 RRG",
+    indRrgTitle:  "🔄 Industry RRG",
     heatmapTitle: "Industry Heatmap",
     colIndustry:  "Industry",
     colScore:     "Score",
@@ -243,6 +266,7 @@ const I18N = {
     infoAccel:    "Accel = 3M rank minus 1W rank. High positive = was weak 3M ago, now strong = first leg, not extended. Ideal for First Flag setups.",
     hintHeatmap:  "Sort by Score: market overview — which industries are currently leading.\nSort by Accel: First Flag search — fresh momentum (weak 3M + strong 1W = first leg, not extended).\nINST filter: shows only institutionally confirmed industries (Top 40 in 1M and 3M).\nClick any column header to sort, click again to reverse.",
     hintIndBubble:"X-axis: 3M performance, Y-axis: 1M performance.\nSize = strength (Score) — strong industries stay big regardless of accelerating or consolidating.\nColor = Accel (stable Rank3M−Rank1M): green = accelerating, gray = consolidating, red = fading.\nThe INST filter (Heatmap toggle) applies here too. Click a bubble to open the Finviz screener.",
+    hintIndRrg:   "X axis: RS-Ratio (3M relative to the industry average), Y axis: RS-Momentum.\nTop right leading, top left improving, bottom left lagging, bottom right weakening.\nTail = the last 10 trading days from the snapshots, head = live data.\nBenchmark is the equal-weight average of all industries — no index is available with history.\nThe two buttons filter to the top-20% intersections; both active = union.\nHovering an industry highlights it and its path, clicking opens the Finviz screener.",
     hintTop10:    "Top 10 performers per timeframe — shows current market leaders.\nCards: compact overview per timeframe.\nBar chart: all industries sorted by 1M and 3M performance.\nINST badge shows institutional interest.",
     hintMovers:   "Rank change since the selected period.\nRising: industries that climbed most in ranking — fresh capital flowing in. Look here!\nFading: industries that lost ranks — capital leaving. Avoid.\nSelect period: 1W / 2W / 1M / 3M (greyed out = not enough data yet).",
     tabEtfs:      "📈 Themes",
@@ -410,6 +434,24 @@ const I18N = {
     expReason_no_contraction: "No contraction",
     vizBubble:      "🔵 Bubble",
     vizMatrix:      "⊞ Matrix",
+    vizRrg:         "🔄 RRG",
+    rrgQ1:          "🚀 Improving",
+    rrgQ2:          "⚡ Leading",
+    rrgQ3:          "💤 Lagging",
+    rrgQ4:          "🔻 Weakening",
+    rrgAxisX:       "RS-Ratio: 3M relative to the theme average →",
+    rrgAxisXInd:    "RS-Ratio: 3M relative to the industry average →",
+    rrgAxisY:       "RS-Momentum ↑",
+    rrgLegendBench: "Benchmark = equal-weight average of all themes",
+    rrgLegendBenchInd: "Benchmark = equal-weight average of all industries",
+    rrgLegendSize:  "Size = strength (score)",
+    rrgLegendTail:  (n) => `Tail = last ${n} days (snapshots + live)`,
+    rrgNoHistory:   "No snapshot history yet — positions only, no tails.",
+    rrgFilterNote:  (labels, n, total, noun) => `Filter: ${labels} — ${n} of ${total} ${noun}`,
+    rrgFilterEmpty: "No theme matches the selected filter.",
+    rrgTip2:        (rs, mom, p1, p3) =>
+      `RS-Ratio: ${rs}  |  RS-Momentum: ${mom}
+1M: ${p1}%  3M: ${p3}%`,
     expColAdr:     "ADR %",
     expCol1M:      "1M %",
     expColPrice:   "Price",
@@ -679,24 +721,30 @@ function selectTopPercent(tbodyId, headerCheckId, updateFn, pct = 0.20) {
   updateFn();
 }
 
+// Schnittmenge der Top-`pct` je Zeitfenster — reine Datenfunktion ohne DOM.
+// Der RRG braucht sie ohne Tabelle: in dieser Ansicht wird das tbody gar nicht
+// gerendert, es gibt also keine Checkbox-Zeilen, an denen man sich entlanghangeln
+// könnte. entries: [[name, row], …] mit row.perfs.
+function topIntersectionKeys(entries, tfs = ["1W", "1M"], pct = 0.20) {
+  if (!entries.length) return new Set();
+  const cutoff = Math.max(1, Math.ceil(entries.length * pct));
+  const topSets = tfs.map(tf => new Set(
+    entries
+      .filter(([, row]) => row?.perfs?.[tf] !== null && row?.perfs?.[tf] !== undefined)
+      .sort(([, a], [, b]) => b.perfs[tf] - a.perfs[tf])
+      .slice(0, cutoff)
+      .map(([k]) => k)
+  ));
+  return topSets.reduce((acc, s) => new Set([...acc].filter(k => s.has(k))));
+}
+
 // Select rows that are in BOTH the top `pct` by each timeframe (intersection),
 // among currently-displayed rows. dataFor(key) -> row object with .perfs.
 // Replaces the current selection, then refreshes the selection bar.
 function selectTopIntersection(tbodyId, headerCheckId, updateFn, dataFor, tfs = ["1W", "1M"], pct = 0.20) {
   const checks = [...document.querySelectorAll(`#${tbodyId} .row-check`)];
   if (!checks.length) return;
-  const keys = checks.map(cb => cb.dataset.key);
-  const cutoff = Math.max(1, Math.ceil(keys.length * pct));
-
-  const topSets = tfs.map(tf => new Set(
-    keys
-      .map(k => ({ k, v: dataFor(k)?.perfs?.[tf] }))
-      .filter(o => o.v !== null && o.v !== undefined)
-      .sort((a, b) => b.v - a.v)
-      .slice(0, cutoff)
-      .map(o => o.k)
-  ));
-  const inter = topSets.reduce((acc, s) => new Set([...acc].filter(k => s.has(k))));
+  const inter = topIntersectionKeys(checks.map(cb => [cb.dataset.key, dataFor(cb.dataset.key)]), tfs, pct);
 
   checks.forEach(cb => { cb.checked = inter.has(cb.dataset.key) && !cb.disabled; });
 
@@ -724,16 +772,26 @@ function initTop20Buttons() {
     selectTopIntersection("heatmap-body", "ind-select-all", updateIndSelectionBar, k => _lastIndustries?.[k]);
 
   const themeInterBtn = document.getElementById("theme-top20i-btn");
-  if (themeInterBtn) themeInterBtn.onclick = () =>
+  if (themeInterBtn) themeInterBtn.onclick = () => {
+    if (_themeVizView === "rrg") return toggleRrgFilter("theme", "1W1M");
     selectTopIntersection("etf-themes-body", "theme-select-all", updateThemeSelectionBar, k => _etfData?.themes?.[k]);
+  };
+
+  const indRrgF1 = document.getElementById("ind-rrg-f1-btn");
+  if (indRrgF1) indRrgF1.onclick = () => toggleRrgFilter("industry", "1W1M");
+
+  const indRrgF2 = document.getElementById("ind-rrg-f2-btn");
+  if (indRrgF2) indRrgF2.onclick = () => toggleRrgFilter("industry", "1M3M");
 
   const indInter2Btn = document.getElementById("ind-top20i2-btn");
   if (indInter2Btn) indInter2Btn.onclick = () =>
     selectTopIntersection("heatmap-body", "ind-select-all", updateIndSelectionBar, k => _lastIndustries?.[k], ["1M", "3M"]);
 
   const themeInter2Btn = document.getElementById("theme-top20i2-btn");
-  if (themeInter2Btn) themeInter2Btn.onclick = () =>
+  if (themeInter2Btn) themeInter2Btn.onclick = () => {
+    if (_themeVizView === "rrg") return toggleRrgFilter("theme", "1M3M");
     selectTopIntersection("etf-themes-body", "theme-select-all", updateThemeSelectionBar, k => _etfData?.themes?.[k], ["1M", "3M"]);
+  };
 }
 
 // ── Industry heatmap multi-select ─────────────────────────────────────────
@@ -863,6 +921,7 @@ function initInstToggle() {
     if (_lastIndustries) {
       renderHeatmap(_lastIndustries);
       renderIndustryBubble(_lastIndustries);
+      renderRrgChart("industry");
     }
   });
 }
@@ -1168,6 +1227,7 @@ function renderAll(payload) {
   renderHeatmap(payload.industries);
   renderTop10(payload.industries);
   renderIndustryBubble(payload.industries);
+  renderRrgChart("industry");
   updateTimestamp(payload.fetched_at);
 }
 
@@ -1225,6 +1285,7 @@ function initTabs() {
       // Re-render with real measurements — the initial render may have
       // happened while the panel was hidden (autoscale fallback dims).
       if (btn.dataset.tab === "ind-bubble" && _lastIndustries) renderIndustryBubble(_lastIndustries);
+      if (btn.dataset.tab === "ind-rrg" && _lastIndustries) renderRrgChart("industry");
       if (btn.dataset.tab === "etfs" && _etfData) renderEtfTab();
       if (btn.dataset.tab === "firstflag" || btn.dataset.tab === "basebreak") renderSetupTabs();
     });
@@ -1420,9 +1481,12 @@ function renderEtfThemes(data) {
   if (tableScroll) tableScroll.classList.toggle("hidden", _themeVizView !== "table");
   document.getElementById("etf-bubble-view").classList.toggle("hidden", _themeVizView !== "bubble");
   document.getElementById("etf-matrix-view").classList.toggle("hidden", _themeVizView !== "matrix");
+  document.getElementById("etf-rrg-view").classList.toggle("hidden", _themeVizView !== "rrg");
+  syncRrgFilterButtons();
 
   if (_themeVizView === "bubble") { renderBubbleChart(data, themeAccel); return; }
   if (_themeVizView === "matrix") { renderMomentumMatrix(data, themeAccel); return; }
+  if (_themeVizView === "rrg")    { renderRrgChart("theme"); return; }
 
   // --- table view continues below ---
 
@@ -1782,8 +1846,11 @@ function placeBubbleLabels(pts, bounds) {
       if (box.x0 < bounds.x0 || box.x1 > bounds.x1 || box.y0 < bounds.y0 || box.y1 > bounds.y1) continue;
       if (placed.some(b => box.x1 > b.x0 && box.x0 < b.x1 && box.y1 > b.y0 && box.y0 < b.y1)) continue;
       placed.push(box);
+      // data-rrg verbindet das Label mit Punkt und Tail desselben Themes
+      // (nur im RRG gesetzt; die Bubble-Charts liefern keine rrgId).
+      const tag = p.rrgId === undefined ? "" : ` data-rrg="${p.rrgId}"`;
       out.push(`<text x="${c.x.toFixed(1)}" y="${c.y.toFixed(1)}" text-anchor="${c.anchor}"
-        font-size="9" fill="${p.color}" style="pointer-events:none">${p.label}</text>`);
+        font-size="9" fill="${p.color}"${tag} style="pointer-events:none">${p.label}</text>`);
       break;
     }
   }
@@ -1940,6 +2007,355 @@ function renderIndustryBubble(industries) {
   renderBubbleSvg(container, pts, "Neutral / Konsolidierung");
 }
 
+// ── RRG (Relative Rotation Graph) ───────────────────────────────────────────
+// Vierter Viz-View der Themes. Statt absoluter Performance zwei relative Achsen:
+//   x  RS-Ratio    = 3M-Perf minus Benchmark
+//   y  RS-Momentum = (1M-Perf minus Benchmark) − RS-Ratio/3
+//        → monatliches Relativtempo gegen das Quartals-Durchschnittstempo.
+//        Bewusst aus den verschachtelten Fenstern EINES Tages gerechnet, nicht
+//        als Δ des RS-Ratio über N Tage: letzteres bewegt den Punkt auch dann,
+//        wenn hinten nur etwas aus dem 3M-Fenster herausfällt.
+// Benchmark = Gleichgewichts-Querschnitt der Themes selbst. Ein Index steht
+// nicht zur Verfügung (etf_perf.json führt SPY ohne Historie), der Querschnitt
+// dagegen liegt in jedem Snapshot und gilt damit auch rückwirkend.
+// Tail = Snapshot-Tage (nur settled), Kopfpunkt = Live-Daten.
+const RRG_TAIL_DAYS = 10;   // ~2 Handelswochen
+const RRG_COLORS = { improving: "#4ade80", leading: "#38bdf8", weakening: "#fbbf24", lagging: "#f87171" };
+// Die beiden Schnittmengen-Buttons wirken im RRG als Filter. Mehrere aktive
+// Filter werden VEREINIGT (eine Gruppe reicht in einer der Mengen), sonst würde
+// der zweite Button die Auswahl immer nur verkleinern statt zu ergänzen.
+const RRG_FILTERS = {
+  "1W1M": { tfs: ["1W", "1M"], label: "1W∩1M" },
+  "1M3M": { tfs: ["1M", "3M"], label: "1M∩3M" },
+};
+
+// Zwei Ausprägungen desselben Charts. Sie unterscheiden sich nur in Datenquelle,
+// Snapshot-Typ, Größen-Kennzahl, Ziel-Link und den beiden Filter-Buttons —
+// Achsen, Benchmark, Tails, Hover und Filterlogik sind identisch.
+// Jede führt ihren eigenen Filter-Zustand: eine Auswahl in den Themes soll die
+// Industries nicht mitfiltern.
+const RRG_VIEWS = {
+  theme: {
+    containerId: "etf-rrg-view",
+    rows: () => _etfData?.themes,
+    size: (row) => row.score,
+    url: (name) => themeScreenerUrl(name),
+    filters: new Set(),
+    axisXKey: "rrgAxisX",
+    noun: "Themes",
+    benchKey: "rrgLegendBench",
+    btns: { "1W1M": "theme-top20i-btn", "1M3M": "theme-top20i2-btn" },
+    // Die Theme-Buttons liegen in der Viz-Leiste und markieren außerhalb des
+    // RRG Tabellenzeilen — dort dürfen sie den Filterzustand nicht anzeigen.
+    btnsActive: () => _themeVizView === "rrg",
+  },
+  industry: {
+    containerId: "ind-rrg-view",
+    rows: () => _lastIndustries,
+    size: (row) => row.composite,
+    url: (name, row) => finvizUrl(row.ticker),
+    filters: new Set(),
+    axisXKey: "rrgAxisXInd",
+    noun: "Industries",
+    benchKey: "rrgLegendBenchInd",
+    btns: { "1W1M": "ind-rrg-f1-btn", "1M3M": "ind-rrg-f2-btn" },
+    btnsActive: () => true,
+  },
+};
+const RRG_Q_KEY = { improving: "rrgQ1", leading: "rrgQ2", lagging: "rrgQ3", weakening: "rrgQ4" };
+
+function rrgQuadrant(rs, mom) {
+  if (rs >= 0) return mom >= 0 ? "leading" : "weakening";
+  return mom >= 0 ? "improving" : "lagging";
+}
+
+// Ein Tag → Koordinaten aller Themes. Null, wenn der Querschnitt zu dünn ist,
+// um als Benchmark zu taugen.
+function rrgDayCoords(perfMap) {
+  const rows = Object.entries(perfMap)
+    .filter(([, p]) => typeof p?.["1M"] === "number" && typeof p?.["3M"] === "number");
+  if (rows.length < 5) return null;
+  const m1 = rows.reduce((a, [, p]) => a + p["1M"], 0) / rows.length;
+  const m3 = rows.reduce((a, [, p]) => a + p["3M"], 0) / rows.length;
+  const out = {};
+  for (const [name, p] of rows) {
+    const rs = p["3M"] - m3;
+    out[name] = { rs, mom: (p["1M"] - m1) - rs / 3 };
+  }
+  return out;
+}
+
+// Pfad je Theme: älteste Snapshot-Tage zuerst, Live-Punkt zuletzt.
+// Aufeinanderfolgende identische Punkte fallen raus — ein Snapshot ohne neue
+// Finviz-Daten soll keinen toten Tail-Knoten erzeugen.
+function computeRrgSeries(rows, kind) {
+  const livePerfs = {};
+  for (const [name, row] of Object.entries(rows)) {
+    livePerfs[name] = { "1M": row.perfs?.["1M"] ?? null, "3M": row.perfs?.["3M"] ?? null };
+  }
+  const live = rrgDayCoords(livePerfs);
+  if (!live) return null;
+
+  const hist = [];
+  for (const day of (_snapDays || []).filter(d => d.settled === true && d.perfs?.[kind]).slice(-RRG_TAIL_DAYS)) {
+    const coords = rrgDayCoords(day.perfs[kind]);
+    if (coords) hist.push(coords);
+  }
+
+  const series = {};
+  for (const [name, head] of Object.entries(live)) {
+    const path = [];
+    const push = (p) => {
+      const prev = path[path.length - 1];
+      if (prev && Math.abs(prev.rs - p.rs) < 0.01 && Math.abs(prev.mom - p.mom) < 0.01) return;
+      path.push({ rs: p.rs, mom: p.mom });
+    };
+    for (const coords of hist) if (coords[name]) push(coords[name]);
+    push(head);
+    series[name] = path;
+  }
+  return series;
+}
+
+// Tail als weiche Kurve statt Polygonzug: zentripetales Catmull-Rom (alpha =
+// 0.5), umgerechnet in kubische Bezier-Segmente. Die Kurve läuft exakt durch
+// jeden Datenpunkt — geglättet wird nur der Weg dazwischen, es wird also nichts
+// erfunden. Zentripetal und nicht uniform, weil uniforme Splines bei eng
+// beieinanderliegenden Tagen Schleifen und Überschwinger produzieren.
+// Erwartet Bildschirmkoordinaten, damit die Glättung dem Seitenverhältnis folgt.
+function rrgSmoothPath(pts) {
+  if (pts.length < 2) return "";
+  const xy = (p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+  let d = `M${xy(pts[0])}`;
+  if (pts.length === 2) return `${d} L${xy(pts[1])}`;
+  const EPS = 1e-6;
+  for (let i = 0; i < pts.length - 1; i++) {
+    // An den Enden fällt der Kontrollpunkt auf den Randpunkt zurück —
+    // dadurch startet und endet der Tail ohne künstlichen Ausschlag.
+    const p0 = pts[i - 1] ?? pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] ?? pts[i + 1];
+    // d1..d3 tragen den Exponenten alpha bereits, quadriert ergibt das d^(2·alpha).
+    const d1 = Math.max(Math.sqrt(Math.hypot(p1.x - p0.x, p1.y - p0.y)), EPS);
+    const d2 = Math.max(Math.sqrt(Math.hypot(p2.x - p1.x, p2.y - p1.y)), EPS);
+    const d3 = Math.max(Math.sqrt(Math.hypot(p3.x - p2.x, p3.y - p2.y)), EPS);
+    const ctrl = (k) => [
+      (d1 * d1 * p2[k] - d2 * d2 * p0[k] + (2 * d1 * d1 + 3 * d1 * d2 + d2 * d2) * p1[k]) / (3 * d1 * (d1 + d2)),
+      (d3 * d3 * p1[k] - d2 * d2 * p3[k] + (2 * d3 * d3 + 3 * d3 * d2 + d2 * d2) * p2[k]) / (3 * d3 * (d3 + d2)),
+    ];
+    const [c1x, c2x] = ctrl("x"), [c1y, c2y] = ctrl("y");
+    d += ` C${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${xy(p2)}`;
+  }
+  return d;
+}
+
+// Aktiver Filter = Button sieht aktiv aus. Außerhalb des RRG sind die beiden
+// Buttons einmalige Aktionen auf der Tabelle und tragen deshalb nie den Zustand.
+function syncRrgFilterButtons() {
+  for (const view of Object.values(RRG_VIEWS)) {
+    const live = view.btnsActive();
+    for (const key of Object.keys(RRG_FILTERS)) {
+      document.getElementById(view.btns[key])?.classList.toggle("active", live && view.filters.has(key));
+    }
+  }
+}
+
+function toggleRrgFilter(kind, key) {
+  const view = RRG_VIEWS[kind];
+  if (view.filters.has(key)) view.filters.delete(key); else view.filters.add(key);
+  syncRrgFilterButtons();
+  renderRrgChart(kind);
+}
+
+function renderRrgChart(kind) {
+  const view = RRG_VIEWS[kind];
+  const container = document.getElementById(view.containerId);
+  if (!container) return;
+  const rows = view.rows();
+  const series = rows ? computeRrgSeries(rows, kind) : null;
+  if (!series) { container.innerHTML = `<p style="color:#6b7280;padding:16px">${t("etfNoData")}</p>`; return; }
+
+  let pts = Object.entries(series).map(([name, path], i) => {
+    const head = path[path.length - 1];
+    const q = rrgQuadrant(head.rs, head.mom);
+    const row = rows[name];
+    const sgn = v => `${v > 0 ? "+" : ""}${v.toFixed(1)}`;
+    return {
+      name, path, rs: head.rs, mom: head.mom, quadrant: q, color: RRG_COLORS[q],
+      score: view.size(row),
+      // Numerische ID statt Name: verbindet Punkt, Tail und Label beim Hover,
+      // ohne dass Sonderzeichen in den Namen escaped werden müssten.
+      rrgId: i,
+      label: name.length > 16 ? name.slice(0, 14) + "…" : name,
+      tip: `${name}\n${t(RRG_Q_KEY[q])}\n`
+         + t("rrgTip2", sgn(head.rs), sgn(head.mom),
+             row.perfs["1M"]?.toFixed(1), row.perfs["3M"]?.toFixed(1)),
+      url: view.url(name, row),
+    };
+  });
+
+  // Filtern NACH dem Berechnen aller Koordinaten: der Benchmark bleibt der
+  // Querschnitt aller Gruppen, die Punkte wandern durch den Filter also nicht.
+  const total = pts.length;
+  if (view.filters.size) {
+    const entries = Object.entries(rows);
+    const keep = new Set();
+    for (const key of view.filters) {
+      for (const name of topIntersectionKeys(entries, RRG_FILTERS[key].tfs)) keep.add(name);
+    }
+    pts = pts.filter(p => keep.has(p.name));
+  }
+  if (!pts.length) {
+    container.innerHTML = `<p style="color:#6b7280;padding:16px">${t("rrgFilterEmpty")}</p>`;
+    return;
+  }
+
+  const maxPathLen = Math.max(...pts.map(p => p.path.length));
+
+  // Domain über ALLE gezeichneten Punkte, damit kein Tail aus dem Bild läuft.
+  const shown = pts.flatMap(p => p.path);
+  const xsAll = shown.map(p => p.rs), ysAll = shown.map(p => p.mom);
+  const padX = (Math.max(...xsAll) - Math.min(...xsAll)) * 0.06 || 1;
+  const padY = (Math.max(...ysAll) - Math.min(...ysAll)) * 0.08 || 1;
+  const loX = Math.min(...xsAll) - padX, hiX = Math.max(...xsAll) + padX;
+  const loY = Math.min(...ysAll) - padY, hiY = Math.max(...ysAll) + padY;
+
+  const { W, H } = bubbleChartDims(container);
+  const PAD = { top: 28, right: 36, bottom: 48, left: 58 };
+  const plotW = W - PAD.left - PAD.right;
+  const plotH = H - PAD.top - PAD.bottom;
+  const toX = v => PAD.left + ((v - loX) / (hiX - loX)) * plotW;
+  const toY = v => H - PAD.bottom - ((v - loY) / (hiY - loY)) * plotH;
+
+  const scores = pts.map(p => p.score);
+  const minScore = Math.min(...scores);
+  const scoreRange = (Math.max(...scores) - minScore) || 1;
+  // Kleiner als im Bubble-Chart: die Tails brauchen den Platz.
+  const rMax = Math.max(12, Math.min(20, Math.round(Math.sqrt(plotW * plotH) / 48)));
+  const rMin = Math.max(4, Math.round(rMax * 0.35));
+  pts.forEach(p => {
+    p.x = toX(p.rs); p.y = toY(p.mom);
+    p.r = rMax - ((p.score - minScore) / scoreRange) * (rMax - rMin);
+  });
+
+  const zeroX = Math.min(Math.max(toX(0), PAD.left), W - PAD.right);
+  const zeroY = Math.min(Math.max(toY(0), PAD.top), H - PAD.bottom);
+  const quadRects = [
+    { x: PAD.left, y: PAD.top, w: zeroX - PAD.left, h: zeroY - PAD.top, fill: RRG_COLORS.improving },
+    { x: zeroX, y: PAD.top, w: W - PAD.right - zeroX, h: zeroY - PAD.top, fill: RRG_COLORS.leading },
+    { x: PAD.left, y: zeroY, w: zeroX - PAD.left, h: H - PAD.bottom - zeroY, fill: RRG_COLORS.lagging },
+    { x: zeroX, y: zeroY, w: W - PAD.right - zeroX, h: H - PAD.bottom - zeroY, fill: RRG_COLORS.weakening },
+  ].map(q => `<rect x="${q.x.toFixed(1)}" y="${q.y.toFixed(1)}" width="${Math.max(0, q.w).toFixed(1)}"
+      height="${Math.max(0, q.h).toFixed(1)}" fill="${q.fill}" fill-opacity="0.05"/>`).join("");
+
+  const qLabels = [
+    { x: PAD.left + 4,      y: PAD.top + 14,       key: "rrgQ1", fill: RRG_COLORS.improving },
+    { x: W - PAD.right - 4, y: PAD.top + 14,       key: "rrgQ2", fill: RRG_COLORS.leading, anchor: "end" },
+    { x: PAD.left + 4,      y: H - PAD.bottom - 6, key: "rrgQ3", fill: RRG_COLORS.lagging },
+    { x: W - PAD.right - 4, y: H - PAD.bottom - 6, key: "rrgQ4", fill: RRG_COLORS.weakening, anchor: "end" },
+  ].map(q => `<text x="${q.x}" y="${q.y}" font-size="10" fill="${q.fill}"
+    text-anchor="${q.anchor || "start"}" style="pointer-events:none">${t(q.key)}</text>`).join("");
+
+  function axisTicks(isX) {
+    const lo = isX ? loX : loY, hi = isX ? hiX : hiY;
+    const n = isX ? Math.max(5, Math.min(12, Math.round(plotW / 160)))
+                  : Math.max(5, Math.min(10, Math.round(plotH / 90)));
+    return Array.from({ length: n }, (_, i) => {
+      const v = lo + (i / (n - 1)) * (hi - lo);
+      const coord = isX ? toX(v).toFixed(1) : toY(v).toFixed(1);
+      const lbl = `${v > 0 ? "+" : ""}${v.toFixed(1)}`;
+      return isX
+        ? `<line x1="${coord}" y1="${H - PAD.bottom}" x2="${coord}" y2="${H - PAD.bottom + 4}" stroke="#4b5563" stroke-width="1"/>
+           ${i === 0 ? "" : `<text x="${coord}" y="${H - PAD.bottom + 15}" text-anchor="middle" font-size="9" fill="#6b7280">${lbl}</text>`}`
+        : `<line x1="${PAD.left - 4}" y1="${coord}" x2="${PAD.left}" y2="${coord}" stroke="#4b5563" stroke-width="1"/>
+           <text x="${PAD.left - 6}" y="${parseFloat(coord) + 3}" text-anchor="end" font-size="9" fill="#6b7280">${lbl}</text>`;
+    }).join("");
+  }
+
+  // Tails vor den Köpfen zeichnen, damit kein Pfad über einem Punkt liegt.
+  // Jedem Tail liegt ein unsichtbarer, breiter Pfad unter: 1,4 px Strichbreite
+  // trifft man mit der Maus nicht.
+  const tails = pts.filter(p => p.path.length > 1).map(p => {
+    const d = rrgSmoothPath(p.path.map(q => ({ x: toX(q.rs), y: toY(q.mom) })));
+    const nodes = p.path.slice(0, -1).map(q =>
+      `<circle class="rrg-node" cx="${toX(q.rs).toFixed(1)}" cy="${toY(q.mom).toFixed(1)}" r="1.8"
+        fill="${p.color}" fill-opacity="0.22" data-rrg="${p.rrgId}"/>`).join("");
+    return `<path class="rrg-hit" d="${d}" fill="none" stroke="transparent" stroke-width="12"
+        data-rrg="${p.rrgId}" style="pointer-events:stroke"/>
+      <path d="${d}" fill="none" stroke="${p.color}" stroke-width="1.4" stroke-opacity="0.28"
+      stroke-linejoin="round" stroke-linecap="round" data-rrg="${p.rrgId}"
+      style="pointer-events:none"/>${nodes}`;
+  }).join("");
+
+  const circles = pts.map(p => {
+    const inner = `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${p.r.toFixed(1)}"
+        data-rrg="${p.rrgId}"
+        fill="${p.color}" fill-opacity="0.72"
+        stroke="${p.color}" stroke-width="0.8"><title>${p.tip}</title></circle>`;
+    return p.url ? `<a href="${p.url}" target="_blank" rel="noopener">${inner}</a>` : inner;
+  }).join("");
+
+  const labels = placeBubbleLabels(pts, {
+    x0: PAD.left + 2, x1: W - PAD.right - 2,
+    y0: PAD.top + 2,  y1: H - PAD.bottom - 2,
+  });
+
+  const legendDot = (c, txt) =>
+    `<span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="${c}" fill-opacity="0.8"/></svg> ${txt}</span>`;
+  const tailNote = maxPathLen > 1
+    ? legendDot("#9ca3af", t("rrgLegendTail", maxPathLen))
+    : `<span class="bubble-legend-item">${t("rrgNoHistory")}</span>`;
+
+  container.innerHTML = `
+    <div class="bubble-chart-wrap">
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">
+        <rect x="${PAD.left}" y="${PAD.top}" width="${plotW}" height="${plotH}" fill="#0d1117" rx="4"/>
+        ${quadRects}
+        <line x1="${zeroX.toFixed(1)}" y1="${PAD.top}" x2="${zeroX.toFixed(1)}" y2="${H - PAD.bottom}"
+          stroke="#4b5563" stroke-width="1"/>
+        <line x1="${PAD.left}" y1="${zeroY.toFixed(1)}" x2="${W - PAD.right}" y2="${zeroY.toFixed(1)}"
+          stroke="#4b5563" stroke-width="1"/>
+        ${axisTicks(true)}${axisTicks(false)}
+        <text x="${PAD.left + plotW / 2}" y="${H - 4}" text-anchor="middle"
+          font-size="11" fill="#9ca3af">${t(view.axisXKey)}</text>
+        <text x="12" y="${PAD.top + plotH / 2}" text-anchor="middle" font-size="11"
+          fill="#9ca3af" transform="rotate(-90,12,${PAD.top + plotH / 2})">${t("rrgAxisY")}</text>
+        ${qLabels}
+        ${tails}
+        ${circles}
+        ${labels}
+      </svg>
+      <div class="bubble-legend">
+        ${legendDot(RRG_COLORS.improving, t("rrgQ1"))}
+        ${legendDot(RRG_COLORS.leading, t("rrgQ2"))}
+        ${legendDot(RRG_COLORS.weakening, t("rrgQ4"))}
+        ${legendDot(RRG_COLORS.lagging, t("rrgQ3"))}
+        ${legendDot("#9ca3af", t("rrgLegendSize"))}
+        ${tailNote}
+        <span class="bubble-legend-item">${t(view.benchKey)}</span>
+        ${view.filters.size ? `<span class="bubble-legend-item" style="color:#fbbf24">${
+          t("rrgFilterNote", [...view.filters].map(k => RRG_FILTERS[k].label).join(" + "), pts.length, total, view.noun)
+        }</span>` : ""}
+      </div>
+    </div>`;
+
+  // Hover: das Theme unter der Maus samt Tail und Label hervorheben, alles
+  // andere zurücknehmen. Delegiert statt 40× einzeln registriert — und über
+  // mouseover statt mouseenter, damit der Wechsel Punkt ↔ eigener Tail nicht
+  // erst löscht und dann neu setzt (das flackert).
+  const svg = container.querySelector("svg");
+  if (svg) {
+    const marked = svg.querySelectorAll("[data-rrg]");
+    const setActive = (id) => {
+      svg.classList.toggle("rrg-hover", id !== null);
+      marked.forEach(el => el.classList.toggle("rrg-on", el.dataset.rrg === id));
+    };
+    svg.addEventListener("mouseover", (e) => {
+      const el = e.target.closest?.("[data-rrg]");
+      setActive(el ? el.dataset.rrg : null);
+    });
+    svg.addEventListener("mouseleave", () => setActive(null));
+  }
+}
+
 // Autoscale: re-render whichever bubble chart is currently visible when the
 // window resizes, so the SVG keeps filling the viewport.
 let _bubbleResizeTimer = null;
@@ -1951,6 +2367,11 @@ window.addEventListener("resize", () => {
     const etf = document.getElementById("etf-bubble-view");
     if (etf && etf.clientWidth > 0 && _etfData?.themes && _themeVizView === "bubble")
       renderBubbleChart(_etfData, _themeAccel);
+    const rrg = document.getElementById("etf-rrg-view");
+    if (rrg && rrg.clientWidth > 0 && _etfData?.themes && _themeVizView === "rrg")
+      renderRrgChart("theme");
+    const indRrg = document.getElementById("ind-rrg-view");
+    if (indRrg && indRrg.clientWidth > 0 && _lastIndustries) renderRrgChart("industry");
   }, 150);
 });
 
@@ -2066,15 +2487,19 @@ async function loadSnapshots() {
     if (!shard) continue;
     for (const [date, entry] of Object.entries(shard)) {
       const stages = {};
-      if (_TM) {
-        for (const row of entry.rows) {
-          if (row.type !== "theme") continue;
+      // Roh-Perfs mitnehmen: der RRG-Tail braucht 1M/3M je Tag — für Themes
+      // UND Industries, beide Ansichten lesen aus demselben Shard.
+      const perfs = { theme: {}, industry: {} };
+      for (const row of entry.rows) {
+        if (!perfs[row.type]) continue;
+        if (row.type === "theme" && _TM) {
           stages[row.name] = _TM.classifyStage(_TM.segments(row.perfs), row.accel);
         }
+        perfs[row.type][row.name] = { "1M": row.perfs?.["1M"] ?? null, "3M": row.perfs?.["3M"] ?? null };
       }
       days.push({
         date, gap: entry.gap, settled: entry.settled,
-        fetchedAt: entry.fetched_at, rowCount: entry.rows.length, stages,
+        fetchedAt: entry.fetched_at, rowCount: entry.rows.length, stages, perfs,
       });
     }
   }
