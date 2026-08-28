@@ -1,24 +1,36 @@
-name: Finviz Scrape (hourly during RTH, NY time)
+name: Finviz Scrape (every 30 min during RTH, NY time)
 
-# Refreshes all data hourly (on the full hour) through the US regular trading
-# session on weekdays, plus one settled post-close run.
+# Refreshes all data through the US regular trading session on weekdays, plus
+# settled post-close runs.
 #
-# GitHub Actions cron is UTC-only and does NOT observe daylight saving time,
-# and scheduled runs are "best effort" (often delayed 15 min to a few hours).
-# We therefore schedule hourly UTC slots that cover 10:00–16:00 New York time
-# in BOTH summer (EDT, UTC-4) and winter (EST, UTC-5), and run every time
-# WITHOUT a wall-clock gate — GitHub's delays make exact-time gating
-# unreliable. The data writes are idempotent per date, so extra runs simply
-# overwrite the day's entry with fresher data.
+# GitHub Actions cron is UTC-only, does NOT observe daylight saving time, and
+# scheduled runs are "best effort". Two rules drive the schedule below:
 #
-#   14:00–21:00 UTC hourly → 10:00–17:00 EDT (summer) / 09:00–16:00 EST (winter)
-#   22:00 UTC              → 18:00 EDT               / 17:00 EST (settled close)
+#  1) NEVER schedule on minute 0. That is the most congested slot on GitHub's
+#     dispatcher. Our old `0 14-21 * * 1-5` schedule drifted from ~15 min late
+#     (Aug 18) to ~33 min late (Aug 25) and then collapsed entirely: 4/9 runs
+#     on Aug 26, 0/9 on Aug 27. Once a delayed run slips past the next slot,
+#     GitHub skips that slot — with hourly triggers the whole chain dies.
+#  2) Schedule twice as often as needed. A dropped slot then still leaves an
+#     hourly cadence intact. Data writes are idempotent per date, so extra runs
+#     simply overwrite the day's entry with fresher data.
+#
+# We cover 10:00-16:00 New York time in BOTH summer (EDT, UTC-4) and winter
+# (EST, UTC-5) and run every time WITHOUT a wall-clock gate — GitHub's delays
+# make exact-time gating unreliable.
+#
+#   14:09-22:39 UTC, every 30 min
+#     → 10:09-18:39 EDT (summer) / 09:09-17:39 EST (winter, settled close)
 
 on:
   schedule:
-    - cron: '0 14-21 * * 1-5'
-    - cron: '0 22 * * 1-5'
+    - cron: '9,39 14-22 * * 1-5'
   workflow_dispatch:  # Manual trigger via GitHub UI
+
+# Delayed runs can overlap. Serialize them so two jobs never race on git push.
+concurrency:
+  group: scrape
+  cancel-in-progress: false
 
 jobs:
   scrape:
@@ -29,6 +41,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 20  # genug Historie, damit ein Rebase beim Push-Retry greift
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -54,5 +68,18 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/data.json docs/etf_data.json docs/etf_perf.json docs/history.json docs/regime.json docs/setups.json docs/snapshots
-          git diff --staged --quiet || git commit -m "data: update $(TZ='America/New_York' date '+%Y-%m-%d %H:%M %Z')"
-          git push
+          if git diff --staged --quiet; then
+            echo "Keine Datenaenderung — nichts zu committen."
+            exit 0
+          fi
+          git commit -m "data: update $(TZ='America/New_York' date '+%Y-%m-%d %H:%M %Z')"
+          for attempt in 1 2 3; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push abgelehnt (Versuch $attempt) — rebase auf origin/${GITHUB_REF_NAME}."
+            git fetch origin "${GITHUB_REF_NAME}"
+            git rebase "origin/${GITHUB_REF_NAME}"
+          done
+          echo "Push nach 3 Versuchen fehlgeschlagen." >&2
+          exit 1

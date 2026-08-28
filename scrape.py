@@ -64,10 +64,11 @@ def _trading_days_between(d1: str, d2: str) -> int:
 B1_STALE_TRADING_DAYS = 3  # ältere Breadth-Zeile ⇒ Badge "DATEN VERALTET"
 
 # ── Setup-Screener: einmal pro Handelstag nach US-Close ───────────────────────
-# Der Workflow feuert stündlich 14–21 UTC plus 22 UTC. Der Experimental-Tab
-# braucht settled Tageskerzen, deshalb rechnet nur der Post-Close-Lauf.
-# 21:30 UTC liegt in BEIDEN Zeitzonen nach dem Close (EDT 17:30, EST 16:30) und
-# trifft damit den 22-UTC-Slot, auch wenn GitHub ihn verspätet startet.
+# Der Workflow feuert alle 30 Minuten von 14:09 bis 22:39 UTC. Der
+# Experimental-Tab braucht settled Tageskerzen, deshalb rechnet nur der
+# Post-Close-Lauf. 21:30 UTC liegt in BEIDEN Zeitzonen nach dem Close
+# (EDT 17:30, EST 16:30) und wird von den Slots 21:39/22:09/22:39 getroffen,
+# auch wenn GitHub einzelne davon verwirft oder verspätet startet.
 # Wall-Clock allein reicht nicht — verspätete Läufe können mehrfach nach 21:30
 # landen —, deshalb zusätzlich die Idempotenz über das Datum in setups.json.
 SETUPS_AFTER_UTC_MINUTE = 21 * 60 + 30
