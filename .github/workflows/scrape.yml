@@ -1,48 +1,121 @@
-name: Finviz Scrape (every 30 min during RTH, NY time)
+name: Finviz Scrape (RTH-Loop, NY time)
 
-# Refreshes all data through the US regular trading session on weekdays, plus
-# settled post-close runs.
+# Haelt alle Daten ueber die US-Kernhandelszeit frisch, plus abgerechnete
+# Post-Close-Slots.
 #
-# GitHub Actions cron is UTC-only, does NOT observe daylight saving time, and
-# scheduled runs are "best effort". Two rules drive the schedule below:
+# WARUM KEIN CRON PRO SLOT MEHR:
+# GitHub-Actions-Crons sind "best effort" und wurden fuer dieses Repo ab dem
+# 26.08.2026 reihenweise verworfen:
 #
-#  1) NEVER schedule on minute 0. That is the most congested slot on GitHub's
-#     dispatcher. Our old `0 14-21 * * 1-5` schedule drifted from ~15 min late
-#     (Aug 18) to ~33 min late (Aug 25) and then collapsed entirely: 4/9 runs
-#     on Aug 26, 0/9 on Aug 27. Once a delayed run slips past the next slot,
-#     GitHub skips that slot — with hourly triggers the whole chain dies.
-#  2) Schedule twice as often as needed. A dropped slot then still leaves an
-#     hourly cadence intact. Data writes are idempotent per date, so extra runs
-#     simply overwrite the day's entry with fresher data.
+#   19.-25.08.  9/9 Slots, Verzug 10 -> 33 min (wachsend)
+#   26.08.      4/9 Slots
+#   27.08.      2/9 Slots, Verzug bis 5h20
+#   28.08.      1/9 Slots, Verzug 8h51
+#   29.08.      1 Nachzuegler um 03:22 UTC (Slot war 22:39 UTC)
+#   31.08.      0/12 Slots
 #
-# We cover 10:00-16:00 New York time in BOTH summer (EDT, UTC-4) and winter
-# (EST, UTC-5) and run every time WITHOUT a wall-clock gate — GitHub's delays
-# make exact-time gating unreliable.
+# Die Gegenmassnahme "Minute != 0, doppelte Frequenz" hat nichts gebracht — mit
+# 18 Slots/Tag lag die Trefferquote bei null. Haeufigere Crons machen es eher
+# schlimmer, weil jeder verworfene Slot den naechsten mitreisst.
 #
-#   14:09-22:39 UTC, every 30 min
-#     → 10:09-18:39 EDT (summer) / 09:09-17:39 EST (winter, settled close)
+# Deshalb: EIN Run pro Tag, der selbst taktet. `.github/scripts/scrape_loop.sh`
+# scraped und schlaeft bis zum naechsten :00/:30. Damit haengt der ganze Tag nur
+# noch an einem einzigen Cron-Slot statt an 18 — und die Slots sitzen danach
+# exakt, weil unser `sleep` taktet und nicht GitHubs Dispatcher.
+#
+# Vier Einstiegs-Crons sind reine Redundanz: der erste, der tatsaechlich
+# gestartet wird, macht die Arbeit; die spaeteren erkennen den laufenden Run
+# im Guard-Step und beenden sich sofort.
+#
+# Zwei Jobs, weil ein einzelner Job bei GitHub nach 6 Stunden hart abgebrochen
+# wird. `session` deckt bis 19:00 UTC ab, `close` uebernimmt direkt danach bis
+# 22:30 UTC:
+#
+#   13:47-22:30 UTC  ->  09:47-18:30 EDT (Sommer) / 08:47-17:30 EST (Winter)
 
 on:
   schedule:
-    - cron: '9,39 14-22 * * 1-5'
-  workflow_dispatch:  # Manual trigger via GitHub UI
+    # Nie auf Minute 0 — der meistueberbuchte Slot bei GitHub.
+    - cron: '47 13 * * 1-5'
+    - cron: '17 14 * * 1-5'
+    - cron: '7 15 * * 1-5'
+    - cron: '23 16 * * 1-5'
+  workflow_dispatch:  # Manueller Trigger; greift der Guard, ist der Run ein No-op
 
-# Delayed runs can overlap. Serialize them so two jobs never race on git push.
-concurrency:
-  group: scrape
-  cancel-in-progress: false
+permissions:
+  contents: write
+  actions: read  # fuer den Guard: laeuft schon ein Run?
 
 jobs:
-  scrape:
+  # 13:47-19:00 UTC (09:47-15:00 EDT)
+  session:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    timeout-minutes: 345
+    outputs:
+      active: ${{ steps.guard.outputs.active }}
+
+    steps:
+      - name: Laeuft schon ein Run?
+        id: guard
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          older=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/scrape.yml/runs?status=in_progress&per_page=100" \
+            --jq '[.workflow_runs[] | select(.run_number < ${{ github.run_number }})] | length')
+          if [ "${older:-0}" -gt 0 ]; then
+            echo "Ein aelterer Scrape-Run laeuft bereits — dieser Run beendet sich."
+            echo "active=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "active=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout repository
+        if: steps.guard.outputs.active == 'true'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 50  # genug Historie fuer die Rebases der Push-Retries
+
+      - name: Set up Python
+        if: steps.guard.outputs.active == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        if: steps.guard.outputs.active == 'true'
+        run: pip install -r requirements.txt
+
+      # Guard: broken metric logic must never ship data. themeMetrics.js is the
+      # single implementation of the stage/segment math (client + report).
+      - name: Run metric tests
+        if: steps.guard.outputs.active == 'true'
+        run: node --test docs/static/themeMetrics.test.js
+
+      - name: Run calendar/snapshot tests
+        if: steps.guard.outputs.active == 'true'
+        run: python -m unittest discover -s tests -t . -p "test_*.py"
+
+      - name: Scrape-Schleife bis 19:00 UTC
+        if: steps.guard.outputs.active == 'true'
+        env:
+          LOOP_UNTIL: '19:00'
+          MAX_MINUTES: '320'
+        run: bash .github/scripts/scrape_loop.sh
+
+  # 19:00-22:30 UTC (15:00-18:30 EDT) — Rest der Session plus settled Close.
+  # `always()`, damit ein kaputter Vormittag den Nachmittag nicht mitnimmt.
+  close:
+    needs: session
+    if: always() && needs.session.outputs.active == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 345
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 20  # genug Historie, damit ein Rebase beim Push-Retry greift
+          fetch-depth: 50
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -52,34 +125,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # Guard: broken metric logic must never ship data. themeMetrics.js is the
-      # single implementation of the stage/segment math (client + report).
       - name: Run metric tests
         run: node --test docs/static/themeMetrics.test.js
 
       - name: Run calendar/snapshot tests
         run: python -m unittest discover -s tests -t . -p "test_*.py"
 
-      - name: Run scraper
-        run: python scrape.py
-
-      - name: Commit updated data
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/data.json docs/etf_data.json docs/etf_perf.json docs/history.json docs/regime.json docs/setups.json docs/snapshots
-          if git diff --staged --quiet; then
-            echo "Keine Datenaenderung — nichts zu committen."
-            exit 0
-          fi
-          git commit -m "data: update $(TZ='America/New_York' date '+%Y-%m-%d %H:%M %Z')"
-          for attempt in 1 2 3; do
-            if git push; then
-              exit 0
-            fi
-            echo "Push abgelehnt (Versuch $attempt) — rebase auf origin/${GITHUB_REF_NAME}."
-            git fetch origin "${GITHUB_REF_NAME}"
-            git rebase "origin/${GITHUB_REF_NAME}"
-          done
-          echo "Push nach 3 Versuchen fehlgeschlagen." >&2
-          exit 1
+      - name: Scrape-Schleife bis 22:30 UTC
+        env:
+          LOOP_UNTIL: '22:30'
+          MAX_MINUTES: '320'
+        run: bash .github/scripts/scrape_loop.sh
