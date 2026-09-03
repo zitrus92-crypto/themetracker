@@ -95,36 +95,25 @@ const I18N = {
     tabThemesOverview: "📊 Übersicht",
     tabFirstFlag:  "🚩 First Flag",
     tabBaseBreak:  "📦 Base Breakout",
-    tabPosition:   "🏔 Position",
     ffTitle:       "🚩 First Flag — Revier-Auswahl",
     bbTitle:       "📦 Base Breakout — Revier-Auswahl",
-    posTitle:      "🏔 Position Trend — Revier-Auswahl",
     ffSubtitle:    "Frische Re-Beschleunigung nach geordneter Korrektur im intakten Trend (Stage PULLBACK). Revier-Auswahl, kein Kaufsignal — die Kaufentscheidung fällt am Einzelchart.",
     bbSubtitle:    "Ausbruch aus flacher Basis (Stage BASE_BREAK). Revier-Auswahl, kein Kaufsignal — die Kaufentscheidung fällt am Einzelchart.",
-    posSubtitle:   "Reifer, intakter Mehrmonatstrend (Stage TREND) mit gleichzeitiger Top-Stärke über 3M/6M/YTD als automatisierter These-Ersatz — für das separate Position-Trading-Sleeve. Revier-Auswahl, kein Kaufsignal — die Kaufentscheidung fällt am Wochenchart.",
     hintFirstFlag: "Kriterien: Stage = PULLBACK · Accel ≥ +10 · Frische 1W/1M im Band 0,15–0,65.\nDichte/Breite/Konzentration folgen in Phase 2 — bis dahin „n/v“, blockieren nicht.\nSegmente entschachtelt: m4_6 = Monate 4–6, m2_3 = Monate 2–3, m1 = letzter Monat.\nSchwellen kalibriert am 14.08.2026 (ein Datensatz) — Nachkalibrierung nach ~8 Wochen Snapshots.",
     hintBaseBreak: "Kriterien: Stage = BASE_BREAK · Frische 1W/1M im Band 0,15–0,65 — bewusst OHNE Accel-Kriterium (der Rang-Sprung ist beim Basis-Ausbruch Folge, nicht Vorbedingung).\nDichte/Breite/Konzentration folgen in Phase 2 — bis dahin „n/v“, blockieren nicht.\nSegmente entschachtelt: m4_6 = Monate 4–6, m2_3 = Monate 2–3, m1 = letzter Monat.",
-    hintPosition:  "Kriterien: Stage = TREND · Lauf Monate 4-6 ≥ +15 % · gleichzeitig Top-20%-Rang in 3M, 6M UND YTD (Persistenz-Filter statt manueller These-Recherche).\nPos-Score = Rang(6M)×50% + Rang(3M)×35% + Rang(1M)×15 % — niedriger = stärker, wie der bestehende Score, nur 6M-dominant statt 1M-dominant.\nDichte/Breite/Konzentration wie First Flag/Base Breakout — bis dahin „n/v“, blockieren nicht.\nSchwellen unvalidiert, erste Kalibrierung.",
     colStage:      "Stage",
     colDensity:    "Dichte",
     colFreshness:  "Frische",
-    colPersist:    "Persistenz",
     colDays:       "Tage",
     colSegments:   "m4_6 · m2_3 · m1",
     colFailsAt:    "Scheitert an",
-    tagPersist:    "STRUKTUR",
     setupQualified: "QUALIFIZIERT",
     setupNearMiss:  "KNAPP DANEBEN",
     setupUnknown:   "OHNE KLASSIFIKATION",
     setupGroups:   (n) => `${n} Gruppe${n === 1 ? "" : "n"}`,
     setupEmptyFF:  "Diese Woche kein qualifizierter First Flag. Das ist ein Ergebnis, kein Fehler.",
     setupEmptyBB:  "Diese Woche kein qualifizierter Base Breakout. Das ist ein Ergebnis, kein Fehler.",
-    setupEmptyPos: "Aktuell kein qualifizierter Position-Trend-Kandidat. Das ist ein Ergebnis, kein Fehler.",
     setupEmptyNear: "→ Beinahe-Treffer stehen unter „Knapp daneben“.",
-    thesisTag:      "🤖 LLM-These",
-    thesisSince:    "Qualifiziert seit",
-    thesisGenerated: "Generiert",
-    thesisDisclaimer: "Automatisiert per LLM mit Web-Suche erstellt, unvalidiert — Recherche-Hilfe, keine Anlageberatung und kein Kaufsignal. Vor dem Handeln selbst prüfen.",
     setupFailsFmt: (label, actual, req) => `${label}: ${actual} (Soll: ${req})`,
     setupUnknownHint: "6M fehlt im Datensatz — Klassifikation nicht möglich.",
     setupMetricsFail: "Kennzahlen-Modul konnte nicht geladen werden — Tab ohne Funktion.",
@@ -336,36 +325,25 @@ const I18N = {
     tabThemesOverview: "📊 Overview",
     tabFirstFlag:  "🚩 First Flag",
     tabBaseBreak:  "📦 Base Breakout",
-    tabPosition:   "🏔 Position",
     ffTitle:       "🚩 First Flag — hunting grounds",
     bbTitle:       "📦 Base Breakout — hunting grounds",
-    posTitle:      "🏔 Position Trend — hunting grounds",
     ffSubtitle:    "Fresh re-acceleration after an orderly correction in an intact trend (stage PULLBACK). Group selection, not a buy signal — the entry decision is made on the individual chart.",
     bbSubtitle:    "Breakout from a flat base (stage BASE_BREAK). Group selection, not a buy signal — the entry decision is made on the individual chart.",
-    posSubtitle:   "Mature, intact multi-month trend (stage TREND) with simultaneous top strength across 3M/6M/YTD as an automated thesis proxy — for the separate position-trading sleeve. Group selection, not a buy signal — the entry decision is made on the weekly chart.",
     hintFirstFlag: "Criteria: stage = PULLBACK · Accel ≥ +10 · freshness 1W/1M within 0.15–0.65.\nDensity/breadth/concentration arrive in phase 2 — “n/a” until then, never blocking.\nDe-nested segments: m4_6 = months 4–6, m2_3 = months 2–3, m1 = last month.\nThresholds calibrated on 2026-08-14 (a single dataset) — recalibrate after ~8 weeks of snapshots.",
     hintBaseBreak: "Criteria: stage = BASE_BREAK · freshness 1W/1M within 0.15–0.65 — deliberately WITHOUT the accel criterion (the rank jump follows a base breakout, it does not precede it).\nDensity/breadth/concentration arrive in phase 2 — “n/a” until then, never blocking.\nDe-nested segments: m4_6 = months 4–6, m2_3 = months 2–3, m1 = last month.",
-    hintPosition:  "Criteria: stage = TREND · months-4-6 run ≥ +15% · simultaneously top-20% rank in 3M, 6M AND YTD (persistence filter instead of manual thesis research).\nPos-Score = rank(6M)×50% + rank(3M)×35% + rank(1M)×15% — lower = stronger, like the existing score, just 6M-dominant instead of 1M-dominant.\nDensity/breadth/concentration as in First Flag/Base Breakout — “n/a” until then, never blocking.\nThresholds unvalidated, first calibration.",
     colStage:      "Stage",
     colDensity:    "Density",
     colFreshness:  "Freshness",
-    colPersist:    "Persistence",
     colDays:       "Days",
     colSegments:   "m4_6 · m2_3 · m1",
     colFailsAt:    "Fails at",
-    tagPersist:    "STRUCT",
     setupQualified: "QUALIFIED",
     setupNearMiss:  "NEAR MISS",
     setupUnknown:   "UNCLASSIFIED",
     setupGroups:   (n) => `${n} group${n === 1 ? "" : "s"}`,
     setupEmptyFF:  "No qualified First Flag this week. That is a result, not an error.",
     setupEmptyBB:  "No qualified Base Breakout this week. That is a result, not an error.",
-    setupEmptyPos: "No qualified Position Trend candidate right now. That is a result, not an error.",
     setupEmptyNear: "→ Near misses are listed under “Near miss”.",
-    thesisTag:      "🤖 LLM thesis",
-    thesisSince:    "Qualified since",
-    thesisGenerated: "Generated",
-    thesisDisclaimer: "Generated automatically by an LLM with web search, unvalidated — a research aid, not investment advice or a buy signal. Verify yourself before trading.",
     setupFailsFmt: (label, actual, req) => `${label}: ${actual} (required: ${req})`,
     setupUnknownHint: "6M missing from the dataset — classification not possible.",
     setupMetricsFail: "Metrics module could not be loaded — tab inactive.",
@@ -1292,7 +1270,7 @@ function initTabs() {
         const tab = activeTab(themesSubNav, "etfs");
         showPanel(tab);
         if (tab === "etfs" && _etfData) renderEtfTab();
-        else if (tab === "firstflag" || tab === "basebreak" || tab === "position") renderSetupTabs();
+        else if (tab === "firstflag" || tab === "basebreak") renderSetupTabs();
       }
     });
   });
@@ -1309,7 +1287,7 @@ function initTabs() {
       if (btn.dataset.tab === "ind-bubble" && _lastIndustries) renderIndustryBubble(_lastIndustries);
       if (btn.dataset.tab === "ind-rrg" && _lastIndustries) renderRrgChart("industry");
       if (btn.dataset.tab === "etfs" && _etfData) renderEtfTab();
-      if (btn.dataset.tab === "firstflag" || btn.dataset.tab === "basebreak" || btn.dataset.tab === "position") renderSetupTabs();
+      if (btn.dataset.tab === "firstflag" || btn.dataset.tab === "basebreak") renderSetupTabs();
     });
   });
 }
@@ -2471,9 +2449,6 @@ function initEtfSortHeaders() {
 let _TM = null;            // dynamisch importiertes themeMetrics-Modul
 let _themeMetrics = null;  // { themeName: groupMetrics(...) } — einmal pro Datenladung
 let _snapDays = null;      // Snapshot-Tage aufsteigend: {date, gap, settled, rowCount, stages}
-// LLM-These je qualifiziertem Position-Trend-Theme, von position_thesis.py
-// geschrieben. { generated_at, themes: { name: {thesis, qualified_since, ...} } }
-let _positionThesisData = null;
 
 async function ensureMetricsModule() {
   if (_TM) return _TM;
@@ -2605,42 +2580,6 @@ function buildSetupGroups() {
   }));
 }
 
-// Position-Score = Rang(6M)×50% + Rang(3M)×35% + Rang(1M)×15% — 6M-dominant
-// statt 1M-dominant wie der bestehende Swing-Score, weil Position-Trend einen
-// reifen Mehrmonats-Move sucht, keinen frischen Wochen-Pop. Niedriger = stärker,
-// wie beim bestehenden Score. Persistenz-Filter ersetzt das manuelle
-// Katalysator-Feld: Top-Rang gleichzeitig in 3M, 6M UND YTD statt Freitext-These
-// (siehe docs/superpowers/plans/2026-07-02-regime-gate-theme-id-empfehlung.md).
-function computePositionMetrics(entries) {
-  const n = entries.length;
-  const rankBy = (tf) => {
-    const sorted = [...entries].sort(([, a], [, b]) => (b.perfs[tf] ?? -999) - (a.perfs[tf] ?? -999));
-    const ranks = {};
-    sorted.forEach(([k], i) => { ranks[k] = i + 1; });
-    return ranks;
-  };
-  const r1M = rankBy("1M"), r3M = rankBy("3M"), r6M = rankBy("6M"), rYTD = rankBy("YTD");
-  const topN = Math.max(1, Math.round(n * (_TM.THRESHOLDS.position.persistTopPct ?? 0.20)));
-  const posScore = {}, persistent = {};
-  entries.forEach(([k]) => {
-    const p1 = r1M[k] ?? n, p3 = r3M[k] ?? n, p6 = r6M[k] ?? n;
-    posScore[k] = p6 * 0.50 + p3 * 0.35 + p1 * 0.15;
-    persistent[k] = (r3M[k] ?? n + 1) <= topN && (r6M[k] ?? n + 1) <= topN && (rYTD[k] ?? n + 1) <= topN;
-  });
-  return { posScore, persistent };
-}
-
-function buildPositionGroups() {
-  const entries = Object.entries(_etfData.themes);
-  const accel = computeAccel(entries);
-  const { posScore, persistent } = computePositionMetrics(entries);
-  return entries.map(([name, row]) => ({
-    name, type: "theme", score: row.score, accel: accel[name],
-    perfs: row.perfs, tickers: row.tickers ?? [], rank: row.rank,
-    posScore: posScore[name], persistent: persistent[name],
-  }));
-}
-
 // Export nach SPEC §4.4: aktive Tab-Auswahl mit vollen Kennzahlen-Feldern.
 function exportSetupJson(result) {
   const pickPerfs = (name) => {
@@ -2652,8 +2591,6 @@ function exportSetupJson(result) {
     name: r.name,
     score: r.score,
     accel: r.accel,
-    posScore: r.posScore ?? null,
-    persistent: r.persistent ?? null,
     ranks: { overall: r.rank },
     perfs: pickPerfs(r.name),
     segments: r.segments,
@@ -2685,21 +2622,18 @@ function renderSetupTab(tab, containerId) {
     container.innerHTML = `<div class="error">${t("setupMetricsFail")}</div>`;
     return;
   }
-  const isFF  = tab === _TM.TAB.FIRST_FLAG;
-  const isPos = tab === _TM.TAB.POSITION_TREND;
-  const result = _TM.buildTab(isPos ? buildPositionGroups() : buildSetupGroups(), tab);
+  const isFF = tab === _TM.TAB.FIRST_FLAG;
+  const result = _TM.buildTab(buildSetupGroups(), tab);
   [result.qualified, result.nearMiss, result.rejected].forEach(list =>
     list.forEach(r => { r.daysInStage = _themeMetrics[r.name]?.daysInStage ?? null; }));
 
   const fBand = _TM.THRESHOLDS.freshness;
   const unknown = result.rejected.filter(r => r.stage === _TM.STAGE.UNKNOWN);
 
-  // Position-Trend zeigt Persistenz statt Frische — Frische misst "Wochen-Pop",
-  // genau das Gegenteil dessen, wonach ein reifer Mehrmonatstrend gesucht wird.
   const headRow = (extraCol = "") => `<tr>
     <th>#</th><th style="text-align:left">Theme</th><th data-i18n="colStage">${t("colStage")}</th>
     <th>${t("colDensity")}</th><th>${t("colAccel")}</th><th>1M</th>
-    <th>${isPos ? t("colPersist") : t("colFreshness")}</th><th>${t("colDays")}</th><th>${t("colSegments")}</th>${extraCol}
+    <th>${t("colFreshness")}</th><th>${t("colDays")}</th><th>${t("colSegments")}</th>${extraCol}
   </tr>`;
 
   // Kopier-Button nur, wenn die Gruppe überhaupt Ticker mitbringt.
@@ -2710,20 +2644,17 @@ function renderSetupTab(tab, containerId) {
   const bodyRow = (r, idx, extraCell = "", rowCls = "") => {
     const accelStr = r.accel === null ? "—" : (r.accel > 0 ? `+${r.accel}` : `${r.accel}`);
     const accelCls = r.accel > 0 ? "accel-pos" : r.accel < 0 ? "accel-neg" : "accel-neu";
-    const freshOut = !isPos && r.freshness !== null && (r.freshness < fBand.min || r.freshness > fBand.max);
+    const freshOut = r.freshness !== null && (r.freshness < fBand.min || r.freshness > fBand.max);
     const daysCls = r.daysInStage !== null && r.daysInStage <= 4 ? "days-green" : "";
     const tip = [
       `${t("setupTipDamage")}: ${fmtOrDash(r.damage, 1)}`,
       `${t("setupTipBreadth")}: ${r.breadth === null ? t("nv") : fmtOrDash(r.breadth, 0) + " %"}`,
       `${t("setupTipConc")}: ${r.concentration === null ? t("nv") : fmtOrDash(r.concentration)}`,
-      isPos ? `Pos-Score: ${fmtOrDash(r.posScore, 1)}` : `Score: ${fmtOrDash(r.score, 1)}`,
+      `Score: ${fmtOrDash(r.score, 1)}`,
     ].join(" · ");
     const density = r.density === null
       ? `<span class="nv">${t("nv")}</span>`
       : `${r.density.toFixed(0)} %`;
-    const midCell = isPos
-      ? `<td>${r.persistent ? `<span class="pick-tag tag-persist">${t("tagPersist")}</span>` : "—"}</td>`
-      : `<td class="${freshOut ? "fresh-out" : ""}">${fmtOrDash(r.freshness)}</td>`;
     return `<tr class="${rowCls}" title="${esc(tip)}">
       <td>${idx + 1}</td>
       <td style="text-align:left" class="setup-name-cell">${themeBadge(r.name)}${rowCopyBtn(r.name)}</td>
@@ -2731,7 +2662,7 @@ function renderSetupTab(tab, containerId) {
       <td>${density}</td>
       <td class="${accelCls}">${accelStr}</td>
       <td class="${perfClass(r.segments.m1)}">${fmtPct(r.segments.m1)}</td>
-      ${midCell}
+      <td class="${freshOut ? "fresh-out" : ""}">${fmtOrDash(r.freshness)}</td>
       <td class="${daysCls}">${r.daysInStage === null ? "—" : r.daysInStage}</td>
       <td>${segCell(r.segments.m4_6)} ${segCell(r.segments.m2_3)} ${segCell(r.segments.m1)}</td>
       ${extraCell}
@@ -2743,28 +2674,8 @@ function renderSetupTab(tab, containerId) {
         <thead>${headRow()}</thead>
         <tbody>${result.qualified.map((r, i) => bodyRow(r, i)).join("")}</tbody>
       </table></div>`
-    : `<div class="setup-empty">${isPos ? t("setupEmptyPos") : (isFF ? t("setupEmptyFF") : t("setupEmptyBB"))}
+    : `<div class="setup-empty">${isFF ? t("setupEmptyFF") : t("setupEmptyBB")}
         ${result.nearMiss.length ? `<br>${t("setupEmptyNear")}` : ""}</div>`;
-
-  // LLM-These je qualifiziertem Position-Trend-Theme (position_thesis.py) —
-  // nur fuer QUALIFIZIERTE Zeilen, ein Near-Miss ist noch kein Kandidat.
-  const thesisCardsHtml = isPos && result.qualified.length
-    ? result.qualified
-        .map(r => ({ r, entry: _positionThesisData?.themes?.[r.name] }))
-        .filter(({ entry }) => entry?.thesis)
-        .map(({ r, entry }) => `
-          <div class="thesis-card">
-            <div class="thesis-card-hdr">
-              <span class="pick-tag tag-persist">${t("thesisTag")}</span>
-              ${themeBadge(r.name)}
-              <span class="thesis-meta">${t("thesisSince")} ${esc(entry.qualified_since || "—")}
-                · ${t("thesisGenerated")} ${esc((entry.generated_at || "").slice(0, 10))}</span>
-            </div>
-            <p class="thesis-text">${esc(entry.thesis)}</p>
-            <p class="thesis-disclaimer">${t("thesisDisclaimer")}</p>
-          </div>`)
-        .join("")
-    : "";
 
   const nearMissHtml = result.nearMiss.length
     ? `<div class="table-scroll"><table class="setup-table">
@@ -2798,7 +2709,6 @@ function renderSetupTab(tab, containerId) {
         <button class="selection-bar__export-btn setup-export-btn">${t("exportJson")}</button>
       </div>
       ${qualifiedHtml}
-      ${thesisCardsHtml}
     </div>
     <details class="setup-nearmiss"${result.qualified.length ? "" : " open"}>
       <summary class="setup-section-hdr">▸ ${t("setupNearMiss")}
@@ -3158,7 +3068,6 @@ function renderSetupTabs() {
   if (!_TM) return;
   renderSetupTab(_TM.TAB.FIRST_FLAG, "firstflag-container");
   renderSetupTab(_TM.TAB.BASE_BREAKOUT, "basebreak-container");
-  renderSetupTab(_TM.TAB.POSITION_TREND, "position-container");
 }
 
 // ── Regime-Gate Badge (Modul A) ───────────────────────────────────────────
@@ -3301,13 +3210,12 @@ async function loadData() {
   const bust = `?t=${Date.now()}`;
 
   try {
-    const [dataRes, histRes, etfRes, regimeRes, setupsRes, positionThesisRes] = await Promise.all([
-      fetch("data.json" + bust),            // → dataRes           (index 0)
-      fetch("history.json" + bust),         // → histRes           (index 1)
-      fetch("etf_data.json" + bust),        // → etfRes            (index 2)
-      fetch("regime.json" + bust),          // → regimeRes         (index 3)
-      fetch("setups.json" + bust),          // → setupsRes         (index 4)
-      fetch("position_thesis.json" + bust), // → positionThesisRes (index 5)
+    const [dataRes, histRes, etfRes, regimeRes, setupsRes] = await Promise.all([
+      fetch("data.json" + bust),        // → dataRes   (index 0)
+      fetch("history.json" + bust),     // → histRes   (index 1)
+      fetch("etf_data.json" + bust),    // → etfRes    (index 2)
+      fetch("regime.json" + bust),      // → regimeRes (index 3)
+      fetch("setups.json" + bust),      // → setupsRes (index 4)
     ]);
 
     if (!dataRes.ok) throw new Error(`data.json: HTTP ${dataRes.status}`);
@@ -3319,13 +3227,6 @@ async function loadData() {
       _lastHistory = await histRes.json();
       updatePeriodButtons(_lastHistory);
       renderMovers(_lastHistory, _activePeriodDays);
-    }
-
-    if (positionThesisRes.ok) {
-      // position_thesis.json existiert erst nach dem ersten Scraper-Lauf mit
-      // ANTHROPIC_API_KEY — 404 ist ok, der Position-Tab zeigt dann nur die
-      // Tabelle ohne These.
-      _positionThesisData = await positionThesisRes.json();
     }
 
     if (etfRes.ok) {

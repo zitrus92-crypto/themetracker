@@ -291,7 +291,6 @@ svg.sparkline { display: block; }
 .tag-accel { background: #1a2a4a; color: #58a6ff; }
 .tag-fresh { background: #2a1a00; color: #e3a227; }
 .tag-inst  { background: #1a0d4a; color: #b794f4; }
-.tag-persist { background: #0d2830; color: #56d3d3; }
 .pick-empty { color: var(--text-dim); text-align: center; padding: 40px; font-size: 14px; }
 .pick-link { color: var(--accent); text-decoration: none; font-weight: 600; }
 .pick-link:hover { text-decoration: underline; }
@@ -551,18 +550,6 @@ a.etf-theme-badge:hover { filter: brightness(1.25); }
 .stage-bounce     { background: #2a0d0d; color: #f87171; border: 1px solid #7f1d1d; }
 .stage-neutral    { background: #21262d; color: #8b949e; border: 1px solid #30363d; }
 .stage-unknown    { background: #1a1a1a; color: #6b7280; border: 1px dashed #4b5563; }
-
-.thesis-card {
-  margin-top: 14px; padding: 12px 14px; border-radius: 8px;
-  background: #0d1520; border: 1px solid #1e2d3d;
-}
-.thesis-card + .thesis-card { margin-top: 10px; }
-.thesis-card-hdr {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;
-}
-.thesis-meta { color: var(--text-dim); font-size: 11px; }
-.thesis-text { margin: 0 0 8px; font-size: 13px; line-height: 1.5; }
-.thesis-disclaimer { margin: 0; color: var(--text-dim); font-size: 11px; font-style: italic; }
 
 .snap-health {
   color: var(--text-dim); font-size: 12px; margin-bottom: 14px;
