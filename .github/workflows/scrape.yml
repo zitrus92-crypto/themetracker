@@ -101,6 +101,7 @@ jobs:
         env:
           LOOP_UNTIL: '19:00'
           MAX_MINUTES: '320'
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: bash .github/scripts/scrape_loop.sh
 
   # 19:00-22:30 UTC (15:00-18:30 EDT) — Rest der Session plus settled Close.
@@ -135,4 +136,5 @@ jobs:
         env:
           LOOP_UNTIL: '22:30'
           MAX_MINUTES: '320'
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: bash .github/scripts/scrape_loop.sh

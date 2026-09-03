@@ -30,6 +30,7 @@ DATA_PATHS=(
   docs/history.json
   docs/regime.json
   docs/setups.json
+  docs/position_thesis.json
   docs/snapshots
 )
 

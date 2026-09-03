@@ -7,12 +7,14 @@ Fetches Finviz industry data AND Finviz thematic map data in parallel, writes:
   docs/history.json     — compact daily history (Movers tab)
   docs/regime.json      — daily Regime-Gate states (header badge)
   docs/setups.json      — Einzelaktien-Setups der stärksten Gruppen (Experimental-Tab)
+  docs/position_thesis.json — LLM-These je qualifiziertem Position-Trend-Theme
 """
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from datetime import date, datetime, timedelta, timezone
 
+import position_thesis
 import scraper
 import setups
 from market_calendar import is_trading_day
@@ -260,6 +262,18 @@ def main():
                   f"WATCH {c['WATCH']} · EXTENDED {c['EXTENDED']})")
         except Exception as e:
             print(f"  WARNING: setups.json nicht aktualisiert ({e}) — alte Datei bleibt.")
+
+    # ── Write position_thesis.json (Position-Trend-Tab: LLM-These) ───────────
+    # Qualifikation ist extrem selten (0-2 Themes) — ein API-Fehlschlag hier
+    # darf nie die restliche Pipeline mitreissen, deshalb eigenes try/except
+    # wie beim Setup-Screener oben.
+    if not (etf_payload and etf_payload.get("themes")):
+        print("  SKIPPED position_thesis.json (Theme-Daten fehlen)")
+    else:
+        try:
+            position_thesis.update_position_thesis(etf_payload["themes"], DOCS)
+        except Exception as e:
+            print(f"  WARNING: position_thesis.json nicht aktualisiert ({e}) — alte Datei bleibt.")
 
     # ── Write regime.json ─────────────────────────────────────────────────────
     if not trading_day:

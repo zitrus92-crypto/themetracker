@@ -36,6 +36,10 @@ export const THRESHOLDS = {
     densityMin: 25,         // % handelbarer Mitglieder
     concentrationMax: 2.5,  // Mittelwert / Median der 1M-Perf
   },
+  position: {
+    m4_6Min: 15,        // Mindestlauf Monate 4-6, in %. DEFAULT — unvalidiert, erste Kalibrierung analog First-Flag-Accel-Schwelle.
+    persistTopPct: 0.20,// Persistenz-Filter: Top-Anteil, der gleichzeitig in 3M/6M/YTD stark sein muss.
+  },
 };
 
 export const STAGE = {
@@ -48,7 +52,7 @@ export const STAGE = {
   UNKNOWN: 'UNKNOWN',
 };
 
-export const TAB = { FIRST_FLAG: 'FIRST_FLAG', BASE_BREAKOUT: 'BASE_BREAKOUT' };
+export const TAB = { FIRST_FLAG: 'FIRST_FLAG', BASE_BREAKOUT: 'BASE_BREAKOUT', POSITION_TREND: 'POSITION_TREND' };
 
 /* ------------------------------------------------------------------ */
 /* Ebene 1 — Gruppe                                                    */
@@ -224,6 +228,10 @@ export function groupMetrics(group, opts = {}) {
     type: group.type,
     score: num(group.score),
     accel: num(group.accel),
+    // Nur vom Position-Trend-Tab gesetzt (Rang über 1M/3M/6M/YTD, aussenrum in app.js
+    // berechnet — braucht Sicht auf alle Gruppen gleichzeitig, wie computeAccel()).
+    posScore: num(group.posScore),
+    persistent: group.persistent === true,
     members: Array.isArray(group.tickers) ? group.tickers.length : 0,
     segments: seg,
     damage: damage(seg),
@@ -246,13 +254,11 @@ function normalizeTicker(t) {
  * Kriterienliste eines Tabs. Jedes Kriterium ist einzeln auswertbar,
  * damit die UI benennen kann, WORAN eine Gruppe gescheitert ist.
  */
-function criteriaFor(tab, m) {
-  const f = THRESHOLDS.freshness, g = THRESHOLDS.group;
-  const base = [
-    { key: 'freshness', label: 'Frische 1W/1M im Band',
-      ok: m.freshness !== null && m.freshness >= f.min && m.freshness <= f.max,
-      actual: m.freshness, required: `${f.min}–${f.max}` },
-    // Ebene-2-Kriterien gelten als erfüllt, solange keine Ticker-Daten vorliegen.
+// Ebene-2-Kriterien gelten als erfüllt, solange keine Ticker-Daten vorliegen —
+// gilt für alle drei Tabs gleich.
+function level2Criteria(m) {
+  const g = THRESHOLDS.group;
+  return [
     { key: 'density', label: 'Setup-Dichte',
       ok: m.density === null || m.density >= g.densityMin,
       actual: m.density, required: `≥ ${g.densityMin} %`, soft: m.density === null },
@@ -263,6 +269,16 @@ function criteriaFor(tab, m) {
       ok: m.concentration === null || m.concentration < g.concentrationMax,
       actual: m.concentration, required: `< ${g.concentrationMax}`, soft: m.concentration === null },
   ];
+}
+
+function freshnessCriterion(m) {
+  const f = THRESHOLDS.freshness;
+  return { key: 'freshness', label: 'Frische 1W/1M im Band',
+    ok: m.freshness !== null && m.freshness >= f.min && m.freshness <= f.max,
+    actual: m.freshness, required: `${f.min}–${f.max}` };
+}
+
+function criteriaFor(tab, m) {
   if (tab === TAB.FIRST_FLAG) {
     return [
       { key: 'stage', label: 'Stage = PULLBACK', ok: m.stage === STAGE.PULLBACK,
@@ -270,13 +286,33 @@ function criteriaFor(tab, m) {
       { key: 'accel', label: 'Accel über Rauschschwelle',
         ok: m.accel !== null && m.accel >= THRESHOLDS.accel.firstFlagMin,
         actual: m.accel, required: `≥ +${THRESHOLDS.accel.firstFlagMin}` },
-      ...base,
+      freshnessCriterion(m),
+      ...level2Criteria(m),
     ];
   }
+  if (tab === TAB.POSITION_TREND) {
+    const p = THRESHOLDS.position;
+    return [
+      { key: 'stage', label: 'Stage = TREND', ok: m.stage === STAGE.TREND,
+        actual: m.stage, required: 'TREND' },
+      { key: 'trendRun', label: 'Lauf Monate 4-6',
+        ok: m.segments.m4_6 !== null && m.segments.m4_6 >= p.m4_6Min,
+        actual: m.segments.m4_6, required: `≥ +${p.m4_6Min}` },
+      // Automatisierter These-Ersatz statt manuellem Katalysator-Feld (siehe
+      // docs/superpowers/plans/2026-07-02-regime-gate-theme-id-empfehlung.md):
+      // gleichzeitige Top-Stärke über 3M/6M/YTD statt Freitext-Recherche.
+      { key: 'persistent', label: 'Top-Rang gleichzeitig 3M/6M/YTD',
+        ok: m.persistent === true,
+        actual: m.persistent ? 'ja' : 'nein', required: 'ja' },
+      ...level2Criteria(m),
+    ];
+  }
+  // BASE_BREAKOUT: bewusst ohne Accel-Kriterium (siehe hintBaseBreak).
   return [
     { key: 'stage', label: 'Stage = BASE_BREAK', ok: m.stage === STAGE.BASE_BREAK,
       actual: m.stage, required: 'BASE_BREAK' },
-    ...base,
+    freshnessCriterion(m),
+    ...level2Criteria(m),
   ];
 }
 
@@ -295,10 +331,15 @@ export function buildTab(groups, tab, opts = {}) {
     const m = groupMetrics(g, opts);
     return { ...m, ...evaluateForTab(m, tab) };
   });
-  const rank = (a, b) =>
-    (b.density ?? -1) - (a.density ?? -1) ||
-    (b.accel ?? 0) - (a.accel ?? 0) ||
-    (a.score ?? 1e9) - (b.score ?? 1e9);
+  // Position-Trend sortiert nach dem 6M-dominanten Pos-Score (niedriger = stärker,
+  // wie beim bestehenden Score) statt nach Dichte/Accel — die sind für einen
+  // reifen Mehrmonatstrend nicht die richtige Rangfrage.
+  const rank = tab === TAB.POSITION_TREND
+    ? (a, b) => (a.posScore ?? 1e9) - (b.posScore ?? 1e9)
+    : (a, b) =>
+        (b.density ?? -1) - (a.density ?? -1) ||
+        (b.accel ?? 0) - (a.accel ?? 0) ||
+        (a.score ?? 1e9) - (b.score ?? 1e9);
   return {
     tab,
     qualified: rows.filter((r) => r.qualified).sort(rank),
