@@ -43,21 +43,46 @@ deadline=$(( window_end < hard_stop ? window_end : hard_stop ))
 git config user.name "github-actions[bot]"
 git config user.email "github-actions[bot]@users.noreply.github.com"
 
+# actions/checkout holt github.sha — den Stand vom RUN-Start. Der `close`-Job
+# startet aber erst Stunden spaeter und ist damit um alle Commits hinterher,
+# die `session` inzwischen gepusht hat. Ohne diesen Sync ist sein erster Push
+# zwangslaeufig "behind" (31.08./01.09./02.09.2026: dadurch je 0 erfolgreiche
+# Durchlaeufe am ganzen Nachmittag).
+if git fetch -q origin "${GITHUB_REF_NAME}"; then
+  git reset -q --hard "origin/${GITHUB_REF_NAME}"
+  echo "Auf origin/${GITHUB_REF_NAME} synchronisiert: $(git rev-parse --short HEAD)"
+else
+  echo "fetch fehlgeschlagen — arbeite auf dem ausgecheckten Stand weiter." >&2
+fi
+
 commit_and_push() {
-  git add "${DATA_PATHS[@]}"
-  if git diff --staged --quiet; then
-    echo "Keine Datenaenderung — nichts zu committen."
-    return 0
-  fi
-  git commit -q -m "data: update $(TZ='America/New_York' date '+%Y-%m-%d %H:%M %Z')"
+  local msg
+  msg="data: update $(TZ='America/New_York' date '+%Y-%m-%d %H:%M %Z')"
+
   for attempt in 1 2 3; do
+    git add "${DATA_PATHS[@]}"
+    if git diff --staged --quiet; then
+      echo "Keine Datenaenderung — nichts zu committen."
+      return 0
+    fi
+    git commit -q -m "${msg}"
     if git push -q; then
       return 0
     fi
-    echo "Push abgelehnt (Versuch ${attempt}) — rebase auf origin/${GITHUB_REF_NAME}."
-    git fetch -q origin "${GITHUB_REF_NAME}"
-    git rebase -q "origin/${GITHUB_REF_NAME}" || { git rebase --abort; return 1; }
+
+    # Kein Rebase mehr: die Datendateien werden bei jedem Scrape vollstaendig
+    # neu geschrieben, ein Merge gegen den Remote-Stand endet deshalb IMMER im
+    # Konflikt — und der abgebrochene Rebase liess den Commit lokal liegen, was
+    # jeden weiteren Slot des Jobs mit derselben Kollision hat scheitern lassen.
+    # Stattdessen HEAD und Index auf den Remote-Stand setzen (Working Tree mit
+    # den frischen Daten bleibt unangetastet) und neu committen: unsere Zahlen
+    # sind per Definition die aktuelleren, fremde Aenderungen an anderen Dateien
+    # bleiben erhalten, weil nur DATA_PATHS gestaged wird.
+    echo "Push abgelehnt (Versuch ${attempt}) — setze auf origin/${GITHUB_REF_NAME} neu auf."
+    git fetch -q origin "${GITHUB_REF_NAME}" || continue
+    git reset -q --mixed "origin/${GITHUB_REF_NAME}"
   done
+
   echo "Push nach 3 Versuchen fehlgeschlagen." >&2
   return 1
 }
