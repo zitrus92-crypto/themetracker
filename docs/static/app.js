@@ -156,6 +156,11 @@ const I18N = {
     expS0Preview:  "Beispiel-Link (stärkste Industry):",
     expBaseline:   "Grundbedingung im ganzen Tab: Volatility 1M > 3 % in jedem Link — und ADR ≥ 3 % als Pendant in der Tabelle. Ruhige Titel tauchen hier gar nicht erst auf.",
 
+    expBubbleXTitle: "Bubble-Chart X-Achse — Default",
+    expBubbleXDesc:  "Legt fest, welche Performance beim Laden als X-Achse in den Bubble-Charts (Themes + Industry) steht. Die 3M/1W-Buttons direkt am Chart wechseln nur für die aktuelle Ansicht, ohne diesen Default zu verändern.",
+    expBubbleX3M:    "3M",
+    expBubbleX1W:    "1W",
+
     expS1Title:    "Stufe 1 — Gerechneter Setup-Screener",
     expS1Desc:     "Aus Tages-OHLCV der Ticker der stärksten Gruppen. Pivot = höchstes Hoch der letzten 25 Tage ohne die letzten 3. Abstand = Kurs zum Pivot in %.",
     expS1NoData:   "Noch keine setups.json — die Datei entsteht beim nächsten Post-Close-Lauf.",
@@ -386,6 +391,11 @@ const I18N = {
     expS0StrengthDesc: "like Setup plus 3M perf > +20% — strength as the entry ticket, pivot proximity stays the ordering (Finviz allows only one sort key)",
     expS0Preview:  "Sample link (strongest industry):",
     expBaseline:   "Baseline across the whole tab: volatility 1M > 3% in every link — and ADR ≥ 3% as its counterpart in the table. Quiet names never show up here.",
+
+    expBubbleXTitle: "Bubble chart X-axis — default",
+    expBubbleXDesc:  "Sets which performance timeframe the bubble charts (Themes + Industry) use as the X-axis on load. The 3M/1W buttons on the chart itself only switch the current view without changing this default.",
+    expBubbleX3M:    "3M",
+    expBubbleX1W:    "1W",
 
     expS1Title:    "Stage 1 — Computed setup screener",
     expS1Desc:     "From daily OHLCV of the tickers in the strongest groups. Pivot = highest high of the last 25 days excluding the last 3. Distance = price to pivot in %.",
@@ -1301,8 +1311,15 @@ let _etfView       = "themes";   // "themes" | "etfs"
 let _etfThemeSort  = { col: "score", dir: 1 };
 let _etfListSort   = { col: "score", dir: 1 };
 let _themeVizView  = "bubble"; // "table" | "bubble" | "matrix"
-let _themeBubbleXAxis = "3M"; // "3M" | "1W" — X-Achse des Themes-Bubble-Charts
-let _indBubbleXAxis   = "3M"; // "3M" | "1W" — X-Achse des Industry-Bubble-Charts
+
+// Default-X-Achse der Bubble-Charts, im Experimental-Tab einstellbar und per
+// Cookie gemerkt (siehe prefSet/prefGet). Die Chart-eigenen 3M/1W-Buttons
+// setzen sich davon ab, ohne den Default zu verändern — sie sind nur ein
+// temporärer Blick, kein neues Speichern.
+let _bubbleXAxisDefault = prefGet("bubbleXAxisDefault") || "3M";
+if (_bubbleXAxisDefault !== "3M" && _bubbleXAxisDefault !== "1W") _bubbleXAxisDefault = "3M";
+let _themeBubbleXAxis = _bubbleXAxisDefault; // "3M" | "1W" — X-Achse des Themes-Bubble-Charts
+let _indBubbleXAxis   = _bubbleXAxisDefault; // "3M" | "1W" — X-Achse des Industry-Bubble-Charts
 
 // Theme badge colours for all 40 Finviz themes
 const THEME_COLORS = {
@@ -2418,9 +2435,13 @@ function initThemeVizToggle() {
 }
 
 function initBubbleXAxisToggles() {
-  const wire = (containerId, apply) => {
+  const wire = (containerId, initial, apply) => {
     const container = document.getElementById(containerId);
     if (!container) return;
+    // Statisches HTML markiert immer "3M" aktiv — hier auf den geladenen
+    // Default (Cookie) angleichen, sonst zeigt der Button nach Reload den
+    // falschen Stand, obwohl die Daten schon korrekt gerendert werden.
+    container.querySelectorAll(".xaxis-btn").forEach(b => b.classList.toggle("active", b.dataset.xaxis === initial));
     container.querySelectorAll(".xaxis-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         if (btn.classList.contains("active")) return;
@@ -2430,8 +2451,8 @@ function initBubbleXAxisToggles() {
       });
     });
   };
-  wire("theme-bubble-xaxis-toggle", tf => { _themeBubbleXAxis = tf; renderEtfThemes(_etfData); });
-  wire("ind-bubble-xaxis-toggle",   tf => { _indBubbleXAxis = tf; if (_lastIndustries) renderIndustryBubble(_lastIndustries); });
+  wire("theme-bubble-xaxis-toggle", _themeBubbleXAxis, tf => { _themeBubbleXAxis = tf; renderEtfThemes(_etfData); });
+  wire("ind-bubble-xaxis-toggle",   _indBubbleXAxis,   tf => { _indBubbleXAxis = tf; if (_lastIndustries) renderIndustryBubble(_lastIndustries); });
 }
 
 function initEtfSortHeaders() {
@@ -2820,6 +2841,21 @@ function expGroupsHtml(groups) {
   }).join(" ");
 }
 
+function expBubbleXAxisHtml() {
+  const btn = (tf) => `
+    <button class="exp-mode-btn${_bubbleXAxisDefault === tf ? " exp-mode-btn--active" : ""}"
+            data-bubblexaxis="${tf}">${t("expBubbleX" + tf)}</button>`;
+  return `
+    <div class="exp-block">
+      <div class="setup-section-hdr">${t("expBubbleXTitle")}</div>
+      <p class="exp-desc">${t("expBubbleXDesc")}</p>
+      <div class="exp-modes">
+        ${btn("3M")}
+        ${btn("1W")}
+      </div>
+    </div>`;
+}
+
 function expStage0Html() {
   const strongest = Object.entries(_lastIndustries ?? {})
     .sort((a, b) => a[1].composite - b[1].composite)[0];
@@ -3009,7 +3045,7 @@ function expChartsHtml(rows) {
 function renderExperimental() {
   const box = document.getElementById("exp-container");
   if (!box) return;
-  box.innerHTML = expStage0Html() + expStage1Html();
+  box.innerHTML = expBubbleXAxisHtml() + expStage0Html() + expStage1Html();
 
   // Stufe-0-Schalter: wirkt app-weit, also alles neu zeichnen, was Links baut.
   const rerenderLinkViews = () => {
@@ -3018,6 +3054,22 @@ function renderExperimental() {
     renderSetupTabs();
       renderExperimental();
   };
+
+  box.querySelectorAll("[data-bubblexaxis]").forEach(btn => {
+    btn.onclick = () => {
+      const tf = btn.dataset.bubblexaxis;
+      if (tf === _bubbleXAxisDefault) return;
+      _bubbleXAxisDefault = tf;
+      prefSet("bubbleXAxisDefault", tf);
+      _themeBubbleXAxis = tf;
+      _indBubbleXAxis = tf;
+      document.querySelectorAll("#theme-bubble-xaxis-toggle .xaxis-btn, #ind-bubble-xaxis-toggle .xaxis-btn")
+        .forEach(b => b.classList.toggle("active", b.dataset.xaxis === tf));
+      if (_etfData) renderEtfThemes(_etfData);
+      if (_lastIndustries) renderIndustryBubble(_lastIndustries);
+      renderExperimental();
+    };
+  });
 
   box.querySelectorAll("[data-fvmode]").forEach(btn => {
     btn.onclick = () => {
