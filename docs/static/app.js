@@ -6,6 +6,7 @@ const SPARKLINE_ORDER = ["YTD", "6M", "3M", "1M", "1W", "1D"];
 const I18N = {
   de: {
     notLoaded:    "— noch nicht geladen —",
+    xAxisLabel:   "X-Achse:",
     updated:      "Stand: ",
     loading:      "Daten werden geladen…",
     noData:       "Keine Daten.",
@@ -236,6 +237,7 @@ const I18N = {
   },
   en: {
     notLoaded:    "— not yet loaded —",
+    xAxisLabel:   "X-axis:",
     updated:      "Updated: ",
     loading:      "Loading data…",
     noData:       "No data.",
@@ -1299,6 +1301,8 @@ let _etfView       = "themes";   // "themes" | "etfs"
 let _etfThemeSort  = { col: "score", dir: 1 };
 let _etfListSort   = { col: "score", dir: 1 };
 let _themeVizView  = "bubble"; // "table" | "bubble" | "matrix"
+let _themeBubbleXAxis = "3M"; // "3M" | "1W" — X-Achse des Themes-Bubble-Charts
+let _indBubbleXAxis   = "3M"; // "3M" | "1W" — X-Achse des Industry-Bubble-Charts
 
 // Theme badge colours for all 40 Finviz themes
 const THEME_COLORS = {
@@ -1480,6 +1484,7 @@ function renderEtfThemes(data) {
   const tableScroll = document.querySelector("#etf-themes-view .table-scroll");
   if (tableScroll) tableScroll.classList.toggle("hidden", _themeVizView !== "table");
   document.getElementById("etf-bubble-view").classList.toggle("hidden", _themeVizView !== "bubble");
+  document.getElementById("theme-bubble-xaxis-toggle").classList.toggle("hidden", _themeVizView !== "bubble");
   document.getElementById("etf-matrix-view").classList.toggle("hidden", _themeVizView !== "matrix");
   document.getElementById("etf-rrg-view").classList.toggle("hidden", _themeVizView !== "rrg");
   syncRrgFilterButtons();
@@ -1857,7 +1862,7 @@ function placeBubbleLabels(pts, bounds) {
   return out.join("");
 }
 
-function renderBubbleSvg(container, pts, neutralLabel) {
+function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M") {
   if (!pts.length) { container.innerHTML = '<p style="color:#6b7280;padding:16px">No data</p>'; return; }
 
   const xs = pts.map(p => p.x3m), ys = pts.map(p => p.y1m);
@@ -1943,7 +1948,7 @@ function renderBubbleSvg(container, pts, neutralLabel) {
           stroke="#374151" stroke-width="1" stroke-dasharray="5,4"/>
         ${axisTicks("x")}${axisTicks("y")}
         <text x="${PAD.left + plotW / 2}" y="${H - 4}" text-anchor="middle"
-          font-size="11" fill="#9ca3af">3M Performance →</text>
+          font-size="11" fill="#9ca3af">${xTf} Performance →</text>
         <text x="12" y="${PAD.top + plotH / 2}" text-anchor="middle" font-size="11"
           fill="#9ca3af" transform="rotate(-90,12,${PAD.top + plotH / 2})">1M Performance ↑</text>
         ${qLabels}
@@ -1962,21 +1967,22 @@ function renderBubbleSvg(container, pts, neutralLabel) {
 
 function renderBubbleChart(data, themeAccel) {
   const container = document.getElementById("etf-bubble-view");
+  const xTf = _themeBubbleXAxis;
   const pts = Object.entries(data.themes)
-    .filter(([,r]) => r.perfs["3M"] !== null && r.perfs["1M"] !== null)
+    .filter(([,r]) => r.perfs[xTf] !== null && r.perfs["1M"] !== null)
     .map(([theme, row]) => {
       const accel = themeAccel[theme] ?? 0;
       const accelSign = accel > 0 ? "+" : "";
-      const p3 = row.perfs["3M"] > 0 ? "+" : "";
+      const pX = row.perfs[xTf] > 0 ? "+" : "";
       const p1 = row.perfs["1M"] > 0 ? "+" : "";
       return {
-        x3m: row.perfs["3M"], y1m: row.perfs["1M"], score: row.score, accel,
+        x3m: row.perfs[xTf], y1m: row.perfs["1M"], score: row.score, accel,
         label: theme.length > 16 ? theme.slice(0, 14) + "…" : theme,
-        tip: `${theme}\n3M: ${p3}${row.perfs["3M"]?.toFixed(1)}%  1M: ${p1}${row.perfs["1M"]?.toFixed(1)}%\nAccel: ${accelSign}${accel}  |  Score: ${row.score.toFixed(1)}  |  ${(row.tickers||[]).length} Aktien`,
+        tip: `${theme}\n${xTf}: ${pX}${row.perfs[xTf]?.toFixed(1)}%  1M: ${p1}${row.perfs["1M"]?.toFixed(1)}%\nAccel: ${accelSign}${accel}  |  Score: ${row.score.toFixed(1)}  |  ${(row.tickers||[]).length} Aktien`,
         url: themeScreenerUrl(theme),
       };
     });
-  renderBubbleSvg(container, pts, "Neutral");
+  renderBubbleSvg(container, pts, "Neutral", xTf);
 }
 
 // --- Industry Bubble Chart (analogous to Theme bubble chart) ---
@@ -1988,23 +1994,24 @@ function renderBubbleChart(data, themeAccel) {
 function renderIndustryBubble(industries) {
   const container = document.getElementById("ind-bubble-view");
   if (!container) return;
+  const xTf = _indBubbleXAxis;
   let entries = Object.entries(industries)
-    .filter(([,r]) => r.perfs["3M"] !== null && r.perfs["1M"] !== null);
+    .filter(([,r]) => r.perfs[xTf] !== null && r.perfs["1M"] !== null);
   if (_instFilter) entries = entries.filter(([,r]) => isInst(r));
 
   const pts = entries.map(([name, row]) => {
     const accel = (row.ranks?.["3M"] ?? 0) - (row.ranks?.["1M"] ?? 0);
     const accelSign = accel > 0 ? "+" : "";
-    const p3 = row.perfs["3M"] > 0 ? "+" : "";
+    const pX = row.perfs[xTf] > 0 ? "+" : "";
     const p1 = row.perfs["1M"] > 0 ? "+" : "";
     return {
-      x3m: row.perfs["3M"], y1m: row.perfs["1M"], score: row.composite, accel,
+      x3m: row.perfs[xTf], y1m: row.perfs["1M"], score: row.composite, accel,
       label: name.length > 16 ? name.slice(0, 14) + "…" : name,
-      tip: `${name}\n3M: ${p3}${row.perfs["3M"]?.toFixed(1)}%  1M: ${p1}${row.perfs["1M"]?.toFixed(1)}%\nAccel: ${accelSign}${accel}  |  Score: ${row.composite.toFixed(1)}`,
+      tip: `${name}\n${xTf}: ${pX}${row.perfs[xTf]?.toFixed(1)}%  1M: ${p1}${row.perfs["1M"]?.toFixed(1)}%\nAccel: ${accelSign}${accel}  |  Score: ${row.composite.toFixed(1)}`,
       url: finvizUrl(row.ticker),
     };
   });
-  renderBubbleSvg(container, pts, "Neutral / Konsolidierung");
+  renderBubbleSvg(container, pts, "Neutral / Konsolidierung", xTf);
 }
 
 // ── RRG (Relative Rotation Graph) ───────────────────────────────────────────
@@ -2408,6 +2415,23 @@ function initThemeVizToggle() {
       renderEtfThemes(_etfData);
     });
   });
+}
+
+function initBubbleXAxisToggles() {
+  const wire = (containerId, apply) => {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.querySelectorAll(".xaxis-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (btn.classList.contains("active")) return;
+        container.querySelectorAll(".xaxis-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        apply(btn.dataset.xaxis);
+      });
+    });
+  };
+  wire("theme-bubble-xaxis-toggle", tf => { _themeBubbleXAxis = tf; renderEtfThemes(_etfData); });
+  wire("ind-bubble-xaxis-toggle",   tf => { _indBubbleXAxis = tf; if (_lastIndustries) renderIndustryBubble(_lastIndustries); });
 }
 
 function initEtfSortHeaders() {
@@ -3193,6 +3217,7 @@ initViewToggle();
 initEtfViewToggle();
 initEtfSortHeaders();
 initThemeVizToggle();
+initBubbleXAxisToggles();
 initTop20Buttons();
 
 // --- Load data ---

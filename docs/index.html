@@ -130,6 +130,11 @@
         <h2 data-i18n="indBubbleTitle">&#128309; Industry Bubble Chart</h2>
         <span class="section-hint" data-hint-key="hintIndBubble">i</span>
       </div>
+      <div class="xaxis-toggle" id="ind-bubble-xaxis-toggle">
+        <span class="xaxis-toggle-label" data-i18n="xAxisLabel">X-Achse:</span>
+        <button class="xaxis-btn active" data-xaxis="3M">3M</button>
+        <button class="xaxis-btn" data-xaxis="1W">1W</button>
+      </div>
       <div id="ind-bubble-view"></div>
     </section>
 
@@ -173,6 +178,11 @@
           <button id="theme-top20-btn" class="top20-btn" title="Top 20% der aktuellen Sortierung markieren (zum Kopieren)">★ Top 20%</button>
           <button id="theme-top20i-btn" class="top20-btn" title="Schnittmenge der Top 20% nach 1W und 1M (nur die stärksten)">★ 1W∩1M</button>
           <button id="theme-top20i2-btn" class="top20-btn" title="Schnittmenge der Top 20% nach 1M und 3M (nur die stärksten)">★ 1M∩3M</button>
+        </div>
+        <div class="xaxis-toggle hidden" id="theme-bubble-xaxis-toggle">
+          <span class="xaxis-toggle-label" data-i18n="xAxisLabel">X-Achse:</span>
+          <button class="xaxis-btn active" data-xaxis="3M">3M</button>
+          <button class="xaxis-btn" data-xaxis="1W">1W</button>
         </div>
         <div id="etf-bubble-view" class="hidden"></div>
         <div id="etf-matrix-view" class="hidden"></div>
