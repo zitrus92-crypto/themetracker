@@ -1976,14 +1976,6 @@ function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M", legendHtml = 
   const medX = toX(med3M).toFixed(1);
   const medY = toY(med1M).toFixed(1);
 
-  const qLabels = [
-    { x: PAD.left + 4,      y: PAD.top + 14,        text: "🚀 First Flag",  fill: "#4ade80" },
-    { x: W - PAD.right - 4, y: PAD.top + 14,        text: "Extended ⚠️",    fill: "#f87171", anchor: "end" },
-    { x: PAD.left + 4,      y: H - PAD.bottom - 6,  text: "💀 Dead",        fill: "#6b7280" },
-    { x: W - PAD.right - 4, y: H - PAD.bottom - 6,  text: "🔻 Fading",      fill: "#f87171", anchor: "end" },
-  ].map(q => `<text x="${q.x}" y="${q.y}" font-size="10" fill="${q.fill}"
-    text-anchor="${q.anchor || "start"}" style="pointer-events:none">${q.text}</text>`).join("");
-
   // Axis tick lines + labels — tick count scales with plot size
   function axisTicks(axis) {
     const isX = axis === "x";
@@ -2029,7 +2021,6 @@ function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M", legendHtml = 
           font-size="11" fill="#9ca3af">${xTf} Performance →</text>
         <text x="12" y="${PAD.top + plotH / 2}" text-anchor="middle" font-size="11"
           fill="#9ca3af" transform="rotate(-90,12,${PAD.top + plotH / 2})">1M Performance ↑</text>
-        ${qLabels}
         ${circles}
         ${labels}
       </svg>
