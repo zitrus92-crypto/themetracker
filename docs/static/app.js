@@ -133,9 +133,10 @@ const I18N = {
     // ── Tickers (Bubble-Chart Einzelaktien) ────────────────────────────────
     topTickers:    "🎯 Tickers",
     tickersTitle:  "🎯 Tickers Bubble Chart",
-    hintTickers:   "Universum: Ticker aus den Industries UND Themes, die aktuell in der Top-20-%-Schnittmenge nach 1W UND 1M liegen (★ 1W∩1M).\nGefiltert: Market Cap > 1 Mrd. $ und ATR% (20 Tage) > 4 % — beides vollautomatisch, keine manuelle Liste.\nX-Achse: 3M- oder 1W-Performance, Y-Achse: 1M-Performance.\nGröße = Market Cap (log-skaliert). Farbe = Accel (Rang3M−Rang1M unter den gefilterten Tickern): grün = beschleunigt, grau = neutral, rot = fällt ab.\nRechnet einmal pro Handelstag nach US-Close (braucht settled Tageskerzen, wie der Experimental-Tab). Klick auf Bubble öffnet die Finviz-Aktienseite.",
+    hintTickers:   "Universum: Ticker aus den Industries UND Themes, die aktuell in der Top-20-%-Schnittmenge nach 1W UND 1M liegen (★ 1W∩1M).\nGefiltert: Market Cap > 1 Mrd. $ und ATR% (20 Tage) > 4 % — beides vollautomatisch, keine manuelle Liste.\nX-Achse: 3M- oder 1W-Performance, Y-Achse: 1M-Performance.\nGröße = Market Cap (log-skaliert). Farbe = Accel (Rang3M−Rang1M unter den gefilterten Tickern): grün = beschleunigt, grau = neutral, rot = fällt ab.\n„Not Extended“-Toggle: blendet Ticker aus, die weit über ihrem SMA50 laufen (Jeff-Sun-Konvention, siehe eigener Tooltip).\nRechnet einmal pro Handelstag nach US-Close (braucht settled Tageskerzen, wie der Experimental-Tab). Klick auf Bubble öffnet die Finviz-Aktienseite.",
     tickersNoData: "Noch keine tickers.json — die Datei entsteht beim nächsten Post-Close-Lauf.",
     tickersMeta:   (n, cap, atr, atrDays, date) => `${n} Ticker · Market Cap > $${cap} Mrd. · ATR% (${atrDays}T) > ${atr}% · Stand: ${date}`,
+    tickersNotExtTitle: (x) => `Blendet Ticker aus, die mehr als ${x} ATR(20) über ihrem SMA50 liegen — Extension-Konvention (u.a. Jeff Sun): weit über der Norm entfernte Kurse = schlechtes Chance/Risiko für einen neuen Einstieg.\nFormel: (Close − SMA50) ÷ ATR(20). Schwelle ist ein UNVALIDIERTER Default.`,
 
     // ── Experimental (Stufe 0 + Stufe 1) ──────────────────────────────────
     topExperimental: "🧪 Experimental",
@@ -376,9 +377,10 @@ const I18N = {
     // ── Tickers (single-stock bubble chart) ────────────────────────────────
     topTickers:    "🎯 Tickers",
     tickersTitle:  "🎯 Tickers Bubble Chart",
-    hintTickers:   "Universe: tickers from the industries AND themes currently in the top-20% intersection by 1W AND 1M (★ 1W∩1M).\nFiltered: Market Cap > $1B and ATR% (20 days) > 4% — both fully automatic, no manual list.\nX-axis: 3M or 1W performance, Y-axis: 1M performance.\nSize = Market Cap (log-scaled). Color = Accel (Rank3M−Rank1M among the filtered tickers): green = accelerating, gray = neutral, red = fading.\nRuns once per trading day after US close (needs settled daily candles, like the Experimental tab). Click a bubble to open the Finviz stock page.",
+    hintTickers:   "Universe: tickers from the industries AND themes currently in the top-20% intersection by 1W AND 1M (★ 1W∩1M).\nFiltered: Market Cap > $1B and ATR% (20 days) > 4% — both fully automatic, no manual list.\nX-axis: 3M or 1W performance, Y-axis: 1M performance.\nSize = Market Cap (log-scaled). Color = Accel (Rank3M−Rank1M among the filtered tickers): green = accelerating, gray = neutral, red = fading.\n\"Not Extended\" toggle: hides tickers running far above their SMA50 (Jeff Sun convention, see its own tooltip).\nRuns once per trading day after US close (needs settled daily candles, like the Experimental tab). Click a bubble to open the Finviz stock page.",
     tickersNoData: "No tickers.json yet — the file appears after the next post-close run.",
     tickersMeta:   (n, cap, atr, atrDays, date) => `${n} tickers · Market Cap > $${cap}B · ATR% (${atrDays}D) > ${atr}% · as of: ${date}`,
+    tickersNotExtTitle: (x) => `Hides tickers more than ${x} ATR(20) above their SMA50 — extension convention (a.o. Jeff Sun): stocks running far from the norm make for a poor risk/reward on a new entry.\nFormula: (Close − SMA50) ÷ ATR(20). The threshold is an UNVALIDATED default.`,
 
     // ── Experimental (stage 0 + stage 1) ──────────────────────────────────
     topExperimental: "🧪 Experimental",
@@ -535,6 +537,7 @@ function applyTranslations() {
   ["ind-top20i2-btn", "theme-top20i2-btn"].forEach(id => {
     const b = document.getElementById(id); if (b) b.title = t("top20Intersect2Title");
   });
+  { const b = document.getElementById("tickers-notext-toggle"); if (b) b.title = t("tickersNotExtTitle", tickersExtAtrMax()); }
   document.documentElement.lang = _lang;
   document.getElementById("lang-btn").textContent = _lang === "de" ? "EN" : "DE";
   initSectionHints();
@@ -952,6 +955,18 @@ function initInstToggle() {
   });
 }
 
+// Optionaler UI-Filter im Tickers-Tab: blendet Ticker aus, die weiter als
+// EXT_ATR_MAX ATR-Einheiten über ihrem SMA50 laufen (siehe ticker_metrics.py).
+function initTickersNotExtendedToggle() {
+  const btn = document.getElementById("tickers-notext-toggle");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    _tickersNotExtended = !_tickersNotExtended;
+    btn.classList.toggle("active", _tickersNotExtended);
+    renderTickersTab();
+  });
+}
+
 function initSortHeaders() {
   document.querySelectorAll("#heatmap-table thead th[data-col]").forEach(th => {
     th.style.cursor = "pointer";
@@ -1341,6 +1356,7 @@ let _themeBubbleXAxis   = _bubbleXAxisDefault; // "3M" | "1W" — X-Achse des Th
 let _indBubbleXAxis     = _bubbleXAxisDefault; // "3M" | "1W" — X-Achse des Industry-Bubble-Charts
 let _tickersBubbleXAxis = _bubbleXAxisDefault; // "3M" | "1W" — X-Achse des Tickers-Bubble-Charts
 let _tickersData        = null; // docs/tickers.json (einmal pro Handelstag, wie setups.json)
+let _tickersNotExtended = false; // optionaler UI-Filter: nur Ticker <= EXT_ATR_MAX ATR-Einheiten über SMA50
 
 // Theme badge colours for all 40 Finviz themes
 const THEME_COLORS = {
@@ -2052,6 +2068,20 @@ function renderIndustryBubble(industries) {
   renderBubbleSvg(container, pts, "Neutral / Konsolidierung", xTf);
 }
 
+// Schwellwert für den "Not Extended"-Toggle: aus tickers.json (config.EXT_ATR_MAX),
+// mit Fallback auf den Backend-Default, solange die Datei noch nicht geladen ist.
+function tickersExtAtrMax() {
+  return _tickersData?.config?.EXT_ATR_MAX ?? 7;
+}
+
+// Basisreihen des Tickers-Bubble-Charts, inkl. optionalem "Not Extended"-Filter.
+function tickersFilteredRows() {
+  const rows = _tickersData?.rows || [];
+  if (!_tickersNotExtended) return rows;
+  const maxAtr = tickersExtAtrMax();
+  return rows.filter(r => r.ext_atr != null && r.ext_atr <= maxAtr);
+}
+
 // ── Tickers Bubble Chart (Einzelaktien aus den 1W∩1M-Top-Industries/-Themes) ──
 // Datengrundlage: docs/tickers.json (ticker_metrics.py, einmal pro Handelstag,
 // wie setups.json). Size = Market Cap (log-skaliert, größer = größere Bubble).
@@ -2061,7 +2091,7 @@ function renderTickersBubble() {
   const container = document.getElementById("tickers-bubble-view");
   if (!container || !_tickersData) return;
   const xTf = _tickersBubbleXAxis;
-  const rows = (_tickersData.rows || [])
+  const rows = tickersFilteredRows()
     .filter(r => r.perfs?.[xTf] != null && r.perfs?.["1M"] != null && r.market_cap);
   const accel = computeAccel(rows.map(r => [r.t, r]));
 
@@ -2071,13 +2101,14 @@ function renderTickersBubble() {
     const pX = r.perfs[xTf] > 0 ? "+" : "";
     const p1 = r.perfs["1M"] > 0 ? "+" : "";
     const capB = (r.market_cap / 1e9).toFixed(1);
+    const extTxt = r.ext_atr != null ? `${r.ext_atr > 0 ? "+" : ""}${r.ext_atr} ATR` : "—";
     const groupNames = (r.groups || []).map(g => g.name).join(", ") || "—";
     return {
       x3m: r.perfs[xTf], y1m: r.perfs["1M"],
       score: -Math.log10(Math.max(r.market_cap, 1)), // negativ: größere Cap -> kleinerer Score -> größere Bubble
       accel: a,
       label: r.t,
-      tip: `${r.t}\n${xTf}: ${pX}${r.perfs[xTf]?.toFixed(1)}%  1M: ${p1}${r.perfs["1M"]?.toFixed(1)}%\nAccel: ${accelSign}${a}  |  Market Cap: $${capB} Mrd.  |  ATR%: ${r.atr_pct}%\n${groupNames}`,
+      tip: `${r.t}\n${xTf}: ${pX}${r.perfs[xTf]?.toFixed(1)}%  1M: ${p1}${r.perfs["1M"]?.toFixed(1)}%\nAccel: ${accelSign}${a}  |  Market Cap: $${capB} Mrd.  |  ATR%: ${r.atr_pct}%  |  Extension (SMA50): ${extTxt}\n${groupNames}`,
       url: finvizQuoteUrl(r.t),
     };
   });
@@ -2086,6 +2117,8 @@ function renderTickersBubble() {
 
 function renderTickersTab() {
   const meta = document.getElementById("tickers-meta");
+  const notExtBtn = document.getElementById("tickers-notext-toggle");
+  if (notExtBtn) notExtBtn.title = t("tickersNotExtTitle", tickersExtAtrMax());
   if (!meta) return;
   if (!_tickersData || !_tickersData.rows) {
     meta.textContent = t("tickersNoData");
@@ -2095,8 +2128,10 @@ function renderTickersTab() {
   }
   const cfg = _tickersData.config || {};
   const cap = Math.round((cfg.MIN_MARKET_CAP ?? 1_000_000_000) / 1e9);
-  meta.textContent = t("tickersMeta",
-    _tickersData.rows.length, cap, cfg.MIN_ATR_PCT ?? 4, cfg.ATR_WINDOW ?? 20, _tickersData.date);
+  const total = _tickersData.rows.length;
+  const shown = _tickersNotExtended ? tickersFilteredRows().length : total;
+  const n = _tickersNotExtended ? `${shown}/${total}` : `${total}`;
+  meta.textContent = t("tickersMeta", n, cap, cfg.MIN_ATR_PCT ?? 4, cfg.ATR_WINDOW ?? 20, _tickersData.date);
   renderTickersBubble();
 }
 
@@ -3335,6 +3370,7 @@ function renderSituational() {
 initTabs();
 initSortHeaders();
 initInstToggle();
+initTickersNotExtendedToggle();
 initSectionHints();
 initPeriodSelector();
 initViewToggle();

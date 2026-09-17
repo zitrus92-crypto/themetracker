@@ -15,6 +15,10 @@ Mittel der taeglichen Kursbewegung; ATR% (High-Low)/Close ueber N Tage misst
 dieselbe Grundfrage ("genug Bewegungsbreite?") und ist bereits in setups.py
 validiert im Einsatz - deshalb hier wiederverwendet statt zusaetzlich neu
 implementiert.
+
+Zusaetzlich liefert jeder Ticker "ext_atr" - die Extension vom SMA50 in
+ATR-Einheiten, (Close - SMA50) / ATR(20). Kein harter Server-Filter, sondern
+Grundlage fuer den optionalen "Not Extended"-Toggle im Frontend (app.js).
 """
 import math
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -29,12 +33,21 @@ TICKER_CONFIG = {
     "MAX_TICKERS": 1500,     # Reissleine, kein Filter - greift im Normalfall nicht
     "CHUNK": 150,            # Ticker pro yfinance-Bulk-Request (siehe setups.fetch_bars)
     "PERIOD": "6mo",
-    "MIN_BARS": 30,
+    "MIN_BARS": 50,          # >= SMA_WINDOW, sonst bleibt ext_atr fuer diese Ticker None
 
     # -- Filter ------------------------------------------------------------
     "MIN_MARKET_CAP": 1_000_000_000,   # $ - UNVALIDIERT
     "ATR_WINDOW": 20,                  # Tage
     "MIN_ATR_PCT": 4.0,                # % - UNVALIDIERT
+
+    # -- "Not Extended" (optionaler UI-Filter, siehe app.js) ------------------
+    # Extension vom SMA50 in ATR-Einheiten: (Close - SMA50) / ATR(ATR_WINDOW).
+    # Momentum-Konvention (u.a. Jeff Sun): weit über der Norm entfernte Kurse
+    # gelten als "extended" - schlechtes Chance/Risiko fuer einen neuen Einstieg.
+    # Wird IMMER mitgeliefert (ext_atr je Ticker), gefiltert wird nur optional
+    # im Frontend - EXT_ATR_MAX ist hier nur der mitgelieferte Default-Schwellwert.
+    "SMA_WINDOW": 50,
+    "EXT_ATR_MAX": 7.0,                 # ATR-Einheiten - UNVALIDIERT
 
     # -- Market Cap ----------------------------------------------------------
     "CAP_WORKERS": 8,
@@ -140,6 +153,23 @@ def _atr_pct(highs: list, lows: list, closes: list, window: int):
     return round(atr / close * 100, 2) if (atr and close) else None
 
 
+def _ext_atr(highs: list, lows: list, closes: list, sma_window: int, atr_window: int):
+    """Extension vom SMA(sma_window) in ATR(atr_window)-Einheiten: (Close - SMA) / ATR.
+
+    Positiv = Kurs liegt ueber dem SMA (Aufwaertsbewegung), je hoeher desto
+    "extended". Negativ = Kurs liegt darunter. None, wenn zu wenig Historie
+    fuer SMA ODER ATR vorliegt.
+    """
+    if len(closes) < sma_window:
+        return None
+    sma = _mean(closes[-sma_window:])
+    trs = _true_ranges(highs, lows, closes)
+    atr = _mean(trs[-atr_window:]) if len(trs) >= atr_window else None
+    if not sma or not atr:
+        return None
+    return round((closes[-1] - sma) / atr, 2)
+
+
 def build_ticker_metrics(industries: dict, themes: dict, cfg: dict = TICKER_CONFIG) -> dict:
     """Kompletter Lauf -> Payload fuer docs/tickers.json."""
     tickers, groups, universe_meta = build_universe(industries, themes, cfg)
@@ -169,11 +199,13 @@ def build_ticker_metrics(industries: dict, themes: dict, cfg: dict = TICKER_CONF
         }
         if perfs["1W"] is None or perfs["1M"] is None:
             continue
+        ext_atr = _ext_atr(b["high"], b["low"], b["close"], cfg["SMA_WINDOW"], cfg["ATR_WINDOW"])
         rows.append({
             "t":          tk,
             "perfs":      perfs,
             "market_cap": round(cap),
             "atr_pct":    atr_pct,
+            "ext_atr":    ext_atr,
             "groups":     groups.get(tk, []),
         })
 
