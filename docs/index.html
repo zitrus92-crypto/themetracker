@@ -21,6 +21,7 @@
   <nav class="top-nav">
     <button class="top-btn" data-top="industry" data-i18n="topIndustry">Industry</button>
     <button class="top-btn active" data-top="themes" data-i18n="tabEtfs">&#128200; Themes</button>
+    <button class="top-btn" data-top="tickers" data-i18n="topTickers">&#127919; Tickers</button>
     <button class="top-btn" data-top="experimental" data-i18n="topExperimental">&#129514; Experimental</button>
   </nav>
   <nav class="sub-nav hidden" id="industry-subnav">
@@ -252,6 +253,21 @@
           </table>
         </div>
       </div>
+    </section>
+
+    <!-- Tickers tab: Einzelaktien-Bubble-Chart aus den 1W∩1M-Top-Industries/-Themes -->
+    <section class="section-tickers tab-panel hidden" data-panel="tickers">
+      <div class="heading-group">
+        <h2 data-i18n="tickersTitle">&#127919; Tickers Bubble Chart</h2>
+        <span class="section-hint" data-hint-key="hintTickers">i</span>
+      </div>
+      <div class="xaxis-toggle" id="tickers-bubble-xaxis-toggle">
+        <span class="xaxis-toggle-label" data-i18n="xAxisLabel">X-Achse:</span>
+        <button class="xaxis-btn active" data-xaxis="3M">3M</button>
+        <button class="xaxis-btn" data-xaxis="1W">1W</button>
+      </div>
+      <p class="picks-subtitle" id="tickers-meta"></p>
+      <div id="tickers-bubble-view"></div>
     </section>
 
     <!-- First Flag tab (SPEC-first-flag-base-breakout §4) -->

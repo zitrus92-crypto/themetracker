@@ -130,6 +130,13 @@ const I18N = {
     snapNotSettled: "vorläufig (Intraday-Lauf)",
     nv:            "n/v",
 
+    // ── Tickers (Bubble-Chart Einzelaktien) ────────────────────────────────
+    topTickers:    "🎯 Tickers",
+    tickersTitle:  "🎯 Tickers Bubble Chart",
+    hintTickers:   "Universum: Ticker aus den Industries UND Themes, die aktuell in der Top-20-%-Schnittmenge nach 1W UND 1M liegen (★ 1W∩1M).\nGefiltert: Market Cap > 1 Mrd. $ und ATR% (20 Tage) > 4 % — beides vollautomatisch, keine manuelle Liste.\nX-Achse: 3M- oder 1W-Performance, Y-Achse: 1M-Performance.\nGröße = Market Cap (log-skaliert). Farbe = Accel (Rang3M−Rang1M unter den gefilterten Tickern): grün = beschleunigt, grau = neutral, rot = fällt ab.\nRechnet einmal pro Handelstag nach US-Close (braucht settled Tageskerzen, wie der Experimental-Tab). Klick auf Bubble öffnet die Finviz-Aktienseite.",
+    tickersNoData: "Noch keine tickers.json — die Datei entsteht beim nächsten Post-Close-Lauf.",
+    tickersMeta:   (n, cap, atr, atrDays, date) => `${n} Ticker · Market Cap > $${cap} Mrd. · ATR% (${atrDays}T) > ${atr}% · Stand: ${date}`,
+
     // ── Experimental (Stufe 0 + Stufe 1) ──────────────────────────────────
     topExperimental: "🧪 Experimental",
     expTitle:      "🧪 Experimental",
@@ -365,6 +372,13 @@ const I18N = {
     snapLast:      (d, n, g) => `Last snapshot: ${d} · ${n} rows · ${g} gap${g === 1 ? "" : "s"} (30 d)`,
     snapNotSettled: "provisional (intraday run)",
     nv:            "n/a",
+
+    // ── Tickers (single-stock bubble chart) ────────────────────────────────
+    topTickers:    "🎯 Tickers",
+    tickersTitle:  "🎯 Tickers Bubble Chart",
+    hintTickers:   "Universe: tickers from the industries AND themes currently in the top-20% intersection by 1W AND 1M (★ 1W∩1M).\nFiltered: Market Cap > $1B and ATR% (20 days) > 4% — both fully automatic, no manual list.\nX-axis: 3M or 1W performance, Y-axis: 1M performance.\nSize = Market Cap (log-scaled). Color = Accel (Rank3M−Rank1M among the filtered tickers): green = accelerating, gray = neutral, red = fading.\nRuns once per trading day after US close (needs settled daily candles, like the Experimental tab). Click a bubble to open the Finviz stock page.",
+    tickersNoData: "No tickers.json yet — the file appears after the next post-close run.",
+    tickersMeta:   (n, cap, atr, atrDays, date) => `${n} tickers · Market Cap > $${cap}B · ATR% (${atrDays}D) > ${atr}% · as of: ${date}`,
 
     // ── Experimental (stage 0 + stage 1) ──────────────────────────────────
     topExperimental: "🧪 Experimental",
@@ -1272,6 +1286,11 @@ function initTabs() {
         themesSubNav.classList.add("hidden");
         showPanel("experimental");
         renderExperimental();
+      } else if (btn.dataset.top === "tickers") {
+        subNav.classList.add("hidden");
+        themesSubNav.classList.add("hidden");
+        showPanel("tickers");
+        renderTickersTab();
       } else if (btn.dataset.top === "industry") {
         subNav.classList.remove("hidden");
         themesSubNav.classList.add("hidden");
@@ -1318,8 +1337,10 @@ let _themeVizView  = "bubble"; // "table" | "bubble" | "matrix"
 // temporärer Blick, kein neues Speichern.
 let _bubbleXAxisDefault = prefGet("bubbleXAxisDefault") || "3M";
 if (_bubbleXAxisDefault !== "3M" && _bubbleXAxisDefault !== "1W") _bubbleXAxisDefault = "3M";
-let _themeBubbleXAxis = _bubbleXAxisDefault; // "3M" | "1W" — X-Achse des Themes-Bubble-Charts
-let _indBubbleXAxis   = _bubbleXAxisDefault; // "3M" | "1W" — X-Achse des Industry-Bubble-Charts
+let _themeBubbleXAxis   = _bubbleXAxisDefault; // "3M" | "1W" — X-Achse des Themes-Bubble-Charts
+let _indBubbleXAxis     = _bubbleXAxisDefault; // "3M" | "1W" — X-Achse des Industry-Bubble-Charts
+let _tickersBubbleXAxis = _bubbleXAxisDefault; // "3M" | "1W" — X-Achse des Tickers-Bubble-Charts
+let _tickersData        = null; // docs/tickers.json (einmal pro Handelstag, wie setups.json)
 
 // Theme badge colours for all 40 Finviz themes
 const THEME_COLORS = {
@@ -2031,6 +2052,54 @@ function renderIndustryBubble(industries) {
   renderBubbleSvg(container, pts, "Neutral / Konsolidierung", xTf);
 }
 
+// ── Tickers Bubble Chart (Einzelaktien aus den 1W∩1M-Top-Industries/-Themes) ──
+// Datengrundlage: docs/tickers.json (ticker_metrics.py, einmal pro Handelstag,
+// wie setups.json). Size = Market Cap (log-skaliert, größer = größere Bubble).
+// Color = Accel (rank3M - rank1M unter den gefilterten Tickern) via die
+// generische computeAccel() — dieselbe Formel wie bei Themes/Sub-Themes.
+function renderTickersBubble() {
+  const container = document.getElementById("tickers-bubble-view");
+  if (!container || !_tickersData) return;
+  const xTf = _tickersBubbleXAxis;
+  const rows = (_tickersData.rows || [])
+    .filter(r => r.perfs?.[xTf] != null && r.perfs?.["1M"] != null && r.market_cap);
+  const accel = computeAccel(rows.map(r => [r.t, r]));
+
+  const pts = rows.map(r => {
+    const a = accel[r.t] ?? 0;
+    const accelSign = a > 0 ? "+" : "";
+    const pX = r.perfs[xTf] > 0 ? "+" : "";
+    const p1 = r.perfs["1M"] > 0 ? "+" : "";
+    const capB = (r.market_cap / 1e9).toFixed(1);
+    const groupNames = (r.groups || []).map(g => g.name).join(", ") || "—";
+    return {
+      x3m: r.perfs[xTf], y1m: r.perfs["1M"],
+      score: -Math.log10(Math.max(r.market_cap, 1)), // negativ: größere Cap -> kleinerer Score -> größere Bubble
+      accel: a,
+      label: r.t,
+      tip: `${r.t}\n${xTf}: ${pX}${r.perfs[xTf]?.toFixed(1)}%  1M: ${p1}${r.perfs["1M"]?.toFixed(1)}%\nAccel: ${accelSign}${a}  |  Market Cap: $${capB} Mrd.  |  ATR%: ${r.atr_pct}%\n${groupNames}`,
+      url: finvizQuoteUrl(r.t),
+    };
+  });
+  renderBubbleSvg(container, pts, "Neutral", xTf);
+}
+
+function renderTickersTab() {
+  const meta = document.getElementById("tickers-meta");
+  if (!meta) return;
+  if (!_tickersData || !_tickersData.rows) {
+    meta.textContent = t("tickersNoData");
+    const container = document.getElementById("tickers-bubble-view");
+    if (container) container.innerHTML = "";
+    return;
+  }
+  const cfg = _tickersData.config || {};
+  const cap = Math.round((cfg.MIN_MARKET_CAP ?? 1_000_000_000) / 1e9);
+  meta.textContent = t("tickersMeta",
+    _tickersData.rows.length, cap, cfg.MIN_ATR_PCT ?? 4, cfg.ATR_WINDOW ?? 20, _tickersData.date);
+  renderTickersBubble();
+}
+
 // ── RRG (Relative Rotation Graph) ───────────────────────────────────────────
 // Vierter Viz-View der Themes. Statt absoluter Performance zwei relative Achsen:
 //   x  RS-Ratio    = 3M-Perf minus Benchmark
@@ -2396,6 +2465,8 @@ window.addEventListener("resize", () => {
       renderRrgChart("theme");
     const indRrg = document.getElementById("ind-rrg-view");
     if (indRrg && indRrg.clientWidth > 0 && _lastIndustries) renderRrgChart("industry");
+    const tickers = document.getElementById("tickers-bubble-view");
+    if (tickers && tickers.clientWidth > 0 && _tickersData) renderTickersBubble();
   }, 150);
 });
 
@@ -2453,6 +2524,7 @@ function initBubbleXAxisToggles() {
   };
   wire("theme-bubble-xaxis-toggle", _themeBubbleXAxis, tf => { _themeBubbleXAxis = tf; renderEtfThemes(_etfData); });
   wire("ind-bubble-xaxis-toggle",   _indBubbleXAxis,   tf => { _indBubbleXAxis = tf; if (_lastIndustries) renderIndustryBubble(_lastIndustries); });
+  wire("tickers-bubble-xaxis-toggle", _tickersBubbleXAxis, tf => { _tickersBubbleXAxis = tf; renderTickersBubble(); });
 }
 
 function initEtfSortHeaders() {
@@ -3287,12 +3359,13 @@ async function loadData() {
   const bust = `?t=${Date.now()}`;
 
   try {
-    const [dataRes, histRes, etfRes, regimeRes, setupsRes] = await Promise.all([
-      fetch("data.json" + bust),        // → dataRes   (index 0)
-      fetch("history.json" + bust),     // → histRes   (index 1)
-      fetch("etf_data.json" + bust),    // → etfRes    (index 2)
-      fetch("regime.json" + bust),      // → regimeRes (index 3)
-      fetch("setups.json" + bust),      // → setupsRes (index 4)
+    const [dataRes, histRes, etfRes, regimeRes, setupsRes, tickersRes] = await Promise.all([
+      fetch("data.json" + bust),        // → dataRes    (index 0)
+      fetch("history.json" + bust),     // → histRes    (index 1)
+      fetch("etf_data.json" + bust),    // → etfRes     (index 2)
+      fetch("regime.json" + bust),      // → regimeRes  (index 3)
+      fetch("setups.json" + bust),      // → setupsRes  (index 4)
+      fetch("tickers.json" + bust),     // → tickersRes (index 5)
     ]);
 
     if (!dataRes.ok) throw new Error(`data.json: HTTP ${dataRes.status}`);
@@ -3326,6 +3399,13 @@ async function loadData() {
       // der Experimental-Tab zeigt dann den Hinweis statt einer Tabelle.
       _setupsData = await setupsRes.json();
       renderExperimental();
+    }
+
+    if (tickersRes.ok) {
+      // tickers.json existiert erst nach dem ersten Post-Close-Lauf — 404 ist ok,
+      // der Tickers-Tab zeigt dann den Hinweis statt eines Bubble-Charts.
+      _tickersData = await tickersRes.json();
+      renderTickersTab();
     }
 
     if (regimeRes.ok) {

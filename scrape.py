@@ -7,6 +7,7 @@ Fetches Finviz industry data AND Finviz thematic map data in parallel, writes:
   docs/history.json     — compact daily history (Movers tab)
   docs/regime.json      — daily Regime-Gate states (header badge)
   docs/setups.json      — Einzelaktien-Setups der stärksten Gruppen (Experimental-Tab)
+  docs/tickers.json     — Einzelaktien-Bubble-Chart der stärksten Gruppen (Tickers-Tab)
 """
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -15,6 +16,7 @@ from datetime import date, datetime, timedelta, timezone
 
 import scraper
 import setups
+import ticker_metrics
 from market_calendar import is_trading_day
 from scores import compute_scores
 from snapshots import write_snapshot
@@ -94,6 +96,18 @@ def _load_existing_setups() -> dict | None:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception as e:
         print(f"  WARNING: setups.json nicht lesbar ({e}) — wird neu gerechnet.")
+        return None
+
+
+def _load_existing_tickers() -> dict | None:
+    """Letzten tickers.json-Stand lesen; unlesbar = wie nicht vorhanden."""
+    path = DOCS / "tickers.json"
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"  WARNING: tickers.json nicht lesbar ({e}) — wird neu gerechnet.")
         return None
 
 
@@ -260,6 +274,30 @@ def main():
                   f"WATCH {c['WATCH']} · EXTENDED {c['EXTENDED']})")
         except Exception as e:
             print(f"  WARNING: setups.json nicht aktualisiert ({e}) — alte Datei bleibt.")
+
+    # ── Write tickers.json (Tickers-Tab) ──────────────────────────────────────
+    # Universum sind die staerksten Industries UND Themes (1W∩1M-Top-20%),
+    # deshalb erst hier. Gleiche Post-Close-Kadenz wie setups.json — ATR%
+    # braucht settled Tageskerzen. Eigener Idempotenz-Stand (tickers.json trägt
+    # sein eigenes Datum), damit ein Fehlschlag bei setups.json den Tickers-Tab
+    # nicht mit blockiert und umgekehrt.
+    due2, why2 = setups_due(
+        datetime.now(timezone.utc), today, trading_day, _load_existing_tickers()
+    )
+    if not (scored and etf_payload and etf_payload.get("themes")):
+        print("  SKIPPED tickers.json (Industry- oder Theme-Daten fehlen)")
+    elif not due2:
+        print(f"  SKIPPED tickers.json ({why2}) — letzter Stand bleibt liegen")
+    else:
+        try:
+            tickers_payload = ticker_metrics.build_ticker_metrics(scored, etf_payload["themes"])
+            (DOCS / "tickers.json").write_text(
+                json.dumps(tickers_payload, ensure_ascii=False, separators=(",", ":")),
+                encoding="utf-8",
+            )
+            print(f"  Saved tickers.json ({tickers_payload['count']} Ticker)")
+        except Exception as e:
+            print(f"  WARNING: tickers.json nicht aktualisiert ({e}) — alte Datei bleibt.")
 
     # ── Write regime.json ─────────────────────────────────────────────────────
     if not trading_day:
