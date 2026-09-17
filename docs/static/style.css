@@ -454,13 +454,14 @@ a.etf-theme-badge:hover { filter: brightness(1.25); }
 /* Gruppen-Hover/-Klick im Tickers-Bubble-Chart (wireBubbleGroupHighlight):
    dieselbe Mechanik wie der RRG-Hover unten (data-rrg/.rrg-hover), nur unter
    eigenem Namen — no-op auf Themes-/Industry-Bubble-Charts, die kein
-   data-group setzen. */
+   data-groups setzen. Legenden-Eintrag = eine Gruppe (data-group), Bubble/
+   Label tragen ALLE Gruppen eines Tickers (data-groups, "||"-getrennt). */
 .bubble-legend-item[data-group] { cursor: pointer; }
 .bubble-legend-item[data-group]:hover { color: var(--text); }
 .bubble-legend-item--active { color: var(--text); font-weight: 600; }
-.bubble-chart-wrap svg [data-group] { transition: opacity .12s ease; }
-.bubble-chart-wrap svg.bubble-hover [data-group] { opacity: 0.1; }
-.bubble-chart-wrap svg.bubble-hover [data-group].bubble-on { opacity: 1; }
+.bubble-chart-wrap svg [data-groups] { transition: opacity .12s ease; }
+.bubble-chart-wrap svg.bubble-hover [data-groups] { opacity: 0.1; }
+.bubble-chart-wrap svg.bubble-hover [data-groups].bubble-on { opacity: 1; }
 
 /* RRG-Hover: aktive Gruppe bleibt voll sichtbar, der Rest tritt zurück.
    An .rrg-view und nicht an eine ID gehängt — Themes und Industries teilen

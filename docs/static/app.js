@@ -1941,9 +1941,10 @@ function placeBubbleLabels(pts, bounds) {
       // data-rrg verbindet das Label mit Punkt und Tail desselben Themes
       // (nur im RRG gesetzt; die Bubble-Charts liefern keine rrgId).
       const rrgTag = p.rrgId === undefined ? "" : ` data-rrg="${p.rrgId}"`;
-      // data-group verbindet das Label mit Bubble und Legenden-Eintrag
-      // derselben Gruppe (nur im Tickers-Chart gesetzt, siehe wireBubbleGroupHighlight).
-      const groupTag = p.group === undefined ? "" : ` data-group="${esc(p.group)}"`;
+      // data-groups verbindet das Label mit Bubble und Legenden-Eintrag ALLER
+      // Gruppen, zu denen der Ticker gehört (nicht nur der primären/Farb-
+      // gebenden) — nur im Tickers-Chart gesetzt, siehe wireBubbleGroupHighlight.
+      const groupTag = p.groups === undefined ? "" : ` data-groups="${esc(p.groups.join("||"))}"`;
       out.push(`<text x="${c.x.toFixed(1)}" y="${c.y.toFixed(1)}" text-anchor="${c.anchor}"
         font-size="9" fill="${p.color}"${rrgTag}${groupTag} style="pointer-events:none">${p.label}</text>`);
       break;
@@ -1987,19 +1988,22 @@ function resolveBubbleCollisions(pts, bounds, iterations = 200) {
 
 // Legenden-Hover/-Klick für Bubble-Charts mit Gruppen-Einfärbung: Hover hebt
 // die Gruppe temporär hervor, Klick pinnt sie (bis erneuter Klick oder Klick
-// auf eine andere Gruppe). No-op, wenn der Chart kein data-group setzt
-// (Themes-/Industry-Bubble-Charts) — dieselbe Mechanik wie der RRG-Hover
-// (data-rrg/.rrg-hover), nur unter eigenem Klassennamen.
+// auf eine andere Gruppe). Ein Ticker kann in mehreren Gruppen stecken (Bubble
+// UND Label tragen data-groups = ALLE Gruppen, "||"-getrennt) — nur die
+// EINE farbgebende Gruppe würde sonst z.B. bei einem Ticker mit drei Themes
+// die anderen beiden unsichtbar für den Hover machen. No-op, wenn der Chart
+// kein data-groups setzt (Themes-/Industry-Bubble-Charts) — dieselbe Mechanik
+// wie der RRG-Hover (data-rrg/.rrg-hover), nur unter eigenem Klassennamen.
 function wireBubbleGroupHighlight(container) {
   const svg = container.querySelector("svg");
   if (!svg) return;
-  const marked = svg.querySelectorAll("[data-group]");
+  const marked = svg.querySelectorAll("[data-groups]");
   if (!marked.length) return;
   const legendItems = container.querySelectorAll(".bubble-legend-item[data-group]");
   let pinned = null;
   const setActive = (key) => {
     svg.classList.toggle("bubble-hover", key !== null);
-    marked.forEach(el => el.classList.toggle("bubble-on", el.dataset.group === key));
+    marked.forEach(el => el.classList.toggle("bubble-on", key !== null && el.dataset.groups.split("||").includes(key)));
     legendItems.forEach(el => el.classList.toggle("bubble-legend-item--active", el.dataset.group === key));
   };
   legendItems.forEach(el => {
@@ -2079,7 +2083,7 @@ function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M", legendHtml = 
   }
 
   const circles = pts.map(p => {
-    const groupTag = p.group === undefined ? "" : ` data-group="${esc(p.group)}"`;
+    const groupTag = p.groups === undefined ? "" : ` data-groups="${esc(p.groups.join("||"))}"`;
     const inner = `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${p.r.toFixed(1)}"
         fill="${p.color}" fill-opacity="0.72" stroke="${p.color}" stroke-width="0.8"${groupTag}><title>${p.tip}</title></circle>`;
     return p.url ? `<a href="${p.url}" target="_blank" rel="noopener">${inner}</a>` : inner;
@@ -2255,18 +2259,22 @@ function renderTickersBubble() {
   };
 
   const pts = rows.map(r => {
-    const primary = (r.groups && r.groups[0]) || null;
-    const entry = primary ? registerGroup(primary) : null;
+    const groups = r.groups || [];
+    // ALLE Gruppen registrieren (Legenden-Count = echte Mitgliederzahl, nicht
+    // nur "Ticker, deren erste Gruppe das ist") — nur die Bubble-Farbe bleibt
+    // bei der ersten/primären Gruppe, eine Bubble hat nur eine Füllfarbe.
+    const entries = groups.map(g => registerGroup(g));
+    const primaryColor = entries[0] ? entries[0].color : "#6b7280";
     const pX = r.perfs[xTf] > 0 ? "+" : "";
     const p1 = r.perfs["1M"] > 0 ? "+" : "";
     const capB = (r.market_cap / 1e9).toFixed(1);
     const extTxt = r.ext_atr != null ? `${r.ext_atr > 0 ? "+" : ""}${r.ext_atr} ATR` : "—";
-    const groupNames = (r.groups || []).map(g => g.name).join(", ") || "—";
+    const groupNames = groups.map(g => g.name).join(", ") || "—";
     return {
       x3m: r.perfs[xTf], y1m: r.perfs["1M"],
       score: -Math.log10(Math.max(r.market_cap, 1)), // negativ: größere Cap -> kleinerer Score -> größere Bubble
-      color: entry ? entry.color : "#6b7280",
-      group: entry ? entry.key : undefined, // treibt den Legenden-Hover/-Klick (wireBubbleGroupHighlight)
+      color: primaryColor,
+      groups: entries.map(e => e.key), // ALLE Gruppen des Tickers -> Legenden-Hover/-Klick (wireBubbleGroupHighlight)
       label: r.t,
       tip: `${r.t}\n${xTf}: ${pX}${r.perfs[xTf]?.toFixed(1)}%  1M: ${p1}${r.perfs["1M"]?.toFixed(1)}%\nMarket Cap: $${capB} Mrd.  |  ATR%: ${r.atr_pct}%  |  Extension (SMA50): ${extTxt}\nGruppen: ${groupNames}`,
       url: finvizQuoteUrl(r.t),
