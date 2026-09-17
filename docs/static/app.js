@@ -1486,6 +1486,18 @@ function computeAccel(entries) {
   return accel;
 }
 
+// Rang je Zeitfenster innerhalb einer Gruppe (Themes ODER Industries) — exakt
+// dieselbe Sortierung wie topIntersectionKeys() (Performance absteigend,
+// Rang 1 = stärkstes). Reine Datenfunktion, {name -> rank}.
+function rankMapFor(entries, tf) {
+  const ranks = {};
+  entries
+    .filter(([, row]) => row?.perfs?.[tf] != null)
+    .sort(([, a], [, b]) => b.perfs[tf] - a.perfs[tf])
+    .forEach(([name], i) => { ranks[name] = i + 1; });
+  return ranks;
+}
+
 // Render a 5-point sparkline SVG (YTD→6M→3M→1M→1W) colored by accel value.
 function renderSparkline(perfs, accel) {
   const TFS = ["YTD", "6M", "3M", "1M", "1W"];
@@ -2206,11 +2218,36 @@ function renderTickersBubble() {
   const xTf = _tickersBubbleXAxis;
   const rows = tickersVisibleRows();
 
-  const groupColors = new Map(); // "type|name" -> {key, name, type, color, count}
+  // Rang "1W∩1M" je Gruppe: das SCHWÄCHERE (höhere) der beiden Einzelränge,
+  // denn genau dieser Wert entscheidet, ob eine Gruppe überhaupt in die
+  // Top-20-%-Schnittmenge fällt (siehe topIntersectionKeys) — niedriger =
+  // tiefer/stabiler in der Schnittmenge, wie überall sonst Rang 1 = stärkstes.
+  // _lastIndustries/_etfData sind beim Rendern immer schon geladen (loadData()
+  // füllt sie vor dem tickers.json-Fetch), Fallback auf {} nur zur Sicherheit.
+  const rankMaps = {
+    industry: {
+      "1W": rankMapFor(Object.entries(_lastIndustries || {}), "1W"),
+      "1M": rankMapFor(Object.entries(_lastIndustries || {}), "1M"),
+    },
+    theme: {
+      "1W": rankMapFor(Object.entries(_etfData?.themes || {}), "1W"),
+      "1M": rankMapFor(Object.entries(_etfData?.themes || {}), "1M"),
+    },
+  };
+  const intersectionRank = (name, type) => {
+    const r1w = rankMaps[type]?.["1W"]?.[name];
+    const r1m = rankMaps[type]?.["1M"]?.[name];
+    return (r1w == null || r1m == null) ? Infinity : Math.max(r1w, r1m);
+  };
+
+  const groupColors = new Map(); // "type|name" -> {key, name, type, color, count, rank}
   const registerGroup = (g) => {
     const key = `${g.type}|${g.name}`;
     if (!groupColors.has(key)) {
-      groupColors.set(key, { key, name: g.name, type: g.type, color: groupColorFor(g.name, g.type), count: 0 });
+      groupColors.set(key, {
+        key, name: g.name, type: g.type, color: groupColorFor(g.name, g.type),
+        count: 0, rank: intersectionRank(g.name, g.type),
+      });
     }
     const entry = groupColors.get(key);
     entry.count++;
@@ -2236,10 +2273,12 @@ function renderTickersBubble() {
     };
   });
 
-  // Legende: eine Zeile je Gruppe (häufigste zuerst), plus Größen-Hinweis.
+  // Legende: eine Zeile je Gruppe, sortiert nach Rang "1W∩1M" (stärkste
+  // Gruppe der Schnittmenge zuerst — Rang 1 = stärkstes, wie überall sonst
+  // in der App), plus Größen-Hinweis.
   // data-group macht jede Zeile per Hover/Klick zum Filter (siehe wireBubbleGroupHighlight).
   const legendHtml = [...groupColors.values()]
-    .sort((a, b) => b.count - a.count)
+    .sort((a, b) => a.rank - b.rank)
     .map(g => `<span class="bubble-legend-item" data-group="${esc(g.key)}"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="${g.color}" fill-opacity="0.85"/></svg> ${esc(g.name)} (${g.count})</span>`)
     .join("")
     + `<span class="bubble-legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#9ca3af" fill-opacity="0.5"/></svg> Größe = Market Cap</span>`;
