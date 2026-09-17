@@ -1928,16 +1928,79 @@ function placeBubbleLabels(pts, bounds) {
       placed.push(box);
       // data-rrg verbindet das Label mit Punkt und Tail desselben Themes
       // (nur im RRG gesetzt; die Bubble-Charts liefern keine rrgId).
-      const tag = p.rrgId === undefined ? "" : ` data-rrg="${p.rrgId}"`;
+      const rrgTag = p.rrgId === undefined ? "" : ` data-rrg="${p.rrgId}"`;
+      // data-group verbindet das Label mit Bubble und Legenden-Eintrag
+      // derselben Gruppe (nur im Tickers-Chart gesetzt, siehe wireBubbleGroupHighlight).
+      const groupTag = p.group === undefined ? "" : ` data-group="${esc(p.group)}"`;
       out.push(`<text x="${c.x.toFixed(1)}" y="${c.y.toFixed(1)}" text-anchor="${c.anchor}"
-        font-size="9" fill="${p.color}"${tag} style="pointer-events:none">${p.label}</text>`);
+        font-size="9" fill="${p.color}"${rrgTag}${groupTag} style="pointer-events:none">${p.label}</text>`);
       break;
     }
   }
   return out.join("");
 }
 
-function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M", legendHtml = null) {
+// Leichte, iterative Kollisionsauflösung: schiebt sich überlappende Bubbles
+// paarweise minimal auseinander, bis keine mehr überlappen (oder das
+// Iterationslimit erreicht ist). Die Achsen-Position bleibt näherungsweise
+// erhalten — nur so viel Verschiebung wie nötig, um Überlappung aufzulösen,
+// nicht um die Punkte "hübsch" zu verteilen. Kappt am Plot-Rand, damit nichts
+// aus dem sichtbaren Bereich wandert.
+function resolveBubbleCollisions(pts, bounds, iterations = 200) {
+  const GAP = 1.5;
+  for (let iter = 0; iter < iterations; iter++) {
+    let moved = false;
+    for (let i = 0; i < pts.length; i++) {
+      for (let j = i + 1; j < pts.length; j++) {
+        const a = pts[i], b = pts[j];
+        let dx = b.x - a.x, dy = b.y - a.y;
+        let dist = Math.hypot(dx, dy);
+        const minDist = a.r + b.r + GAP;
+        if (dist >= minDist) continue;
+        moved = true;
+        if (dist < 0.01) { dx = 1; dy = 0; dist = 1; } // exakt übereinander -> künstlich trennen
+        const push = (minDist - dist) / 2;
+        const ux = dx / dist, uy = dy / dist;
+        a.x -= ux * push; a.y -= uy * push;
+        b.x += ux * push; b.y += uy * push;
+      }
+    }
+    for (const p of pts) {
+      p.x = Math.min(Math.max(p.x, bounds.x0 + p.r), Math.max(bounds.x1 - p.r, bounds.x0 + p.r));
+      p.y = Math.min(Math.max(p.y, bounds.y0 + p.r), Math.max(bounds.y1 - p.r, bounds.y0 + p.r));
+    }
+    if (!moved) break;
+  }
+}
+
+// Legenden-Hover/-Klick für Bubble-Charts mit Gruppen-Einfärbung: Hover hebt
+// die Gruppe temporär hervor, Klick pinnt sie (bis erneuter Klick oder Klick
+// auf eine andere Gruppe). No-op, wenn der Chart kein data-group setzt
+// (Themes-/Industry-Bubble-Charts) — dieselbe Mechanik wie der RRG-Hover
+// (data-rrg/.rrg-hover), nur unter eigenem Klassennamen.
+function wireBubbleGroupHighlight(container) {
+  const svg = container.querySelector("svg");
+  if (!svg) return;
+  const marked = svg.querySelectorAll("[data-group]");
+  if (!marked.length) return;
+  const legendItems = container.querySelectorAll(".bubble-legend-item[data-group]");
+  let pinned = null;
+  const setActive = (key) => {
+    svg.classList.toggle("bubble-hover", key !== null);
+    marked.forEach(el => el.classList.toggle("bubble-on", el.dataset.group === key));
+    legendItems.forEach(el => el.classList.toggle("bubble-legend-item--active", el.dataset.group === key));
+  };
+  legendItems.forEach(el => {
+    el.addEventListener("mouseenter", () => { if (pinned === null) setActive(el.dataset.group); });
+    el.addEventListener("mouseleave", () => { if (pinned === null) setActive(null); });
+    el.addEventListener("click", () => {
+      pinned = pinned === el.dataset.group ? null : el.dataset.group;
+      setActive(pinned);
+    });
+  });
+}
+
+function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M", legendHtml = null, opts = {}) {
   if (!pts.length) { container.innerHTML = '<p style="color:#6b7280;padding:16px">No data</p>'; return; }
 
   const xs = pts.map(p => p.x3m), ys = pts.map(p => p.y1m);
@@ -1960,9 +2023,11 @@ function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M", legendHtml = 
   const toX = v => PAD.left + ((v - lo3M) / (hi3M - lo3M)) * plotW;
   const toY = v => H - PAD.bottom - ((v - lo1M) / (hi1M - lo1M)) * plotH;
   // Size = strength (score, lower = stronger) — strongest themes stay biggest.
-  // Radius range scales gently with the plot area.
-  const rMax = Math.max(20, Math.min(30, Math.round(Math.sqrt(plotW * plotH) / 32)));
-  const rMin = Math.max(6, Math.round(rMax * 0.28));
+  // Radius range scales gently with the plot area. opts.sizeScale schrumpft
+  // beide Enden gleichermaßen (Tickers-Chart: viel mehr Punkte, kleiner lesbarer).
+  const sizeScale = opts.sizeScale ?? 1;
+  const rMax = Math.max(20, Math.min(30, Math.round(Math.sqrt(plotW * plotH) / 32))) * sizeScale;
+  const rMin = Math.max(6 * sizeScale, Math.round(rMax * 0.28));
   const toR = s => rMax - ((s - minScore) / scoreRange) * (rMax - rMin);
   const toColor = a => a >= 10 ? "#4ade80" : a <= -10 ? "#f87171" : a >= 5 ? "#86efac" : "#6b7280";
 
@@ -1972,6 +2037,13 @@ function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M", legendHtml = 
     p.x = toX(p.x3m); p.y = toY(p.y1m); p.r = toR(p.score);
     if (p.color === undefined) p.color = toColor(p.accel);
   });
+
+  // opts.declutter: überlappende Bubbles minimal auseinanderschieben (siehe
+  // resolveBubbleCollisions) — bewusst NUR wenn angefordert, damit Themes-
+  // und Industry-Bubble-Charts exakt ihre bisherigen, datentreuen Positionen behalten.
+  if (opts.declutter) {
+    resolveBubbleCollisions(pts, { x0: PAD.left, x1: W - PAD.right, y0: PAD.top, y1: H - PAD.bottom });
+  }
 
   const medX = toX(med3M).toFixed(1);
   const medY = toY(med1M).toFixed(1);
@@ -1995,8 +2067,9 @@ function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M", legendHtml = 
   }
 
   const circles = pts.map(p => {
+    const groupTag = p.group === undefined ? "" : ` data-group="${esc(p.group)}"`;
     const inner = `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${p.r.toFixed(1)}"
-        fill="${p.color}" fill-opacity="0.72" stroke="${p.color}" stroke-width="0.8"><title>${p.tip}</title></circle>`;
+        fill="${p.color}" fill-opacity="0.72" stroke="${p.color}" stroke-width="0.8"${groupTag}><title>${p.tip}</title></circle>`;
     return p.url ? `<a href="${p.url}" target="_blank" rel="noopener">${inner}</a>` : inner;
   }).join("");
 
@@ -2032,6 +2105,8 @@ function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M", legendHtml = 
         <span class="bubble-legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#9ca3af" fill-opacity="0.5"/></svg> Größe = Stärke (Score)</span>
       `}</div>
     </div>`;
+
+  wireBubbleGroupHighlight(container);
 }
 
 function renderBubbleChart(data, themeAccel) {
@@ -2131,20 +2206,20 @@ function renderTickersBubble() {
   const xTf = _tickersBubbleXAxis;
   const rows = tickersVisibleRows();
 
-  const groupColors = new Map(); // "type|name" -> {name, type, color, count}
-  const colorFor = (g) => {
+  const groupColors = new Map(); // "type|name" -> {key, name, type, color, count}
+  const registerGroup = (g) => {
     const key = `${g.type}|${g.name}`;
     if (!groupColors.has(key)) {
-      groupColors.set(key, { name: g.name, type: g.type, color: groupColorFor(g.name, g.type), count: 0 });
+      groupColors.set(key, { key, name: g.name, type: g.type, color: groupColorFor(g.name, g.type), count: 0 });
     }
     const entry = groupColors.get(key);
     entry.count++;
-    return entry.color;
+    return entry;
   };
 
   const pts = rows.map(r => {
     const primary = (r.groups && r.groups[0]) || null;
-    const color = primary ? colorFor(primary) : "#6b7280";
+    const entry = primary ? registerGroup(primary) : null;
     const pX = r.perfs[xTf] > 0 ? "+" : "";
     const p1 = r.perfs["1M"] > 0 ? "+" : "";
     const capB = (r.market_cap / 1e9).toFixed(1);
@@ -2153,7 +2228,8 @@ function renderTickersBubble() {
     return {
       x3m: r.perfs[xTf], y1m: r.perfs["1M"],
       score: -Math.log10(Math.max(r.market_cap, 1)), // negativ: größere Cap -> kleinerer Score -> größere Bubble
-      color,
+      color: entry ? entry.color : "#6b7280",
+      group: entry ? entry.key : undefined, // treibt den Legenden-Hover/-Klick (wireBubbleGroupHighlight)
       label: r.t,
       tip: `${r.t}\n${xTf}: ${pX}${r.perfs[xTf]?.toFixed(1)}%  1M: ${p1}${r.perfs["1M"]?.toFixed(1)}%\nMarket Cap: $${capB} Mrd.  |  ATR%: ${r.atr_pct}%  |  Extension (SMA50): ${extTxt}\nGruppen: ${groupNames}`,
       url: finvizQuoteUrl(r.t),
@@ -2161,13 +2237,14 @@ function renderTickersBubble() {
   });
 
   // Legende: eine Zeile je Gruppe (häufigste zuerst), plus Größen-Hinweis.
+  // data-group macht jede Zeile per Hover/Klick zum Filter (siehe wireBubbleGroupHighlight).
   const legendHtml = [...groupColors.values()]
     .sort((a, b) => b.count - a.count)
-    .map(g => `<span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="${g.color}" fill-opacity="0.85"/></svg> ${esc(g.name)} (${g.count})</span>`)
+    .map(g => `<span class="bubble-legend-item" data-group="${esc(g.key)}"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="${g.color}" fill-opacity="0.85"/></svg> ${esc(g.name)} (${g.count})</span>`)
     .join("")
     + `<span class="bubble-legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#9ca3af" fill-opacity="0.5"/></svg> Größe = Market Cap</span>`;
 
-  renderBubbleSvg(container, pts, "Neutral", xTf, legendHtml);
+  renderBubbleSvg(container, pts, "Neutral", xTf, legendHtml, { declutter: true, sizeScale: 0.6 });
 }
 
 function renderTickersTab() {
