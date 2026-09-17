@@ -27,8 +27,10 @@ from datetime import datetime, timezone
 from setups import fetch_bars, _mean, _true_ranges
 
 TICKER_CONFIG = {
-    # -- Universum: 1W∩1M Top-20%, Industries UND Themes -----------------------
-    "PCT": 0.20,
+    # -- Universum: 1W∩1M Top-30%, Industries UND Themes -----------------------
+    # War 0.20 - auf Wunsch schrittweise auf 0.25, dann 0.30 gelockert, damit
+    # knapp verpasste Gruppen (Rang leicht ueber dem alten Cutoff) mitkommen.
+    "PCT": 0.30,
     "TFS": ["1W", "1M"],
     "MAX_TICKERS": 1500,     # Reissleine, kein Filter - greift im Normalfall nicht
     "CHUNK": 150,            # Ticker pro yfinance-Bulk-Request (siehe setups.fetch_bars)
