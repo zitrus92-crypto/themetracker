@@ -133,10 +133,12 @@ const I18N = {
     // ── Tickers (Bubble-Chart Einzelaktien) ────────────────────────────────
     topTickers:    "🎯 Tickers",
     tickersTitle:  "🎯 Tickers Bubble Chart",
-    hintTickers:   "Universum: Ticker aus den Industries UND Themes, die aktuell in der Top-20-%-Schnittmenge nach 1W UND 1M liegen (★ 1W∩1M).\nGefiltert: Market Cap > 1 Mrd. $ und ATR% (20 Tage) > 4 % — beides vollautomatisch, keine manuelle Liste.\nX-Achse: 3M- oder 1W-Performance, Y-Achse: 1M-Performance.\nGröße = Market Cap (log-skaliert). Farbe = Theme/Industry-Gruppe (siehe Legende unten) — gehört ein Ticker zu mehreren Gruppen, zählt die erste (Industries vor Themes), alle stehen im Tooltip.\n„Not Extended“-Toggle: blendet Ticker aus, die weit über ihrem SMA50 laufen (Jeff-Sun-Konvention, siehe eigener Tooltip).\nRechnet einmal pro Handelstag nach US-Close (braucht settled Tageskerzen, wie der Experimental-Tab). Klick auf Bubble öffnet die Finviz-Aktienseite.",
+    hintTickers:   "Universum: Ticker aus den Industries UND Themes, die aktuell in der Top-20-%-Schnittmenge nach 1W UND 1M liegen (★ 1W∩1M).\nGefiltert: Market Cap > 1 Mrd. $ und ATR% (20 Tage) > 4 % — beides vollautomatisch, keine manuelle Liste.\nX-Achse: 3M- oder 1W-Performance, Y-Achse: 1M-Performance.\nGröße = Market Cap (log-skaliert). Farbe = Theme/Industry-Gruppe (siehe Legende unten) — gehört ein Ticker zu mehreren Gruppen, zählt die erste (Industries vor Themes), alle stehen im Tooltip.\n„Not Extended“-Toggle: blendet Ticker aus, die weit über ihrem SMA50 laufen (Jeff-Sun-Konvention, siehe eigener Tooltip).\n„Copy Tickers“: kopiert die aktuell sichtbaren Ticker als kommagetrennte Liste zum Einfügen in eine TradingView-Watchlist.\nRechnet einmal pro Handelstag nach US-Close (braucht settled Tageskerzen, wie der Experimental-Tab). Klick auf Bubble öffnet die Finviz-Aktienseite.",
     tickersNoData: "Noch keine tickers.json — die Datei entsteht beim nächsten Post-Close-Lauf.",
     tickersMeta:   (n, cap, atr, atrDays, date) => `${n} Ticker · Market Cap > $${cap} Mrd. · ATR% (${atrDays}T) > ${atr}% · Stand: ${date}`,
     tickersNotExtTitle: (x) => `Blendet Ticker aus, die mehr als ${x} ATR(20) über ihrem SMA50 liegen — Extension-Konvention (u.a. Jeff Sun): weit über der Norm entfernte Kurse = schlechtes Chance/Risiko für einen neuen Einstieg.\nFormel: (Close − SMA50) ÷ ATR(20). Schwelle ist ein UNVALIDIERTER Default.`,
+    tickersCopyTitle: "Kopiert die aktuell angezeigten Ticker (X-Achse + „Not Extended“-Filter berücksichtigt) als kommagetrennte Liste — direkt einfügbar in eine TradingView-Watchlist (Symbol hinzufügen → Liste einfügen).",
+    tickersCopied:  (n) => `${n} Ticker kopiert!`,
 
     // ── Experimental (Stufe 0 + Stufe 1) ──────────────────────────────────
     topExperimental: "🧪 Experimental",
@@ -377,10 +379,12 @@ const I18N = {
     // ── Tickers (single-stock bubble chart) ────────────────────────────────
     topTickers:    "🎯 Tickers",
     tickersTitle:  "🎯 Tickers Bubble Chart",
-    hintTickers:   "Universe: tickers from the industries AND themes currently in the top-20% intersection by 1W AND 1M (★ 1W∩1M).\nFiltered: Market Cap > $1B and ATR% (20 days) > 4% — both fully automatic, no manual list.\nX-axis: 3M or 1W performance, Y-axis: 1M performance.\nSize = Market Cap (log-scaled). Color = Theme/Industry group (see legend below) — a ticker in several groups counts under the first (industries before themes), all of them show in the tooltip.\n\"Not Extended\" toggle: hides tickers running far above their SMA50 (Jeff Sun convention, see its own tooltip).\nRuns once per trading day after US close (needs settled daily candles, like the Experimental tab). Click a bubble to open the Finviz stock page.",
+    hintTickers:   "Universe: tickers from the industries AND themes currently in the top-20% intersection by 1W AND 1M (★ 1W∩1M).\nFiltered: Market Cap > $1B and ATR% (20 days) > 4% — both fully automatic, no manual list.\nX-axis: 3M or 1W performance, Y-axis: 1M performance.\nSize = Market Cap (log-scaled). Color = Theme/Industry group (see legend below) — a ticker in several groups counts under the first (industries before themes), all of them show in the tooltip.\n\"Not Extended\" toggle: hides tickers running far above their SMA50 (Jeff Sun convention, see its own tooltip).\n\"Copy Tickers\": copies the currently visible tickers as a comma-separated list to paste into a TradingView watchlist.\nRuns once per trading day after US close (needs settled daily candles, like the Experimental tab). Click a bubble to open the Finviz stock page.",
     tickersNoData: "No tickers.json yet — the file appears after the next post-close run.",
     tickersMeta:   (n, cap, atr, atrDays, date) => `${n} tickers · Market Cap > $${cap}B · ATR% (${atrDays}D) > ${atr}% · as of: ${date}`,
     tickersNotExtTitle: (x) => `Hides tickers more than ${x} ATR(20) above their SMA50 — extension convention (a.o. Jeff Sun): stocks running far from the norm make for a poor risk/reward on a new entry.\nFormula: (Close − SMA50) ÷ ATR(20). The threshold is an UNVALIDATED default.`,
+    tickersCopyTitle: "Copies the currently shown tickers (X-axis + \"Not Extended\" filter applied) as a comma-separated list — paste directly into a TradingView watchlist (Add symbol → paste list).",
+    tickersCopied:  (n) => `${n} tickers copied!`,
 
     // ── Experimental (stage 0 + stage 1) ──────────────────────────────────
     topExperimental: "🧪 Experimental",
@@ -538,6 +542,7 @@ function applyTranslations() {
     const b = document.getElementById(id); if (b) b.title = t("top20Intersect2Title");
   });
   { const b = document.getElementById("tickers-notext-toggle"); if (b) b.title = t("tickersNotExtTitle", tickersExtAtrMax()); }
+  { const b = document.getElementById("tickers-copy-btn"); if (b) b.title = t("tickersCopyTitle"); }
   document.documentElement.lang = _lang;
   document.getElementById("lang-btn").textContent = _lang === "de" ? "EN" : "DE";
   initSectionHints();
@@ -964,6 +969,22 @@ function initTickersNotExtendedToggle() {
     _tickersNotExtended = !_tickersNotExtended;
     btn.classList.toggle("active", _tickersNotExtended);
     renderTickersTab();
+  });
+}
+
+// Kopiert die aktuell im Bubble-Chart sichtbaren Ticker als kommagetrennte
+// Liste — TradingView übernimmt das direkt beim Einfügen in eine Watchlist
+// (Symbol hinzufügen -> Liste einfügen), keine Konvertierung nötig.
+function initTickersCopyButton() {
+  const btn = document.getElementById("tickers-copy-btn");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    const tickers = tickersVisibleRows().map(r => r.t);
+    if (!tickers.length) return;
+    navigator.clipboard.writeText(tickers.join(",")).then(() => {
+      flashDone(btn);
+      showToast(t("tickersCopied", tickers.length));
+    });
   });
 }
 
@@ -2085,6 +2106,15 @@ function tickersFilteredRows() {
   return rows.filter(r => r.ext_atr != null && r.ext_atr <= maxAtr);
 }
 
+// Genau die Ticker, die der Bubble-Chart gerade zeichnet (Not-Extended-Filter
+// + gültige Werte für die aktuelle X-Achse) — einzige Quelle für Chart UND
+// Copy-Button, damit beide nie auseinanderlaufen.
+function tickersVisibleRows() {
+  const xTf = _tickersBubbleXAxis;
+  return tickersFilteredRows()
+    .filter(r => r.perfs?.[xTf] != null && r.perfs?.["1M"] != null && r.market_cap);
+}
+
 // Stabile Farbe je Theme/Industry-Gruppe. Themes nutzen die app-weite
 // THEME_COLORS-Palette (dieselben Farben wie die Theme-Badges anderswo).
 // Für Industries existiert keine feste Palette (144 mögliche Namen) — deshalb
@@ -2108,8 +2138,7 @@ function renderTickersBubble() {
   const container = document.getElementById("tickers-bubble-view");
   if (!container || !_tickersData) return;
   const xTf = _tickersBubbleXAxis;
-  const rows = tickersFilteredRows()
-    .filter(r => r.perfs?.[xTf] != null && r.perfs?.["1M"] != null && r.market_cap);
+  const rows = tickersVisibleRows();
 
   const groupColors = new Map(); // "type|name" -> {name, type, color, count}
   const colorFor = (g) => {
@@ -3406,6 +3435,7 @@ initTabs();
 initSortHeaders();
 initInstToggle();
 initTickersNotExtendedToggle();
+initTickersCopyButton();
 initSectionHints();
 initPeriodSelector();
 initViewToggle();
