@@ -133,7 +133,7 @@ const I18N = {
     // ── Tickers (Bubble-Chart Einzelaktien) ────────────────────────────────
     topTickers:    "🎯 Tickers",
     tickersTitle:  "🎯 Tickers Bubble Chart",
-    hintTickers:   "Universum: Ticker aus den Industries UND Themes, die aktuell in der Top-20-%-Schnittmenge nach 1W UND 1M liegen (★ 1W∩1M).\nGefiltert: Market Cap > 1 Mrd. $ und ATR% (20 Tage) > 4 % — beides vollautomatisch, keine manuelle Liste.\nX-Achse: 3M- oder 1W-Performance, Y-Achse: 1M-Performance.\nGröße = Market Cap (log-skaliert). Farbe = Accel (Rang3M−Rang1M unter den gefilterten Tickern): grün = beschleunigt, grau = neutral, rot = fällt ab.\n„Not Extended“-Toggle: blendet Ticker aus, die weit über ihrem SMA50 laufen (Jeff-Sun-Konvention, siehe eigener Tooltip).\nRechnet einmal pro Handelstag nach US-Close (braucht settled Tageskerzen, wie der Experimental-Tab). Klick auf Bubble öffnet die Finviz-Aktienseite.",
+    hintTickers:   "Universum: Ticker aus den Industries UND Themes, die aktuell in der Top-20-%-Schnittmenge nach 1W UND 1M liegen (★ 1W∩1M).\nGefiltert: Market Cap > 1 Mrd. $ und ATR% (20 Tage) > 4 % — beides vollautomatisch, keine manuelle Liste.\nX-Achse: 3M- oder 1W-Performance, Y-Achse: 1M-Performance.\nGröße = Market Cap (log-skaliert). Farbe = Theme/Industry-Gruppe (siehe Legende unten) — gehört ein Ticker zu mehreren Gruppen, zählt die erste (Industries vor Themes), alle stehen im Tooltip.\n„Not Extended“-Toggle: blendet Ticker aus, die weit über ihrem SMA50 laufen (Jeff-Sun-Konvention, siehe eigener Tooltip).\nRechnet einmal pro Handelstag nach US-Close (braucht settled Tageskerzen, wie der Experimental-Tab). Klick auf Bubble öffnet die Finviz-Aktienseite.",
     tickersNoData: "Noch keine tickers.json — die Datei entsteht beim nächsten Post-Close-Lauf.",
     tickersMeta:   (n, cap, atr, atrDays, date) => `${n} Ticker · Market Cap > $${cap} Mrd. · ATR% (${atrDays}T) > ${atr}% · Stand: ${date}`,
     tickersNotExtTitle: (x) => `Blendet Ticker aus, die mehr als ${x} ATR(20) über ihrem SMA50 liegen — Extension-Konvention (u.a. Jeff Sun): weit über der Norm entfernte Kurse = schlechtes Chance/Risiko für einen neuen Einstieg.\nFormel: (Close − SMA50) ÷ ATR(20). Schwelle ist ein UNVALIDIERTER Default.`,
@@ -377,7 +377,7 @@ const I18N = {
     // ── Tickers (single-stock bubble chart) ────────────────────────────────
     topTickers:    "🎯 Tickers",
     tickersTitle:  "🎯 Tickers Bubble Chart",
-    hintTickers:   "Universe: tickers from the industries AND themes currently in the top-20% intersection by 1W AND 1M (★ 1W∩1M).\nFiltered: Market Cap > $1B and ATR% (20 days) > 4% — both fully automatic, no manual list.\nX-axis: 3M or 1W performance, Y-axis: 1M performance.\nSize = Market Cap (log-scaled). Color = Accel (Rank3M−Rank1M among the filtered tickers): green = accelerating, gray = neutral, red = fading.\n\"Not Extended\" toggle: hides tickers running far above their SMA50 (Jeff Sun convention, see its own tooltip).\nRuns once per trading day after US close (needs settled daily candles, like the Experimental tab). Click a bubble to open the Finviz stock page.",
+    hintTickers:   "Universe: tickers from the industries AND themes currently in the top-20% intersection by 1W AND 1M (★ 1W∩1M).\nFiltered: Market Cap > $1B and ATR% (20 days) > 4% — both fully automatic, no manual list.\nX-axis: 3M or 1W performance, Y-axis: 1M performance.\nSize = Market Cap (log-scaled). Color = Theme/Industry group (see legend below) — a ticker in several groups counts under the first (industries before themes), all of them show in the tooltip.\n\"Not Extended\" toggle: hides tickers running far above their SMA50 (Jeff Sun convention, see its own tooltip).\nRuns once per trading day after US close (needs settled daily candles, like the Experimental tab). Click a bubble to open the Finviz stock page.",
     tickersNoData: "No tickers.json yet — the file appears after the next post-close run.",
     tickersMeta:   (n, cap, atr, atrDays, date) => `${n} tickers · Market Cap > $${cap}B · ATR% (${atrDays}D) > ${atr}% · as of: ${date}`,
     tickersNotExtTitle: (x) => `Hides tickers more than ${x} ATR(20) above their SMA50 — extension convention (a.o. Jeff Sun): stocks running far from the norm make for a poor risk/reward on a new entry.\nFormula: (Close − SMA50) ÷ ATR(20). The threshold is an UNVALIDATED default.`,
@@ -1916,7 +1916,7 @@ function placeBubbleLabels(pts, bounds) {
   return out.join("");
 }
 
-function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M") {
+function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M", legendHtml = null) {
   if (!pts.length) { container.innerHTML = '<p style="color:#6b7280;padding:16px">No data</p>'; return; }
 
   const xs = pts.map(p => p.x3m), ys = pts.map(p => p.y1m);
@@ -1945,8 +1945,11 @@ function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M") {
   const toR = s => rMax - ((s - minScore) / scoreRange) * (rMax - rMin);
   const toColor = a => a >= 10 ? "#4ade80" : a <= -10 ? "#f87171" : a >= 5 ? "#86efac" : "#6b7280";
 
+  // Callers can pre-set p.color (z.B. Gruppen-Einfärbung im Tickers-Tab) und
+  // damit die Accel-Farblogik umgehen — sonst greift wie bisher toColor(accel).
   pts.forEach(p => {
-    p.x = toX(p.x3m); p.y = toY(p.y1m); p.r = toR(p.score); p.color = toColor(p.accel);
+    p.x = toX(p.x3m); p.y = toY(p.y1m); p.r = toR(p.score);
+    if (p.color === undefined) p.color = toColor(p.accel);
   });
 
   const medX = toX(med3M).toFixed(1);
@@ -2009,13 +2012,13 @@ function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M") {
         ${circles}
         ${labels}
       </svg>
-      <div class="bubble-legend">
+      <div class="bubble-legend">${legendHtml ?? `
         <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#4ade80" fill-opacity="0.8"/></svg> Accel ≥ +10 (First Flag)</span>
         <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#86efac" fill-opacity="0.8"/></svg> Accel +5…+9</span>
         <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#6b7280" fill-opacity="0.8"/></svg> ${neutralLabel}</span>
         <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#f87171" fill-opacity="0.8"/></svg> Accel ≤ −10 (Extended/Fading)</span>
         <span class="bubble-legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#9ca3af" fill-opacity="0.5"/></svg> Größe = Stärke (Score)</span>
-      </div>
+      `}</div>
     </div>`;
 }
 
@@ -2082,22 +2085,46 @@ function tickersFilteredRows() {
   return rows.filter(r => r.ext_atr != null && r.ext_atr <= maxAtr);
 }
 
+// Stabile Farbe je Theme/Industry-Gruppe. Themes nutzen die app-weite
+// THEME_COLORS-Palette (dieselben Farben wie die Theme-Badges anderswo).
+// Für Industries existiert keine feste Palette (144 mögliche Namen) — deshalb
+// ein deterministischer Hash-zu-Hue: derselbe Name liefert über Tage/Reloads
+// hinweg immer dieselbe Farbe, ohne 144 Farben von Hand pflegen zu müssen.
+function groupColorFor(name, type) {
+  if (type === "theme" && THEME_COLORS[name]) return THEME_COLORS[name].fg;
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  return `hsl(${hash % 360}, 65%, 60%)`;
+}
+
 // ── Tickers Bubble Chart (Einzelaktien aus den 1W∩1M-Top-Industries/-Themes) ──
 // Datengrundlage: docs/tickers.json (ticker_metrics.py, einmal pro Handelstag,
 // wie setups.json). Size = Market Cap (log-skaliert, größer = größere Bubble).
-// Color = Accel (rank3M - rank1M unter den gefilterten Tickern) via die
-// generische computeAccel() — dieselbe Formel wie bei Themes/Sub-Themes.
+// Color = primäre Gruppe (erster Eintrag in r.groups, siehe ticker_metrics.
+// build_universe: Industries vor Themes, je alphabetisch) — NICHT Accel, damit
+// auf einen Blick sichtbar ist, aus welchem Theme/welcher Industry ein Ticker
+// stammt. Gehört ein Ticker zu mehreren Gruppen, zeigt der Tooltip alle.
 function renderTickersBubble() {
   const container = document.getElementById("tickers-bubble-view");
   if (!container || !_tickersData) return;
   const xTf = _tickersBubbleXAxis;
   const rows = tickersFilteredRows()
     .filter(r => r.perfs?.[xTf] != null && r.perfs?.["1M"] != null && r.market_cap);
-  const accel = computeAccel(rows.map(r => [r.t, r]));
+
+  const groupColors = new Map(); // "type|name" -> {name, type, color, count}
+  const colorFor = (g) => {
+    const key = `${g.type}|${g.name}`;
+    if (!groupColors.has(key)) {
+      groupColors.set(key, { name: g.name, type: g.type, color: groupColorFor(g.name, g.type), count: 0 });
+    }
+    const entry = groupColors.get(key);
+    entry.count++;
+    return entry.color;
+  };
 
   const pts = rows.map(r => {
-    const a = accel[r.t] ?? 0;
-    const accelSign = a > 0 ? "+" : "";
+    const primary = (r.groups && r.groups[0]) || null;
+    const color = primary ? colorFor(primary) : "#6b7280";
     const pX = r.perfs[xTf] > 0 ? "+" : "";
     const p1 = r.perfs["1M"] > 0 ? "+" : "";
     const capB = (r.market_cap / 1e9).toFixed(1);
@@ -2106,13 +2133,21 @@ function renderTickersBubble() {
     return {
       x3m: r.perfs[xTf], y1m: r.perfs["1M"],
       score: -Math.log10(Math.max(r.market_cap, 1)), // negativ: größere Cap -> kleinerer Score -> größere Bubble
-      accel: a,
+      color,
       label: r.t,
-      tip: `${r.t}\n${xTf}: ${pX}${r.perfs[xTf]?.toFixed(1)}%  1M: ${p1}${r.perfs["1M"]?.toFixed(1)}%\nAccel: ${accelSign}${a}  |  Market Cap: $${capB} Mrd.  |  ATR%: ${r.atr_pct}%  |  Extension (SMA50): ${extTxt}\n${groupNames}`,
+      tip: `${r.t}\n${xTf}: ${pX}${r.perfs[xTf]?.toFixed(1)}%  1M: ${p1}${r.perfs["1M"]?.toFixed(1)}%\nMarket Cap: $${capB} Mrd.  |  ATR%: ${r.atr_pct}%  |  Extension (SMA50): ${extTxt}\nGruppen: ${groupNames}`,
       url: finvizQuoteUrl(r.t),
     };
   });
-  renderBubbleSvg(container, pts, "Neutral", xTf);
+
+  // Legende: eine Zeile je Gruppe (häufigste zuerst), plus Größen-Hinweis.
+  const legendHtml = [...groupColors.values()]
+    .sort((a, b) => b.count - a.count)
+    .map(g => `<span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="${g.color}" fill-opacity="0.85"/></svg> ${esc(g.name)} (${g.count})</span>`)
+    .join("")
+    + `<span class="bubble-legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#9ca3af" fill-opacity="0.5"/></svg> Größe = Market Cap</span>`;
+
+  renderBubbleSvg(container, pts, "Neutral", xTf, legendHtml);
 }
 
 function renderTickersTab() {
