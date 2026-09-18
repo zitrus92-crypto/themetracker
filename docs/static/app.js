@@ -2222,26 +2222,28 @@ function renderTickersBubble() {
   const xTf = _tickersBubbleXAxis;
   const rows = tickersVisibleRows();
 
-  // Rang "1W∩1M" je Gruppe: das SCHWÄCHERE (höhere) der beiden Einzelränge,
+  // Rang "Xtf∩1M" je Gruppe: das SCHWÄCHERE (höhere) der beiden Einzelränge,
   // denn genau dieser Wert entscheidet, ob eine Gruppe überhaupt in die
   // Top-20-%-Schnittmenge fällt (siehe topIntersectionKeys) — niedriger =
   // tiefer/stabiler in der Schnittmenge, wie überall sonst Rang 1 = stärkstes.
+  // Folgt der X-Achse des Charts: 1W-Ansicht rankt nach 1W∩1M, 3M-Ansicht
+  // nach 1M∩3M — die Datengrundlage der Legende wechselt mit dem X-Achse-Toggle.
   // _lastIndustries/_etfData sind beim Rendern immer schon geladen (loadData()
   // füllt sie vor dem tickers.json-Fetch), Fallback auf {} nur zur Sicherheit.
   const rankMaps = {
     industry: {
-      "1W": rankMapFor(Object.entries(_lastIndustries || {}), "1W"),
+      [xTf]: rankMapFor(Object.entries(_lastIndustries || {}), xTf),
       "1M": rankMapFor(Object.entries(_lastIndustries || {}), "1M"),
     },
     theme: {
-      "1W": rankMapFor(Object.entries(_etfData?.themes || {}), "1W"),
+      [xTf]: rankMapFor(Object.entries(_etfData?.themes || {}), xTf),
       "1M": rankMapFor(Object.entries(_etfData?.themes || {}), "1M"),
     },
   };
   const intersectionRank = (name, type) => {
-    const r1w = rankMaps[type]?.["1W"]?.[name];
+    const rX = rankMaps[type]?.[xTf]?.[name];
     const r1m = rankMaps[type]?.["1M"]?.[name];
-    return (r1w == null || r1m == null) ? Infinity : Math.max(r1w, r1m);
+    return (rX == null || r1m == null) ? Infinity : Math.max(rX, r1m);
   };
 
   const groupColors = new Map(); // "type|name" -> {key, name, type, color, count, rank}
