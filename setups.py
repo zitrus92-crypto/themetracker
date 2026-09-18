@@ -314,6 +314,23 @@ def fetch_bars(tickers: list, cfg: dict = SETUP_CONFIG) -> dict:
             print(f"      Block {i}/{len(chunks)}: {len(got)}/{len(chunk)} Ticker")
         except Exception as e:
             print(f"      WARNING: bar fetch chunk {i} failed: {e}")
+
+    # yfinance verschluckt innerhalb eines Bulk-Batches vereinzelt Ticker ohne
+    # Fehler (bekannte Eigenheit, kein Muster erkennbar) - einzeln nachholen,
+    # statt sie stillschweigend aus dem Universum fallen zu lassen.
+    missing = [tk for tk in tickers if tk not in out]
+    if missing:
+        recovered = 0
+        for tk in missing:
+            try:
+                got = _one([tk])
+                if tk in got:
+                    out[tk] = got[tk]
+                    recovered += 1
+            except Exception as e:
+                print(f"      WARNING: retry fetch failed for {tk}: {e}")
+        print(f"      Retry: {recovered}/{len(missing)} zuvor fehlende Ticker nachgeholt.")
+
     return out
 
 
