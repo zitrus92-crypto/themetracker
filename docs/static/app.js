@@ -192,9 +192,9 @@ const I18N = {
     expTradeable:  "READY + BREAKOUT",
     expAll:        "Alle",
     expCopyBtn:    "📋 Ticker kopieren",
-    expTop20:      "Top 20 %",
-    expTop20Title: (min) => `Alle Zeilen der aktuellen Ansicht mit Score ≥ ${min} markieren. Nochmal klicken hebt die Markierung auf. Einzelne Zeilen lassen sich auch direkt anklicken.`,
-    expTop20Marked:(n, min) => `${n} Zeilen mit Score ≥ ${min} markiert`,
+    expTop20:      "Top 30 %",
+    expTop20Title: () => `Die besten 30 % der aktuellen Ansicht nach Score markieren. Nochmal klicken hebt die Markierung auf. Einzelne Zeilen lassen sich auch direkt anklicken.`,
+    expTop20Marked:(n, min) => `${n} Zeilen markiert (Top 30 %, Score ≥ ${min})`,
     expSelCount:   (n) => `${n} markiert`,
     expCopiedSel:  (n) => `${n} markierte Ticker kopiert!`,
     expCopyTitle:  "Markierte Ticker in die Zwischenablage (kommagetrennt, TradingView-Import) — ohne Markierung die komplette Ansicht",
@@ -438,9 +438,9 @@ const I18N = {
     expTradeable:  "READY + BREAKOUT",
     expAll:        "All",
     expCopyBtn:    "📋 Copy tickers",
-    expTop20:      "Top 20%",
-    expTop20Title: (min) => `Mark every row of the current view with score ≥ ${min}. Click again to clear. Single rows can be clicked directly too.`,
-    expTop20Marked:(n, min) => `${n} rows with score ≥ ${min} marked`,
+    expTop20:      "Top 30%",
+    expTop20Title: () => `Mark the best 30% of the current view by score. Click again to clear. Single rows can be clicked directly too.`,
+    expTop20Marked:(n, min) => `${n} rows marked (top 30%, score ≥ ${min})`,
     expSelCount:   (n) => `${n} marked`,
     expCopiedSel:  (n) => `${n} marked tickers copied!`,
     expCopyTitle:  "Copy marked tickers to the clipboard (comma-separated, TradingView import) — without a selection, the whole view",
@@ -3085,11 +3085,9 @@ let _expSort    = { col: "score", dir: -1 };
 
 const EXP_MAX_CHARTS = 48;     // Mini-Charts pro Ansicht (Ladezeit/Finviz-Last)
 
-// Markierung für den Clipboard-Export. Der Top-20%-Button markiert alles mit
-// Score >= 80 — gemessen an der READY+BREAKOUT-Ansicht sind das 27 von 150
-// Zeilen (18 %), bei 10 statt 20 Industries waren es 18 von 90 (20 %). Die
-// Grenze ist ein fester Score-Schwellwert, kein gerechnetes Perzentil.
-const EXP_TOP20_MIN = 80;
+// Markierung für den Clipboard-Export. Der Top-30%-Button markiert die besten
+// TOP_PCT der aktuellen Ansicht nach Score — gleicher Anteil wie die ★-Buttons
+// in Industry/Themes. Früher fester Schwellwert Score >= 80 (≈ 20 %).
 let _expSelected = new Set();
 
 const EXP_COLS = [
@@ -3106,6 +3104,14 @@ const EXP_COLS = [
   { col: "price",     key: "expColPrice" },
   { col: "groups",    key: "expColGroup",   left: true, nosort: true },
 ];
+
+// Score der letzten Zeile innerhalb der Top TOP_PCT der aktuellen Ansicht
+// (unabhängig von der gewählten Tabellen-Sortierung). null = keine Zeilen.
+function expTopMinScore() {
+  const scores = expRows().map(r => r.score).filter(v => v != null).sort((a, b) => b - a);
+  if (!scores.length) return null;
+  return scores[Math.max(1, Math.ceil(scores.length * TOP_PCT)) - 1];
+}
 
 function expRows() {
   const rows = _setupsData?.rows ?? [];
@@ -3266,7 +3272,7 @@ function expStage1Html() {
         <span class="exp-toolbar-sep"></span>
         ${viewBtn("table", t("expViewTable"))}${viewBtn("charts", t("expViewCharts"))}
         <button class="exp-top20-btn${selCount ? " exp-top20-btn--active" : ""}"
-                title="${esc(t("expTop20Title", EXP_TOP20_MIN))}">★ ${t("expTop20")}</button>
+                title="${esc(t("expTop20Title"))}">★ ${t("expTop20")}</button>
         ${selCount ? `<span class="exp-selcount">${t("expSelCount", selCount)}</span>` : ""}
         <button class="setup-copyall-btn exp-copy-btn" title="${esc(t("expCopyTitle"))}">${t("expCopyBtn")}</button>
       </div>
@@ -3407,16 +3413,18 @@ function renderExperimental() {
     };
   });
 
-  // Top 20 % = alles mit Score >= EXP_TOP20_MIN in der aktuellen Ansicht.
+  // Top 30 % = die besten TOP_PCT der aktuellen Ansicht nach Score; Gleichstand
+  // an der Grenze kommt mit (Score >= Score der Cutoff-Zeile).
   // Sind die schon alle markiert, hebt ein zweiter Klick die Markierung auf.
   const topBtn = box.querySelector(".exp-top20-btn");
   if (topBtn) topBtn.onclick = () => {
-    const hits = expRows().filter(r => r.score >= EXP_TOP20_MIN);
+    const minScore = expTopMinScore();
+    const hits = minScore === null ? [] : expRows().filter(r => r.score >= minScore);
     const allSet = hits.length > 0 && hits.every(r => _expSelected.has(r.t));
     if (allSet) hits.forEach(r => _expSelected.delete(r.t));
     else hits.forEach(r => _expSelected.add(r.t));
     renderExperimental();
-    if (!allSet) showToast(t("expTop20Marked", hits.length, EXP_TOP20_MIN));
+    if (!allSet) showToast(t("expTop20Marked", hits.length, minScore));
   };
 
   // Kopiert die Markierung (Schnittmenge mit der Ansicht); ohne Markierung

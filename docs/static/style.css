@@ -539,7 +539,7 @@ a.etf-theme-badge:hover { filter: brightness(1.25); }
 .col-check { width: 36px; text-align: center !important; padding: 4px !important; }
 .col-check input[type="checkbox"] { accent-color: #3b82f6; cursor: pointer; }
 
-/* ── Top 20% quick-select button ─────────────────────────────────────────── */
+/* ── Top 30% quick-select button ─────────────────────────────────────────── */
 .heatmap-header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .top20-btn {
   background: #1f2937; color: #fbbf24;
@@ -696,7 +696,7 @@ details.wp-details { margin-bottom: 18px; }
 .exp-universe .exp-desc { margin-bottom: 6px; }
 .exp-univ-warn { color: #fbbf24; font-style: normal; margin: 8px 0 10px; }
 
-/* Markierung für den Clipboard-Export (Top-20%-Button oder Zeilenklick). */
+/* Markierung für den Clipboard-Export (Top-30%-Button oder Zeilenklick). */
 .exp-top20-btn {
   background: var(--bg3); color: var(--text-dim); border: 1px solid var(--border);
   border-radius: 5px; padding: 5px 12px; font-size: 12px; cursor: pointer;
