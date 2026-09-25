@@ -276,7 +276,7 @@ def main():
             print(f"  WARNING: setups.json nicht aktualisiert ({e}) — alte Datei bleibt.")
 
     # ── Write tickers.json (Tickers-Tab) ──────────────────────────────────────
-    # Universum sind die staerksten Industries UND Themes (1W∩1M-Top-20%),
+    # Universum sind die staerksten Industries UND Themes (1W∩1M-Top-30%),
     # deshalb erst hier. Gleiche Post-Close-Kadenz wie setups.json — ATR%
     # braucht settled Tageskerzen. Eigener Idempotenz-Stand (tickers.json trägt
     # sein eigenes Datum), damit ein Fehlschlag bei setups.json den Tickers-Tab

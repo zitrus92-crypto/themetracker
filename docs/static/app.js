@@ -37,7 +37,7 @@ const I18N = {
     infoAccel:    "Accel = 3M-Rang minus 1W-Rang. Hoch positiv = war vor 3M noch schwach, jetzt stark = erster Leg, nicht extended. Ideal fuer First-Flag-Setups.",
     hintHeatmap:  "Score sortieren: Marktüberblick — welche Industries aktuell führen.\nAccel sortieren: First Flag Suche — frisches Momentum (3M schwach + 1W stark = erster Leg, nicht extended).\nINST-Filter: zeigt nur institutionell bestätigte Industries (Top 40 in 1M und 3M).\nKlick auf Spaltenkopf = sortieren, nochmal klicken = umkehren.",
     hintIndBubble:"X-Achse: 3M-Performance, Y-Achse: 1M-Performance.\nGröße = Stärke (Score) — starke Industries bleiben groß, egal ob beschleunigend oder konsolidierend.\nFarbe = Accel (stabiler Rang3M−Rang1M): grün = beschleunigt, grau = konsolidiert, rot = fällt ab.\nINST-Filter (Heatmap-Toggle) wirkt auch hier. Klick auf Bubble öffnet Finviz-Screener.",
-    hintIndRrg:   "X-Achse: RS-Ratio (3M relativ zum Industry-Schnitt), Y-Achse: RS-Momentum.\nRechts oben Leading, links oben Improving, links unten Lagging, rechts unten Weakening.\nTail = die letzten 10 Handelstage aus den Snapshots, Kopfpunkt = Live-Daten.\nBenchmark ist der Gleichgewichts-Schnitt aller Industries — ein Index liegt nicht mit Historie vor.\nDie beiden Buttons filtern auf die Top-20-%-Schnittmengen; beide aktiv = Vereinigung.\nMaus über eine Industry hebt sie samt Pfad hervor, Klick öffnet den Finviz-Screener.",
+    hintIndRrg:   "X-Achse: RS-Ratio (3M relativ zum Industry-Schnitt), Y-Achse: RS-Momentum.\nRechts oben Leading, links oben Improving, links unten Lagging, rechts unten Weakening.\nTail = die letzten 10 Handelstage aus den Snapshots, Kopfpunkt = Live-Daten.\nBenchmark ist der Gleichgewichts-Schnitt aller Industries — ein Index liegt nicht mit Historie vor.\nDie beiden Buttons filtern auf die Top-30-%-Schnittmengen; beide aktiv = Vereinigung.\nMaus über eine Industry hebt sie samt Pfad hervor, Klick öffnet den Finviz-Screener.",
     hintTop10:    "Top 10 Performer pro Zeitraum — zeigt aktuelle Marktführer.\nKarten: kompakte Übersicht pro Zeitraum.\nBalken: alle Industries sortiert nach 1M und 3M Performance.\nINST-Badge zeigt institutionelles Interesse.",
     hintMovers:   "Rang-Veränderung seit dem gewählten Zeitraum.\nRising: Industries die am stärksten gestiegen sind — frisches Kapital fließt ein. Hier suchen!\nFading: Industries die Ränge verloren haben — Kapital verlässt diesen Bereich. Meiden.\nZeitraum wählen: 1W / 2W / 1M / 3M (ausgegraut = noch nicht genug Daten).",
     tabEtfs:      "📈 Themes",
@@ -59,9 +59,9 @@ const I18N = {
     matrixDead:     "💀 Dead",
     matrixDeadSub:  "beide schwach",
     vizTable:       "📋 Tabelle",
-    top20Title:       "Top 20% der aktuellen Sortierung markieren (zum Kopieren)",
-    top20IntersectTitle: "Schnittmenge der Top 20% nach 1W und 1M (nur die stärksten)",
-    top20Intersect2Title: "Schnittmenge der Top 20% nach 1M und 3M (nur die stärksten)",
+    top20Title:       "Top 30% der aktuellen Sortierung markieren (zum Kopieren)",
+    top20IntersectTitle: "Schnittmenge der Top 30% nach 1W und 1M (nur die stärksten)",
+    top20Intersect2Title: "Schnittmenge der Top 30% nach 1M und 3M (nur die stärksten)",
     regimeStale:      "DATEN VERALTET",
     regimeUnknown:    "REGIME ?",
     regimeEffectOn:      "Volle Size (1% Risk/Trade). Add-ons erlaubt.",
@@ -133,7 +133,7 @@ const I18N = {
     // ── Tickers (Bubble-Chart Einzelaktien) ────────────────────────────────
     topTickers:    "🎯 Tickers",
     tickersTitle:  "🎯 Tickers Bubble Chart",
-    hintTickers:   "Universum: Ticker aus den Industries UND Themes, die aktuell in der Top-20-%-Schnittmenge nach 1W UND 1M liegen (★ 1W∩1M).\nGefiltert: Market Cap > 1 Mrd. $ und ATR% (20 Tage) > 4 % — beides vollautomatisch, keine manuelle Liste.\nX-Achse: 3M- oder 1W-Performance, Y-Achse: 1M-Performance.\nGröße = Market Cap (log-skaliert). Farbe = Theme/Industry-Gruppe (siehe Legende unten) — gehört ein Ticker zu mehreren Gruppen, zählt die erste (Industries vor Themes), alle stehen im Tooltip.\n„Not Extended“-Toggle: blendet Ticker aus, die weit über ihrem SMA50 laufen (Jeff-Sun-Konvention, siehe eigener Tooltip).\n„Copy Tickers“: kopiert die aktuell sichtbaren Ticker als kommagetrennte Liste zum Einfügen in eine TradingView-Watchlist.\nRechnet einmal pro Handelstag nach US-Close (braucht settled Tageskerzen, wie der Experimental-Tab). Klick auf Bubble öffnet die Finviz-Aktienseite.",
+    hintTickers:   "Universum: Ticker aus den Industries UND Themes, die aktuell in der Top-30-%-Schnittmenge nach 1W UND 1M liegen (★ 1W∩1M).\nGefiltert: Market Cap > 1 Mrd. $ und ATR% (20 Tage) > 4 % — beides vollautomatisch, keine manuelle Liste.\nX-Achse: 3M- oder 1W-Performance, Y-Achse: 1M-Performance.\nGröße = Market Cap (log-skaliert). Farbe = Theme/Industry-Gruppe (siehe Legende unten) — gehört ein Ticker zu mehreren Gruppen, zählt die erste (Industries vor Themes), alle stehen im Tooltip.\n„Not Extended“-Toggle: blendet Ticker aus, die weit über ihrem SMA50 laufen (Jeff-Sun-Konvention, siehe eigener Tooltip).\n„Copy Tickers“: kopiert die aktuell sichtbaren Ticker als kommagetrennte Liste zum Einfügen in eine TradingView-Watchlist.\nRechnet einmal pro Handelstag nach US-Close (braucht settled Tageskerzen, wie der Experimental-Tab). Klick auf Bubble öffnet die Finviz-Aktienseite.",
     tickersNoData: "Noch keine tickers.json — die Datei entsteht beim nächsten Post-Close-Lauf.",
     tickersMeta:   (n, cap, atr, atrDays, date) => `${n} Ticker · Market Cap > $${cap} Mrd. · ATR% (${atrDays}T) > ${atr}% · Stand: ${date}`,
     tickersNotExtTitle: (x) => `Blendet Ticker aus, die mehr als ${x} ATR(20) über ihrem SMA50 liegen — Extension-Konvention (u.a. Jeff Sun): weit über der Norm entfernte Kurse = schlechtes Chance/Risiko für einen neuen Einstieg.\nFormel: (Close − SMA50) ÷ ATR(20). Schwelle ist ein UNVALIDIERTER Default.`,
@@ -283,7 +283,7 @@ const I18N = {
     infoAccel:    "Accel = 3M rank minus 1W rank. High positive = was weak 3M ago, now strong = first leg, not extended. Ideal for First Flag setups.",
     hintHeatmap:  "Sort by Score: market overview — which industries are currently leading.\nSort by Accel: First Flag search — fresh momentum (weak 3M + strong 1W = first leg, not extended).\nINST filter: shows only institutionally confirmed industries (Top 40 in 1M and 3M).\nClick any column header to sort, click again to reverse.",
     hintIndBubble:"X-axis: 3M performance, Y-axis: 1M performance.\nSize = strength (Score) — strong industries stay big regardless of accelerating or consolidating.\nColor = Accel (stable Rank3M−Rank1M): green = accelerating, gray = consolidating, red = fading.\nThe INST filter (Heatmap toggle) applies here too. Click a bubble to open the Finviz screener.",
-    hintIndRrg:   "X axis: RS-Ratio (3M relative to the industry average), Y axis: RS-Momentum.\nTop right leading, top left improving, bottom left lagging, bottom right weakening.\nTail = the last 10 trading days from the snapshots, head = live data.\nBenchmark is the equal-weight average of all industries — no index is available with history.\nThe two buttons filter to the top-20% intersections; both active = union.\nHovering an industry highlights it and its path, clicking opens the Finviz screener.",
+    hintIndRrg:   "X axis: RS-Ratio (3M relative to the industry average), Y axis: RS-Momentum.\nTop right leading, top left improving, bottom left lagging, bottom right weakening.\nTail = the last 10 trading days from the snapshots, head = live data.\nBenchmark is the equal-weight average of all industries — no index is available with history.\nThe two buttons filter to the top-30% intersections; both active = union.\nHovering an industry highlights it and its path, clicking opens the Finviz screener.",
     hintTop10:    "Top 10 performers per timeframe — shows current market leaders.\nCards: compact overview per timeframe.\nBar chart: all industries sorted by 1M and 3M performance.\nINST badge shows institutional interest.",
     hintMovers:   "Rank change since the selected period.\nRising: industries that climbed most in ranking — fresh capital flowing in. Look here!\nFading: industries that lost ranks — capital leaving. Avoid.\nSelect period: 1W / 2W / 1M / 3M (greyed out = not enough data yet).",
     tabEtfs:      "📈 Themes",
@@ -305,9 +305,9 @@ const I18N = {
     matrixDead:     "💀 Dead",
     matrixDeadSub:  "both weak",
     vizTable:       "📋 Table",
-    top20Title:       "Select the top 20% of the current sort (for copying)",
-    top20IntersectTitle: "Intersection of the top 20% by 1W and by 1M (strongest only)",
-    top20Intersect2Title: "Intersection of the top 20% by 1M and by 3M (strongest only)",
+    top20Title:       "Select the top 30% of the current sort (for copying)",
+    top20IntersectTitle: "Intersection of the top 30% by 1W and by 1M (strongest only)",
+    top20Intersect2Title: "Intersection of the top 30% by 1M and by 3M (strongest only)",
     regimeStale:      "DATA STALE",
     regimeUnknown:    "REGIME ?",
     regimeEffectOn:      "Full size (1% risk/trade). Add-ons allowed.",
@@ -379,7 +379,7 @@ const I18N = {
     // ── Tickers (single-stock bubble chart) ────────────────────────────────
     topTickers:    "🎯 Tickers",
     tickersTitle:  "🎯 Tickers Bubble Chart",
-    hintTickers:   "Universe: tickers from the industries AND themes currently in the top-20% intersection by 1W AND 1M (★ 1W∩1M).\nFiltered: Market Cap > $1B and ATR% (20 days) > 4% — both fully automatic, no manual list.\nX-axis: 3M or 1W performance, Y-axis: 1M performance.\nSize = Market Cap (log-scaled). Color = Theme/Industry group (see legend below) — a ticker in several groups counts under the first (industries before themes), all of them show in the tooltip.\n\"Not Extended\" toggle: hides tickers running far above their SMA50 (Jeff Sun convention, see its own tooltip).\n\"Copy Tickers\": copies the currently visible tickers as a comma-separated list to paste into a TradingView watchlist.\nRuns once per trading day after US close (needs settled daily candles, like the Experimental tab). Click a bubble to open the Finviz stock page.",
+    hintTickers:   "Universe: tickers from the industries AND themes currently in the top-30% intersection by 1W AND 1M (★ 1W∩1M).\nFiltered: Market Cap > $1B and ATR% (20 days) > 4% — both fully automatic, no manual list.\nX-axis: 3M or 1W performance, Y-axis: 1M performance.\nSize = Market Cap (log-scaled). Color = Theme/Industry group (see legend below) — a ticker in several groups counts under the first (industries before themes), all of them show in the tooltip.\n\"Not Extended\" toggle: hides tickers running far above their SMA50 (Jeff Sun convention, see its own tooltip).\n\"Copy Tickers\": copies the currently visible tickers as a comma-separated list to paste into a TradingView watchlist.\nRuns once per trading day after US close (needs settled daily candles, like the Experimental tab). Click a bubble to open the Finviz stock page.",
     tickersNoData: "No tickers.json yet — the file appears after the next post-close run.",
     tickersMeta:   (n, cap, atr, atrDays, date) => `${n} tickers · Market Cap > $${cap}B · ATR% (${atrDays}D) > ${atr}% · as of: ${date}`,
     tickersNotExtTitle: (x) => `Hides tickers more than ${x} ATR(20) above their SMA50 — extension convention (a.o. Jeff Sun): stocks running far from the norm make for a poor risk/reward on a new entry.\nFormula: (Close − SMA50) ÷ ATR(20). The threshold is an UNVALIDATED default.`,
@@ -531,7 +531,7 @@ function applyTranslations() {
   document.querySelectorAll(".selection-bar__export-btn").forEach(btn => {
     btn.textContent = t("exportJson");
   });
-  // Top 20% buttons: language-neutral label, localized tooltip
+  // Top 30% buttons: language-neutral label, localized tooltip
   ["ind-top20-btn", "theme-top20-btn"].forEach(id => {
     const b = document.getElementById(id); if (b) b.title = t("top20Title");
   });
@@ -737,9 +737,14 @@ function sortedEntries(industries) {
   });
 }
 
+// Anteil für alle ★-Buttons (Top X %, 1W∩1M, 1M∩3M) in Industry, Themes und RRG.
+// Muss mit TICKER_CONFIG["PCT"] in ticker_metrics.py übereinstimmen, sonst
+// weicht das Tickers-Universum von der ★ 1W∩1M-Auswahl ab.
+const TOP_PCT = 0.30;
+
 // Check the top `pct` fraction of rows (current sort order) in a multi-select
 // table body, replacing any existing selection, then refresh its selection bar.
-function selectTopPercent(tbodyId, headerCheckId, updateFn, pct = 0.20) {
+function selectTopPercent(tbodyId, headerCheckId, updateFn, pct = TOP_PCT) {
   const checks = [...document.querySelectorAll(`#${tbodyId} .row-check`)];
   if (!checks.length) return;
   const cutoff = Math.max(1, Math.ceil(checks.length * pct));
@@ -759,7 +764,7 @@ function selectTopPercent(tbodyId, headerCheckId, updateFn, pct = 0.20) {
 // Der RRG braucht sie ohne Tabelle: in dieser Ansicht wird das tbody gar nicht
 // gerendert, es gibt also keine Checkbox-Zeilen, an denen man sich entlanghangeln
 // könnte. entries: [[name, row], …] mit row.perfs.
-function topIntersectionKeys(entries, tfs = ["1W", "1M"], pct = 0.20) {
+function topIntersectionKeys(entries, tfs = ["1W", "1M"], pct = TOP_PCT) {
   if (!entries.length) return new Set();
   const cutoff = Math.max(1, Math.ceil(entries.length * pct));
   const topSets = tfs.map(tf => new Set(
@@ -775,7 +780,7 @@ function topIntersectionKeys(entries, tfs = ["1W", "1M"], pct = 0.20) {
 // Select rows that are in BOTH the top `pct` by each timeframe (intersection),
 // among currently-displayed rows. dataFor(key) -> row object with .perfs.
 // Replaces the current selection, then refreshes the selection bar.
-function selectTopIntersection(tbodyId, headerCheckId, updateFn, dataFor, tfs = ["1W", "1M"], pct = 0.20) {
+function selectTopIntersection(tbodyId, headerCheckId, updateFn, dataFor, tfs = ["1W", "1M"], pct = TOP_PCT) {
   const checks = [...document.querySelectorAll(`#${tbodyId} .row-check`)];
   if (!checks.length) return;
   const inter = topIntersectionKeys(checks.map(cb => [cb.dataset.key, dataFor(cb.dataset.key)]), tfs, pct);
@@ -2224,7 +2229,7 @@ function renderTickersBubble() {
 
   // Rang "Xtf∩1M" je Gruppe: das SCHWÄCHERE (höhere) der beiden Einzelränge,
   // denn genau dieser Wert entscheidet, ob eine Gruppe überhaupt in die
-  // Top-20-%-Schnittmenge fällt (siehe topIntersectionKeys) — niedriger =
+  // Top-30-%-Schnittmenge fällt (siehe topIntersectionKeys) — niedriger =
   // tiefer/stabiler in der Schnittmenge, wie überall sonst Rang 1 = stärkstes.
   // Folgt der X-Achse des Charts: 1W-Ansicht rankt nach 1W∩1M, 3M-Ansicht
   // nach 1M∩3M — die Datengrundlage der Legende wechselt mit dem X-Achse-Toggle.

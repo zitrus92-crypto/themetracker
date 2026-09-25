@@ -10,7 +10,7 @@
 - **Accel (Theme)** = Rang 3M − Rang 1M. Hoch positiv = war schwach, dreht frisch an = erster Leg. **Nur Accel ≥ +10 ist ein echtes Signal** (verifiziert: 83 % Signal-Stabilität am Folgetag; +1…+5 ist Rauschen).
 - **Accel (Industry)** = Rang 3M − Rang **1W** (zwitschriger, frühere Erkennung). Nicht 1:1 mit Theme-Accel vergleichbar.
 - **INST-Badge** = Top 40 in 1M UND 3M = institutionell bestätigt.
-- **★-Buttons** = markieren automatisch die Schnittmenge der Top 20 % (1W∩1M = frisch angedreht · 1M∩3M = institutionell anhaltend).
+- **★-Buttons** = markieren automatisch die Schnittmenge der Top 30 % (1W∩1M = frisch angedreht · 1M∩3M = institutionell anhaltend).
 
 ---
 
