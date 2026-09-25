@@ -1,7 +1,7 @@
 """
 Tickers-Tab: Bubble-Chart-Datengrundlage fuer Einzelaktien.
 
-Universum: die Ticker der Top-20%-Schnittmenge (1W UND 1M) aus Industries
+Universum: die Ticker der Top-30%-Schnittmenge (1W UND 1M) aus Industries
 ODER Themes, identische Logik zum "★ 1W∩1M"-Button im Frontend (siehe
 topIntersectionKeys() in docs/static/app.js), hier serverseitig fuer die
 Ticker-Ebene und ueber BEIDE Gruppentypen vereinigt.
@@ -30,6 +30,7 @@ TICKER_CONFIG = {
     # -- Universum: 1W∩1M Top-30%, Industries UND Themes -----------------------
     # War 0.20 - auf Wunsch schrittweise auf 0.25, dann 0.30 gelockert, damit
     # knapp verpasste Gruppen (Rang leicht ueber dem alten Cutoff) mitkommen.
+    # Muss mit TOP_PCT in docs/static/app.js uebereinstimmen.
     "PCT": 0.30,
     "TFS": ["1W", "1M"],
     "MAX_TICKERS": 1500,     # Reissleine, kein Filter - greift im Normalfall nicht
