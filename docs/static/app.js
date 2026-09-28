@@ -7,6 +7,10 @@ const I18N = {
   de: {
     notLoaded:    "— noch nicht geladen —",
     xAxisLabel:   "X-Achse:",
+    perfFilterLabel: "% Performance",
+    perfFilterAll:   "alle",
+    perfFilterReset: "Reset",
+    perfFilterTitle: (axis) => `Nur Einträge zeigen, deren ${axis}-Performance über diesem Schwellenwert liegt. Ganz links = kein Filter.`,
     updated:      "Stand: ",
     loading:      "Daten werden geladen…",
     noData:       "Keine Daten.",
@@ -253,6 +257,10 @@ const I18N = {
   en: {
     notLoaded:    "— not yet loaded —",
     xAxisLabel:   "X-axis:",
+    perfFilterLabel: "% Performance",
+    perfFilterAll:   "all",
+    perfFilterReset: "Reset",
+    perfFilterTitle: (axis) => `Only show entries whose ${axis} performance is above this threshold. Far left = no filter.`,
     updated:      "Updated: ",
     loading:      "Loading data…",
     noData:       "No data.",
@@ -1383,6 +1391,15 @@ let _indBubbleXAxis     = _bubbleXAxisDefault; // "3M" | "1W" — X-Achse des In
 let _tickersBubbleXAxis = _bubbleXAxisDefault; // "3M" | "1W" — X-Achse des Tickers-Bubble-Charts
 let _tickersData        = null; // docs/tickers.json (einmal pro Handelstag, wie setups.json)
 let _tickersNotExtended = false; // optionaler UI-Filter: nur Ticker <= EXT_ATR_MAX ATR-Einheiten über SMA50
+// "% Performance"-Schwellwerte der Bubble-Charts (Schieberegler je Achse).
+// null = kein Filter. xTf merkt sich, für welche X-Zeitebene der X-Wert galt —
+// wechselt die X-Achse (1W-Werte sind nicht mit 3M-Werten vergleichbar), wird
+// der X-Schwellwert verworfen, der Y-Wert (immer 1M) bleibt stehen.
+const _perfFilter = {
+  themes:  { x: null, y: null, xTf: null },
+  ind:     { x: null, y: null, xTf: null },
+  tickers: { x: null, y: null, xTf: null },
+};
 
 // Theme badge colours for all 40 Finviz themes
 const THEME_COLORS = {
@@ -2130,6 +2147,82 @@ function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M", legendHtml = 
   wireBubbleGroupHighlight(container);
 }
 
+// ── "% Performance"-Schieberegler (Themes-, Industry- und Tickers-Bubble) ────
+// Je Achse ein stufenloser Regler; sichtbar bleibt nur, was ÜBER dem
+// Schwellwert liegt. Der Reglerbereich kommt aus den UNGEFILTERTEN Punkten,
+// damit er beim Ziehen nicht mitschrumpft. Ganz links = kein Filter.
+const PERF_FILTER_RENDER = {
+  themes:  () => { if (_etfData) renderEtfThemes(_etfData); },
+  ind:     () => { if (_lastIndustries) renderIndustryBubble(_lastIndustries); },
+  tickers: () => renderTickersTab(),
+};
+
+function fmtPerfThreshold(v) {
+  return v == null ? t("perfFilterAll") : `≥ ${v > 0 ? "+" : ""}${v.toFixed(1)}%`;
+}
+
+function initPerfFilters() {
+  document.querySelectorAll("[data-perf-filter]").forEach(box => {
+    const key = box.dataset.perfFilter;
+    box.innerHTML = `
+      <span class="xaxis-toggle-label perf-filter__title"></span>
+      ${["x", "y"].map(axis => `
+        <label class="perf-filter__axis">
+          <span class="perf-filter__axis-name" data-axis-name="${axis}"></span>
+          <input type="range" class="perf-filter__range" data-axis="${axis}" step="0.1">
+          <span class="perf-filter__value" data-axis-value="${axis}"></span>
+        </label>`).join("")}
+      <button class="xaxis-btn perf-filter__reset"></button>`;
+    box.querySelectorAll(".perf-filter__range").forEach(input => {
+      input.addEventListener("input", () => {
+        const v = parseFloat(input.value);
+        _perfFilter[key][input.dataset.axis] = v <= parseFloat(input.min) ? null : v;
+        PERF_FILTER_RENDER[key]();
+      });
+    });
+    box.querySelector(".perf-filter__reset").addEventListener("click", () => {
+      _perfFilter[key].x = null;
+      _perfFilter[key].y = null;
+      PERF_FILTER_RENDER[key]();
+    });
+  });
+}
+
+// Gleicht die Regler (Bereich, Wert, Beschriftung) an die aktuellen, noch
+// ungefilterten Einträge an und gibt die gefilterten Einträge zurück.
+// getX/getY lesen X- bzw. 1M-Performance aus einem Eintrag.
+function applyPerfFilter(key, items, xTf, getX, getY) {
+  const st = _perfFilter[key];
+  if (st.xTf !== xTf) { st.x = null; st.xTf = xTf; }
+  const box = document.querySelector(`[data-perf-filter="${key}"]`);
+  if (box && box.querySelector(".perf-filter__range")) {
+    box.querySelector(".perf-filter__title").textContent = t("perfFilterLabel");
+    box.querySelector(".perf-filter__reset").textContent = t("perfFilterReset");
+    const names = { x: xTf, y: "1M" };
+    const getters = { x: getX, y: getY };
+    ["x", "y"].forEach(axis => {
+      const input = box.querySelector(`.perf-filter__range[data-axis="${axis}"]`);
+      const vals = items.map(getters[axis]).filter(v => v != null);
+      const lo = vals.length ? Math.floor(Math.min(...vals) * 10) / 10 : 0;
+      const hi = vals.length ? Math.ceil(Math.max(...vals) * 10) / 10 : 0;
+      input.min = lo;
+      input.max = hi;
+      // Neuer Datenbereich (z. B. anderer Tag, Not-Extended) -> Schwellwert klemmen
+      if (st[axis] != null && st[axis] > hi) st[axis] = hi;
+      if (st[axis] != null && st[axis] <= lo) st[axis] = null;
+      input.value = st[axis] ?? lo;
+      input.title = t("perfFilterTitle", names[axis]);
+      box.querySelector(`[data-axis-name="${axis}"]`).textContent = `${axis.toUpperCase()} (${names[axis]})`;
+      const valEl = box.querySelector(`[data-axis-value="${axis}"]`);
+      valEl.textContent = fmtPerfThreshold(st[axis]);
+      valEl.classList.toggle("perf-filter__value--on", st[axis] != null);
+    });
+    box.querySelector(".perf-filter__reset").disabled = st.x == null && st.y == null;
+  }
+  return items.filter(p =>
+    (st.x == null || getX(p) >= st.x) && (st.y == null || getY(p) >= st.y));
+}
+
 function renderBubbleChart(data, themeAccel) {
   const container = document.getElementById("etf-bubble-view");
   const xTf = _themeBubbleXAxis;
@@ -2147,7 +2240,7 @@ function renderBubbleChart(data, themeAccel) {
         url: themeScreenerUrl(theme),
       };
     });
-  renderBubbleSvg(container, pts, "Neutral", xTf);
+  renderBubbleSvg(container, applyPerfFilter("themes", pts, xTf, p => p.x3m, p => p.y1m), "Neutral", xTf);
 }
 
 // --- Industry Bubble Chart (analogous to Theme bubble chart) ---
@@ -2176,7 +2269,7 @@ function renderIndustryBubble(industries) {
       url: finvizUrl(row.ticker),
     };
   });
-  renderBubbleSvg(container, pts, "Neutral / Konsolidierung", xTf);
+  renderBubbleSvg(container, applyPerfFilter("ind", pts, xTf, p => p.x3m, p => p.y1m), "Neutral / Konsolidierung", xTf);
 }
 
 // Schwellwert für den "Not Extended"-Toggle: aus tickers.json (config.EXT_ATR_MAX),
@@ -2193,13 +2286,20 @@ function tickersFilteredRows() {
   return rows.filter(r => r.ext_atr != null && r.ext_atr <= maxAtr);
 }
 
-// Genau die Ticker, die der Bubble-Chart gerade zeichnet (Not-Extended-Filter
-// + gültige Werte für die aktuelle X-Achse) — einzige Quelle für Chart UND
-// Copy-Button, damit beide nie auseinanderlaufen.
-function tickersVisibleRows() {
+// Ticker mit gültigen Werten für die aktuelle X-Achse (inkl. Not-Extended-
+// Filter), noch OHNE "% Performance"-Schwellwerte — Basis für den Reglerbereich.
+function tickersAxisRows() {
   const xTf = _tickersBubbleXAxis;
   return tickersFilteredRows()
     .filter(r => r.perfs?.[xTf] != null && r.perfs?.["1M"] != null && r.market_cap);
+}
+
+// Genau die Ticker, die der Bubble-Chart gerade zeichnet (Not-Extended-Filter
+// + gültige Werte für die aktuelle X-Achse + "% Performance"-Schwellwerte) —
+// einzige Quelle für Chart UND Copy-Button, damit beide nie auseinanderlaufen.
+function tickersVisibleRows() {
+  const xTf = _tickersBubbleXAxis;
+  return applyPerfFilter("tickers", tickersAxisRows(), xTf, r => r.perfs[xTf], r => r.perfs["1M"]);
 }
 
 // Stabile Farbe je Theme/Industry-Gruppe. Themes nutzen die app-weite
@@ -2315,8 +2415,9 @@ function renderTickersTab() {
   const cfg = _tickersData.config || {};
   const cap = Math.round((cfg.MIN_MARKET_CAP ?? 1_000_000_000) / 1e9);
   const total = _tickersData.rows.length;
-  const shown = _tickersNotExtended ? tickersFilteredRows().length : total;
-  const n = _tickersNotExtended ? `${shown}/${total}` : `${total}`;
+  const pf = _perfFilter.tickers;
+  const filtered = _tickersNotExtended || pf.x != null || pf.y != null;
+  const n = filtered ? `${tickersVisibleRows().length}/${total}` : `${total}`;
   meta.textContent = t("tickersMeta", n, cap, cfg.MIN_ATR_PCT ?? 4, cfg.ATR_WINDOW ?? 20, _tickersData.date);
   renderTickersBubble();
 }
@@ -2745,7 +2846,7 @@ function initBubbleXAxisToggles() {
   };
   wire("theme-bubble-xaxis-toggle", _themeBubbleXAxis, tf => { _themeBubbleXAxis = tf; renderEtfThemes(_etfData); });
   wire("ind-bubble-xaxis-toggle",   _indBubbleXAxis,   tf => { _indBubbleXAxis = tf; if (_lastIndustries) renderIndustryBubble(_lastIndustries); });
-  wire("tickers-bubble-xaxis-toggle", _tickersBubbleXAxis, tf => { _tickersBubbleXAxis = tf; renderTickersBubble(); });
+  wire("tickers-bubble-xaxis-toggle", _tickersBubbleXAxis, tf => { _tickersBubbleXAxis = tf; renderTickersTab(); });
 }
 
 function initEtfSortHeaders() {
@@ -3573,6 +3674,7 @@ initEtfViewToggle();
 initEtfSortHeaders();
 initThemeVizToggle();
 initBubbleXAxisToggles();
+initPerfFilters();
 initTop20Buttons();
 
 // --- Load data ---

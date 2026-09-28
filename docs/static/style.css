@@ -754,3 +754,13 @@ details.wp-details { margin-bottom: 18px; }
   .exp-charts { grid-template-columns: 1fr; }
   .exp-sample code { display: block; margin-left: 0; margin-top: 4px; }
 }
+
+/* "% Performance"-Schieberegler der Bubble-Charts (eigene Zeile unter dem X-Achse-Toggle) */
+.perf-filter { flex-basis:100%; display:flex; align-items:center; flex-wrap:wrap; gap:6px 16px; margin-top:4px; }
+.perf-filter__axis { display:flex; align-items:center; gap:6px; font-size:12px; color: var(--text-dim); }
+.perf-filter__axis-name { min-width:52px; }
+.perf-filter__range { width:200px; max-width:40vw; accent-color: var(--accent); cursor:pointer; }
+.perf-filter__value { min-width:64px; font-variant-numeric: tabular-nums; }
+.perf-filter__value--on { color: var(--accent); font-weight:600; }
+.perf-filter__reset { padding:2px 10px; }
+.perf-filter__reset:disabled { opacity:0.4; cursor:default; }
