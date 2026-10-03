@@ -90,7 +90,7 @@ jobs:
       # single implementation of the stage/segment math (client + report).
       - name: Run metric tests
         if: steps.guard.outputs.active == 'true'
-        run: node --test docs/static/themeMetrics.test.js
+        run: node --test docs/static/themeMetrics.test.js docs/static/leadersMetrics.test.js
 
       - name: Run calendar/snapshot tests
         if: steps.guard.outputs.active == 'true'
@@ -126,7 +126,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run metric tests
-        run: node --test docs/static/themeMetrics.test.js
+        run: node --test docs/static/themeMetrics.test.js docs/static/leadersMetrics.test.js
 
       - name: Run calendar/snapshot tests
         run: python -m unittest discover -s tests -t . -p "test_*.py"

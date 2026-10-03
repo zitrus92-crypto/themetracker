@@ -138,6 +138,44 @@ const I18N = {
     topTickers:    "🎯 Tickers",
     tickersTitle:  "🎯 Tickers Bubble Chart",
     hintTickers:   "Universum: Ticker aus den Industries UND Themes, die aktuell in der Top-30-%-Schnittmenge nach 1W UND 1M liegen (★ 1W∩1M).\nGefiltert: Market Cap > 1 Mrd. $ und ATR% (20 Tage) > 4 % — beides vollautomatisch, keine manuelle Liste.\nX-Achse: 3M- oder 1W-Performance, Y-Achse: 1M-Performance.\nGröße = Market Cap (log-skaliert). Farbe = Theme/Industry-Gruppe (siehe Legende unten) — gehört ein Ticker zu mehreren Gruppen, zählt die erste (Industries vor Themes), alle stehen im Tooltip.\n„Not Extended“-Toggle: blendet Ticker aus, die weit über ihrem SMA50 laufen (Jeff-Sun-Konvention, siehe eigener Tooltip).\n„Copy Tickers“: kopiert die aktuell sichtbaren Ticker als kommagetrennte Liste zum Einfügen in eine TradingView-Watchlist.\nRechnet einmal pro Handelstag nach US-Close (braucht settled Tageskerzen, wie der Experimental-Tab). Klick auf Bubble öffnet die Finviz-Aktienseite.",
+    topLeaders:    "🏆 Leading Stocks",
+    leadTitle:     "🏆 Leading Stocks",
+    hintLeaders:   "Welche Einzelaktien führen die stärksten Themes an?\nKonstituenten: je Theme bis zu 20 Finviz-Mitglieder, automatisch gewählt nach Ø Dollarvolumen ÷ Anzahl Theme-Mitgliedschaften (drückt Megacaps, die Finviz in fast jedem Theme führt). Datei: data/theme_constituents.json.\nKopfzeile = Breadth über alle Konstituenten, Tabelle = Leader-Ranking nach RS vs. Theme (Gleichstand: RS vs. SPY).\nGrün = Leader (Rang 1). Grau = Mitläufer: RS unter dem Theme UND ≥ 3 ADR unter dem 52W-Hoch.\nFilter (Dollarvolumen, ATR%) wirken nur auf die Tabelle, nicht auf die Breadth.\nFehlende Kursdaten = n/a, nie interpoliert. Alle Schwellen: static/config.js.\nRechnet einmal pro Handelstag nach US-Close.",
+    leadSortLabel: "Sortierung",
+    leadSortScore: "Theme-Score",
+    leadSortBreadth: "Breadth",
+    leadTopN:      "Top-N",
+    leadMinDvol:   "Min $-Vol",
+    leadAtr:       "ATR%",
+    leadAll:       "alle",
+    leadNoData:    "Noch keine Leading-Stocks-Daten — sie entstehen beim nächsten Post-Close-Lauf.",
+    leadLoading:   "Lade Kursdaten…",
+    leadMeta:      (date, n, themes) => `Stand ${date} · ${n} Konstituenten in ${themes} Themes · RS-Gewichtung IBD-Nachbildung (0,4·3M + 0,2·6M + 0,2·9M + 0,2·12M)`,
+    leadTipDefault:"Tippe oder fahre über ein ⓘ für Definition und Evidenzbasis.",
+    leadMembers:   (n, m) => `${n} Konstituenten${m < n ? ` · ${n - m} ohne Kursdaten` : ""}`,
+    leadManual:    "manuell",
+    leadThin:      "wenige Mitglieder",
+    leadBasketLow: (d, dd) => `Basket-Tief ${d} (${dd} %)`,
+    leadNoLow:     "kein Basket-Tief ≥ 10 % im Fenster",
+    leadLowOld:    (d) => `Basket-Tief ${d} zu alt für 52W-Hoch-Vergleich`,
+    leadEmptyRows: "Kein Ticker erfüllt die Filter.",
+    leadEvidence:  { validated: "validiert", convention: "Konvention", overfit: "potenziell überangepasst" },
+    leadEvidenceLabel: "Evidenz",
+    leadCols: {
+      pct_above_50ma: ["% > SMA50", "Anteil der Konstituenten mit Close über SMA50."],
+      pct_near_high:  ["% nahe Hoch", "Anteil der Konstituenten höchstens 10 % unter dem 52W-Hoch (George/Hwang 2004: Nähe zum 52W-Hoch sagt Renditen voraus)."],
+      new_highs_5d:   ["Neue Hochs 5T", "Anzahl Konstituenten mit neuem 52W-Hoch (High über dem Maximum der 251 Vortage) in den letzten 5 Handelstagen."],
+      rank_change_4w: ["Rang Δ4W", "Veränderung des Theme-Rangs über 20 settled Snapshot-Tage. Positiv = aufgestiegen. n/a, solange die Historie zu kurz ist oder ein Datenloch enthält (Industrie-Momentum, Moskowitz/Grinblatt 1999)."],
+      rs_vs_theme:    ["RS Theme", "3M-Performance der Aktie minus 3M-Performance des gleichgewichteten Theme-Baskets (alle Konstituenten), in %-Punkten."],
+      rs_vs_spy:      ["RS SPY", "IBD-Nachbildung: 0,4·ROC(63) + 0,2·ROC(126) + 0,2·ROC(189) + 0,2·ROC(252) der Aktie minus derselbe Wert für SPY. IBD veröffentlicht die Formel nicht; Gewichte in config.js."],
+      dist_52wh:      ["Abst. 52WH", "Abstand zum 52W-Hoch in ADR-Einheiten (Klammer: in %). −1 = eine durchschnittliche Tagesspanne unter dem Hoch."],
+      first_to_high:  ["1. Hoch", "✓ = erster Konstituent mit neuem 52W-Hoch nach dem letzten Basket-Tief (≥ 10 % Drawdown). Datum = eigenes erstes neues Hoch nach dem Tief."],
+      down_day_strength: ["Down-Day", "Ø Tagesrendite minus SPY an Tagen mit SPY < −1 % (letzte 60 Tage), in %-Punkten. Klammer = Anzahl solcher Tage — wenige Tage = schwache Aussage."],
+      rvol_20d:       ["RVOL", "Heutiges Volumen ÷ Ø Volumen der 20 Tage davor."],
+      adr_pct:        ["ADR%", "Ø (High − Low) ÷ Close über 20 Tage."],
+      atr_pct:        ["ATR%", "Ø True Range ÷ Close über das gewählte Fenster (1W = 5, 14T = 14, 1M = 20 Tage)."],
+      dollar_vol_20d: ["$-Vol", "Ø Close × Volumen über 20 Tage (Liquiditätsfilter)."],
+    },
     tickersNoData: "Noch keine tickers.json — die Datei entsteht beim nächsten Post-Close-Lauf.",
     tickersMeta:   (n, cap, atr, atrDays, date) => `${n} Ticker · Market Cap > $${cap} Mrd. · ATR% (${atrDays}T) > ${atr}% · Stand: ${date}`,
     tickersNotExtTitle: (x) => `Blendet Ticker aus, die mehr als ${x} ATR(20) über ihrem SMA50 liegen — Extension-Konvention (u.a. Jeff Sun): weit über der Norm entfernte Kurse = schlechtes Chance/Risiko für einen neuen Einstieg.\nFormel: (Close − SMA50) ÷ ATR(20). Schwelle ist ein UNVALIDIERTER Default.`,
@@ -388,6 +426,44 @@ const I18N = {
     topTickers:    "🎯 Tickers",
     tickersTitle:  "🎯 Tickers Bubble Chart",
     hintTickers:   "Universe: tickers from the industries AND themes currently in the top-30% intersection by 1W AND 1M (★ 1W∩1M).\nFiltered: Market Cap > $1B and ATR% (20 days) > 4% — both fully automatic, no manual list.\nX-axis: 3M or 1W performance, Y-axis: 1M performance.\nSize = Market Cap (log-scaled). Color = Theme/Industry group (see legend below) — a ticker in several groups counts under the first (industries before themes), all of them show in the tooltip.\n\"Not Extended\" toggle: hides tickers running far above their SMA50 (Jeff Sun convention, see its own tooltip).\n\"Copy Tickers\": copies the currently visible tickers as a comma-separated list to paste into a TradingView watchlist.\nRuns once per trading day after US close (needs settled daily candles, like the Experimental tab). Click a bubble to open the Finviz stock page.",
+    topLeaders:    "🏆 Leading Stocks",
+    leadTitle:     "🏆 Leading Stocks",
+    hintLeaders:   "Which single stocks lead the strongest themes?\nConstituents: up to 20 Finviz members per theme, picked automatically by avg dollar volume ÷ number of theme memberships (pushes down megacaps Finviz lists in almost every theme). File: data/theme_constituents.json.\nHeader = breadth across all constituents, table = leader ranking by RS vs theme (tie: RS vs SPY).\nGreen = leader (rank 1). Grey = laggard: RS below the theme AND ≥ 3 ADR below the 52W high.\nFilters (dollar volume, ATR%) only affect the table, not breadth.\nMissing price data = n/a, never interpolated. All thresholds: static/config.js.\nRuns once per trading day after US close.",
+    leadSortLabel: "Sort",
+    leadSortScore: "Theme score",
+    leadSortBreadth: "Breadth",
+    leadTopN:      "Top N",
+    leadMinDvol:   "Min $ vol",
+    leadAtr:       "ATR%",
+    leadAll:       "all",
+    leadNoData:    "No Leading Stocks data yet — it is created by the next post-close run.",
+    leadLoading:   "Loading price data…",
+    leadMeta:      (date, n, themes) => `As of ${date} · ${n} constituents in ${themes} themes · RS weighting IBD replica (0.4·3M + 0.2·6M + 0.2·9M + 0.2·12M)`,
+    leadTipDefault:"Tap or hover an ⓘ for definition and evidence base.",
+    leadMembers:   (n, m) => `${n} constituents${m < n ? ` · ${n - m} without price data` : ""}`,
+    leadManual:    "manual",
+    leadThin:      "few members",
+    leadBasketLow: (d, dd) => `Basket low ${d} (${dd}%)`,
+    leadNoLow:     "no basket low ≥ 10% in window",
+    leadLowOld:    (d) => `Basket low ${d} too old for 52W-high check`,
+    leadEmptyRows: "No ticker passes the filters.",
+    leadEvidence:  { validated: "validated", convention: "convention", overfit: "potentially overfit" },
+    leadEvidenceLabel: "Evidence",
+    leadCols: {
+      pct_above_50ma: ["% > SMA50", "Share of constituents closing above SMA50."],
+      pct_near_high:  ["% near high", "Share of constituents at most 10% below the 52W high (George/Hwang 2004: 52W-high proximity predicts returns)."],
+      new_highs_5d:   ["New highs 5d", "Constituents with a new 52W high (high above the max of the prior 251 days) within the last 5 trading days."],
+      rank_change_4w: ["Rank Δ4W", "Theme rank change over 20 settled snapshot days. Positive = moved up. n/a while history is too short or has a data gap (industry momentum, Moskowitz/Grinblatt 1999)."],
+      rs_vs_theme:    ["RS theme", "Stock 3M performance minus 3M performance of the equal-weight theme basket (all constituents), in %-points."],
+      rs_vs_spy:      ["RS SPY", "IBD replica: 0.4·ROC(63) + 0.2·ROC(126) + 0.2·ROC(189) + 0.2·ROC(252) of the stock minus the same for SPY. IBD does not publish its formula; weights in config.js."],
+      dist_52wh:      ["Dist 52WH", "Distance to the 52W high in ADR units (brackets: in %). −1 = one average daily range below the high."],
+      first_to_high:  ["1st high", "✓ = first constituent to make a new 52W high after the last basket low (≥ 10% drawdown). Date = its own first new high after the low."],
+      down_day_strength: ["Down day", "Avg daily return minus SPY on days with SPY < −1% (last 60 days), in %-points. Brackets = number of such days — few days = weak signal."],
+      rvol_20d:       ["RVOL", "Today's volume ÷ avg volume of the 20 days before."],
+      adr_pct:        ["ADR%", "Avg (high − low) ÷ close over 20 days."],
+      atr_pct:        ["ATR%", "Avg true range ÷ close over the chosen window (1W = 5, 14D = 14, 1M = 20 days)."],
+      dollar_vol_20d: ["$ vol", "Avg close × volume over 20 days (liquidity filter)."],
+    },
     tickersNoData: "No tickers.json yet — the file appears after the next post-close run.",
     tickersMeta:   (n, cap, atr, atrDays, date) => `${n} tickers · Market Cap > $${cap}B · ATR% (${atrDays}D) > ${atr}% · as of: ${date}`,
     tickersNotExtTitle: (x) => `Hides tickers more than ${x} ATR(20) above their SMA50 — extension convention (a.o. Jeff Sun): stocks running far from the norm make for a poor risk/reward on a new entry.\nFormula: (Close − SMA50) ÷ ATR(20). The threshold is an UNVALIDATED default.`,
@@ -559,6 +635,7 @@ function applyTranslations() {
   if (_etfData) renderEtfTab();
   renderSetupTabs();
   renderExperimental();
+  if (_leadersBars) renderLeadersTab();
   renderRegime();
   renderSituational();
 }
@@ -1335,6 +1412,11 @@ function initTabs() {
         themesSubNav.classList.add("hidden");
         showPanel("experimental");
         renderExperimental();
+      } else if (btn.dataset.top === "leaders") {
+        subNav.classList.add("hidden");
+        themesSubNav.classList.add("hidden");
+        showPanel("leaders");
+        renderLeadersTab();
       } else if (btn.dataset.top === "tickers") {
         subNav.classList.add("hidden");
         themesSubNav.classList.add("hidden");
@@ -2929,7 +3011,9 @@ async function loadSnapshots() {
       // Roh-Perfs mitnehmen: der RRG-Tail braucht 1M/3M je Tag — für Themes
       // UND Industries, beide Ansichten lesen aus demselben Shard.
       const perfs = { theme: {}, industry: {} };
+      const ranks = {};  // Theme-Rang je Tag (Leading-Stocks: rank_change_4w)
       for (const row of entry.rows) {
+        if (row.type === "theme" && row.rank != null) ranks[row.name] = row.rank;
         if (!perfs[row.type]) continue;
         if (row.type === "theme" && _TM) {
           stages[row.name] = _TM.classifyStage(_TM.segments(row.perfs), row.accel);
@@ -2938,7 +3022,7 @@ async function loadSnapshots() {
       }
       days.push({
         date, gap: entry.gap, settled: entry.settled,
-        fetchedAt: entry.fetched_at, rowCount: entry.rows.length, stages, perfs,
+        fetchedAt: entry.fetched_at, rowCount: entry.rows.length, stages, perfs, ranks,
       });
     }
   }
@@ -3678,6 +3762,226 @@ initPerfFilters();
 initTop20Buttons();
 
 // --- Load data ---
+// ── Leading Stocks Tab ──────────────────────────────────────────────────────
+// Rechenkern: static/leadersMetrics.js, Schwellen: static/config.js.
+// Daten: data/leaders_bars.json + data/theme_constituents.json (leaders.py,
+// einmal pro Handelstag nach Close). Lazy: erst beim Öffnen des Tabs geladen,
+// die Kursdatei ist ~2 MB. Liest Theme-Daten nur (Rang/Score aus etf_data.json,
+// Rang-Historie aus den Snapshots) — bestehende Tabs bleiben unberührt.
+let _LM = null;               // leadersMetrics-Modul
+let _LCFG = null;             // LEADERS aus config.js
+let _leadersBars = null;
+let _leadersCons = null;
+let _leadersLoad = null;      // laufendes Promise (Doppelklick-Schutz)
+let _leadersFailed = false;
+let _leadersCache = {};       // atrPeriod -> computeLeaders()-Ergebnis
+let _leadersUi = null;        // {sort, topN, minDvol, minAtr, atrPeriod}
+
+async function ensureLeadersData() {
+  if (_leadersBars && _LM) return true;
+  if (_leadersFailed) return false;
+  if (!_leadersLoad) {
+    _leadersLoad = (async () => {
+      try {
+        const v = Date.now();
+        // Dieselbe URL wie der Import in leadersMetrics.js, damit config.js
+        // genau einmal geladen wird.
+        const [lm, cfg] = await Promise.all([
+          import("./leadersMetrics.js?v=" + v),
+          import("./config.js"),
+        ]);
+        const bust = `?t=${v}`;
+        const [bRes, cRes] = await Promise.all([
+          fetch("data/leaders_bars.json" + bust),
+          fetch("data/theme_constituents.json" + bust),
+        ]);
+        if (!bRes.ok || !cRes.ok) { _leadersFailed = true; return; }
+        _leadersBars = await bRes.json();
+        _leadersCons = await cRes.json();
+        _LM = lm;
+        _LCFG = cfg.LEADERS;
+        const num = (k, d) => { const x = Number(prefGet(k)); return prefGet(k) !== null && Number.isFinite(x) ? x : d; };
+        const per = prefGet("leadAtrPeriod");
+        _leadersUi = {
+          sort: prefGet("leadSort") === "breadth" ? "breadth" : "score",
+          topN: num("leadTopN", _LCFG.TOP_N),
+          minDvol: num("leadMinDvol", _LCFG.MIN_DOLLAR_VOL),
+          minAtr: num("leadMinAtr", _LCFG.MIN_ATR_PCT),
+          atrPeriod: _LCFG.ATR_PERIODS[per] ? per : _LCFG.ATR_PERIOD,
+        };
+      } catch (e) {
+        console.error("Leading Stocks konnte nicht geladen werden:", e);
+        _leadersFailed = true;
+      }
+    })();
+  }
+  await _leadersLoad;
+  return !!(_leadersBars && _LM);
+}
+
+function leadersResult() {
+  const key = _leadersUi.atrPeriod;
+  if (!_leadersCache[key]) {
+    _leadersCache[key] = _LM.computeLeaders(
+      _leadersBars, _leadersCons, _etfData.themes, _snapDays || [], { atrPeriod: key });
+  }
+  return _leadersCache[key];
+}
+
+// Sichtbare Themes inkl. gefilterter Zeilen — Grundlage für Tabelle UND Export.
+function leadersVisibleThemes() {
+  const ui = _leadersUi;
+  return _LM.orderThemes(leadersResult(), ui.sort).slice(0, ui.topN).map(t => ({
+    ...t, rows: _LM.filterRows(t.rows, { minDollarVol: ui.minDvol, minAtrPct: ui.minAtr }),
+  }));
+}
+
+const leadNa = () => `<span class="lead-na">n/a</span>`;
+function leadNum(v, digits = 1, suffix = "", signed = true) {
+  if (v === null || v === undefined || !Number.isFinite(v)) return leadNa();
+  const cls = !signed ? "" : v > 0 ? "lead-pos" : v < 0 ? "lead-neg" : "";
+  const txt = (signed && v > 0 ? "+" : "") + v.toFixed(digits) + suffix;
+  return cls ? `<span class="${cls}">${txt}</span>` : txt;
+}
+function leadDvol(v) {
+  if (v === null || v === undefined) return leadNa();
+  if (v >= 1e9) return (v / 1e9).toFixed(1) + (_lang === "de" ? " Mrd" : "B");
+  return Math.round(v / 1e6) + (_lang === "de" ? " Mio" : "M");
+}
+function leadDate(iso) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  return _lang === "de" ? `${d}.${m}.` : `${m}/${d}`;
+}
+function leadInfo(key) {
+  const col = t("leadCols")[key];
+  const ev = _LCFG.EVIDENCE[key] || "convention";
+  const tip = `${col[0]}: ${col[1]} · ${t("leadEvidenceLabel")}: ${t("leadEvidence")[ev]}`;
+  return `<span class="lead-info lead-ev--${ev}" data-key="${key}" title="${esc(tip)}" tabindex="0">i</span>`;
+}
+
+function leadersCardHtml(theme) {
+  const b = theme.breadth;
+  const pct = (v) => v === null ? leadNa() : Math.round(v) + " %";
+  const rc = b.rank_change_4w;
+  const rcTxt = rc === null ? leadNa()
+    : `<span class="${rc > 0 ? "lead-pos" : rc < 0 ? "lead-neg" : ""}">${rc > 0 ? "▲ +" : rc < 0 ? "▼ " : ""}${rc}</span>`;
+  const chip = (key, val) => `<span class="lead-chip">${t("leadCols")[key][0]} <b>${val}</b>${leadInfo(key)}</span>`;
+  const lowTxt = theme.basket_low
+    ? (theme.fth_reason === "low_too_old" ? t("leadLowOld", leadDate(theme.basket_low.date))
+      : t("leadBasketLow", leadDate(theme.basket_low.date), theme.basket_low.drawdown.toFixed(1)))
+    : t("leadNoLow");
+  const tags = [
+    theme.source === "manual" ? `<span class="lead-tag">${t("leadManual")}</span>` : "",
+    theme.thin ? `<span class="lead-tag">${t("leadThin")}</span>` : "",
+  ].join("");
+
+  const cols = ["rs_vs_theme", "rs_vs_spy", "dist_52wh", "first_to_high", "down_day_strength",
+    "rvol_20d", "adr_pct", "atr_pct", "dollar_vol_20d"];
+  const head = `<th>#</th><th>Ticker</th>` + cols.map(k =>
+    `<th>${t("leadCols")[k][0]}${k === "atr_pct" ? ` ${_leadersUi.atrPeriod}` : ""} ${leadInfo(k)}</th>`).join("");
+  const body = theme.rows.length ? theme.rows.map(r => {
+    const sym = r.ticker.includes(":") ? r.ticker.split(":")[1] : r.ticker;
+    const cls = r.leader ? "lead-row--leader" : r.laggard ? "lead-row--laggard" : "";
+    const fth = r.first_to_high === null ? leadNa()
+      : `${r.first_to_high ? `<span class="lead-pos">✓</span> ` : ""}${r.first_high_date ? leadDate(r.first_high_date) : "—"}`;
+    const dist = r.dist_52wh_adr === null ? leadNa()
+      : `${r.dist_52wh_adr.toFixed(1)} <span class="lead-dim">(${r.dist_52wh_pct.toFixed(1)} %)</span>`;
+    const dd = r.down_day_strength === null ? leadNa()
+      : `${leadNum(r.down_day_strength)} <span class="lead-dim">(${r.down_days})</span>`;
+    return `<tr class="${cls}">
+      <td>${r.rank}</td>
+      <td>${r.leader ? "👑 " : ""}<a href="${finvizQuoteUrl(sym.replace(".", "-"))}" target="_blank" rel="noopener" class="lead-sym">${esc(r.ticker)}</a></td>
+      <td>${leadNum(r.rs_vs_theme)}</td>
+      <td>${leadNum(r.rs_vs_spy)}</td>
+      <td>${dist}</td>
+      <td>${fth}</td>
+      <td>${dd}</td>
+      <td>${r.rvol_20d === null ? leadNa() : r.rvol_20d.toFixed(1) + "×"}</td>
+      <td>${leadNum(r.adr_pct, 1, "", false)}</td>
+      <td>${leadNum(r.atr_pct, 1, "", false)}</td>
+      <td>${leadDvol(r.dollar_vol_20d)}</td>
+    </tr>`;
+  }).join("") : `<tr><td colspan="11" class="empty-msg">${t("leadEmptyRows")}</td></tr>`;
+
+  return `<div class="lead-card">
+    <div class="lead-card__head">
+      <span class="lead-rank">#${theme.rank ?? "–"}</span>
+      <a class="lead-name" href="${themeScreenerUrl(theme.name)}" target="_blank" rel="noopener">${esc(theme.name)}</a>
+      ${tags}
+      <span class="lead-dim">${t("leadMembers", b.members, b.members_with_data)} · ${lowTxt}</span>
+    </div>
+    <div class="lead-chips">
+      ${chip("pct_above_50ma", pct(b.pct_above_50ma))}
+      ${chip("pct_near_high", pct(b.pct_near_high))}
+      ${chip("new_highs_5d", b.new_highs_5d ?? leadNa())}
+      ${chip("rank_change_4w", rcTxt)}
+    </div>
+    <div class="table-scroll"><table class="lead-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
+  </div>`;
+}
+
+function leadersBarHtml() {
+  const ui = _leadersUi;
+  const opt = (vals, cur, fmt) => vals.map(v => `<option value="${v}"${v === cur ? " selected" : ""}>${fmt(v)}</option>`).join("");
+  const seg = (attr, items, cur) => items.map(([v, label]) =>
+    `<button class="xaxis-btn${v === cur ? " active" : ""}" data-${attr}="${v}">${label}</button>`).join("");
+  return `<div class="lead-bar">
+    <span class="lead-group"><span class="xaxis-toggle-label">${t("leadSortLabel")}</span>
+      ${seg("lsort", [["score", t("leadSortScore")], ["breadth", t("leadSortBreadth")]], ui.sort)}</span>
+    <span class="lead-group"><span class="xaxis-toggle-label">${t("leadTopN")}</span>
+      <select class="lead-select" data-lfilter="topN">${opt(_LCFG.TOP_N_OPTIONS, ui.topN, v => v)}</select></span>
+    <span class="lead-group"><span class="xaxis-toggle-label">${t("leadMinDvol")}</span>
+      <select class="lead-select" data-lfilter="minDvol">${opt(_LCFG.MIN_DOLLAR_VOL_OPTIONS, ui.minDvol, v => v ? leadDvol(v) : t("leadAll"))}</select></span>
+    <span class="lead-group"><span class="xaxis-toggle-label">${t("leadAtr")}</span>
+      ${seg("lperiod", Object.keys(_LCFG.ATR_PERIODS).map(k => [k, _lang === "de" ? k : k.replace("T", "D")]), ui.atrPeriod)}
+      <select class="lead-select" data-lfilter="minAtr">${opt(_LCFG.MIN_ATR_OPTIONS, ui.minAtr, v => v ? "> " + v + " %" : t("leadAll"))}</select></span>
+  </div>`;
+}
+
+async function renderLeadersTab() {
+  const box = document.getElementById("leaders-container");
+  if (!box) return;
+  if (!_leadersBars) box.innerHTML = `<p class="loading">${t("leadLoading")}</p>`;
+  const ok = await ensureLeadersData();
+  if (!ok) { box.innerHTML = `<p class="pick-empty">${t("leadNoData")}</p>`; return; }
+  if (!_etfData?.themes) { box.innerHTML = `<p class="loading">${t("loading")}</p>`; return; }
+
+  const themes = leadersVisibleThemes();
+  const nCons = Object.values(_leadersCons.themes).reduce((s, c) => s + c.tickers.length, 0);
+  box.innerHTML = `${leadersBarHtml()}
+    <p class="picks-subtitle lead-meta">${t("leadMeta", _leadersBars.date, nCons, Object.keys(_leadersCons.themes).length)}</p>
+    <p class="lead-tip" id="lead-tip">${t("leadTipDefault")}</p>
+    ${themes.map(leadersCardHtml).join("")}`;
+  wireLeadersControls(box);
+}
+
+function wireLeadersControls(box) {
+  const ui = _leadersUi;
+  box.querySelectorAll("[data-lsort]").forEach(b => b.onclick = () => {
+    ui.sort = b.dataset.lsort; prefSet("leadSort", ui.sort); renderLeadersTab();
+  });
+  box.querySelectorAll("[data-lperiod]").forEach(b => b.onclick = () => {
+    ui.atrPeriod = b.dataset.lperiod; prefSet("leadAtrPeriod", ui.atrPeriod); renderLeadersTab();
+  });
+  box.querySelectorAll("[data-lfilter]").forEach(sel => sel.onchange = () => {
+    const k = sel.dataset.lfilter;
+    ui[k] = Number(sel.value);
+    prefSet("lead" + k[0].toUpperCase() + k.slice(1), ui[k]);
+    renderLeadersTab();
+  });
+  // Info-Icons: Hover (Desktop) und Tap (Mobil) schreiben in die Tipp-Zeile —
+  // ein schwebender Tooltip würde im horizontal scrollenden Tabellen-Container
+  // abgeschnitten.
+  const tip = box.querySelector("#lead-tip");
+  const show = (el) => { tip.textContent = el.getAttribute("title"); tip.classList.add("lead-tip--active"); };
+  box.querySelectorAll(".lead-info").forEach(el => {
+    el.addEventListener("mouseenter", () => show(el));
+    el.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); show(el); });
+    el.addEventListener("focus", () => show(el));
+  });
+}
+
 async function loadData() {
   const loading = document.getElementById("loading");
   const errorEl = document.getElementById("error-msg");
@@ -3721,6 +4025,9 @@ async function loadData() {
       computeThemeMetrics();
       renderEtfTab();
       renderSetupTabs();
+      // Leading Stocks: Kursdatei beim nächsten Öffnen frisch holen.
+      _leadersBars = null; _leadersLoad = null; _leadersFailed = false; _leadersCache = {};
+      if (!document.querySelector('[data-panel="leaders"]')?.classList.contains("hidden")) renderLeadersTab();
     } else {
       document.getElementById("etf-loading").classList.add("hidden");
       document.getElementById("etf-error").textContent = t("etfNoData");

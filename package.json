@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test docs/static/themeMetrics.test.js"
+    "test": "node --test docs/static/themeMetrics.test.js docs/static/leadersMetrics.test.js"
   }
 }

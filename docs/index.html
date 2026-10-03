@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Finviz Theme Tracker</title>
-  <link rel="stylesheet" href="static/style.css?v=20260914">
+  <link rel="stylesheet" href="static/style.css?v=20261003">
 </head>
 <body>
   <header>
@@ -22,6 +22,7 @@
     <button class="top-btn" data-top="industry" data-i18n="topIndustry">Industry</button>
     <button class="top-btn active" data-top="themes" data-i18n="tabEtfs">&#128200; Themes</button>
     <button class="top-btn" data-top="tickers" data-i18n="topTickers">&#127919; Tickers</button>
+    <button class="top-btn" data-top="leaders" data-i18n="topLeaders">&#127942; Leading Stocks</button>
     <button class="top-btn" data-top="experimental" data-i18n="topExperimental">&#129514; Experimental</button>
   </nav>
   <nav class="sub-nav hidden" id="industry-subnav">
@@ -273,6 +274,15 @@
       </div>
       <p class="picks-subtitle" id="tickers-meta"></p>
       <div id="tickers-bubble-view"></div>
+    </section>
+
+    <!-- Leading Stocks: Leader je Theme (leaders.py + static/leadersMetrics.js) -->
+    <section class="section-leaders tab-panel hidden" data-panel="leaders">
+      <div class="heading-group">
+        <h2 data-i18n="leadTitle">&#127942; Leading Stocks</h2>
+        <span class="section-hint" data-hint-key="hintLeaders">i</span>
+      </div>
+      <div id="leaders-container"></div>
     </section>
 
     <!-- First Flag tab (SPEC-first-flag-base-breakout §4) -->
