@@ -8,6 +8,9 @@
 //   "validated"  = in der Literatur belegt (Industrie-Momentum, 52W-Hoch-Naehe)
 //   "convention" = verbreitete Praxis ohne belastbaren Backtest
 //   "overfit"    = konkrete Gewichtung, potenziell ueberangepasst
+//   "descriptive"= stabile Beobachtung, aber ohne belegten Erwartungswert
+// Quelle der Labels fuer die Watchlist: Performer Study (Top-100-Performer
+// 1996–2026, Russell 3000 inkl. Delistings, Norgate), Stand 02.10.2026.
 
 export const LEADERS = {
   // -- Fenster (Handelstage) ------------------------------------------------
@@ -42,7 +45,10 @@ export const LEADERS = {
   DOWN_DAY_LOOKBACK: 60,
 
   // -- Ranking & Darstellung ------------------------------------------------
-  // Leader-Rang: rs_vs_theme absteigend, Gleichstand -> rs_vs_spy.
+  // Reihenfolge in den Theme-Karten; Leader = erster Ticker, der die
+  // Watchlist-Kriterien erfuellt. "rs_rating" (Default) sortiert wie die
+  // Performer Study nach RS; "rs_vs_theme" nach 3M relativ zum Theme-Basket.
+  LEADER_SORT: "rs_rating",
   // Ausgegraut ("Mitlaeufer"): RS unter dem Theme UND weit vom Hoch.
   LAGGARD_RS_THEME_MAX: 0,    // rs_vs_theme < 0 …
   LAGGARD_DIST_ADR: -3,       // … und dist_52wh <= -3 ADR-Einheiten
@@ -50,14 +56,47 @@ export const LEADERS = {
   // -- Filter-Defaults + Auswahllisten -------------------------------------
   TOP_N: 8,
   TOP_N_OPTIONS: [3, 5, 8, 12, 20, 40],
-  MIN_DOLLAR_VOL: 20e6,
+  // Default aus: die Watchlist prueft bereits Ø $-Vol 50T >= 5 Mio (Studie).
+  MIN_DOLLAR_VOL: 0,
   MIN_DOLLAR_VOL_OPTIONS: [0, 5e6, 20e6, 50e6, 100e6],
-  // ATR% = Ø True Range / Close. 1M = 20 Tage wie im Tickers-Tab
-  // (TICKER_CONFIG ATR_WINDOW), Default > 4 % ebenfalls wie dort.
+  // ATR% = Ø True Range / Close. 1M = 20 Tage wie im Tickers-Tab.
+  // Default AUS: Die Performer Study findet fuer Volatilitaets-Merkmale keinen
+  // besseren Erwartungswert, und Leader haben im Median nur 4,4 % ATR - ein
+  // 4-%-Filter strich am 02.10.2026 19 von 51 Watchlist-Namen.
   ATR_PERIODS: { "1W": 5, "14T": 14, "1M": 20 },
   ATR_PERIOD: "1M",
-  MIN_ATR_PCT: 4,
+  MIN_ATR_PCT: 0,
   MIN_ATR_OPTIONS: [0, 2, 3, 4, 5, 6, 8],
+
+  // -- Leader-Watchlist (Performer Study 1996–2026, Stufe 1) -----------------
+  // RS-Perzentil wie in der Studie: IBD-Gewichtung (RS_WEIGHTS oben) gegen ein
+  // breites Universum. Die Studie rankt gegen den Russell 3000; hier: die
+  // RS_UNIVERSE_N liquidesten Aktien (Ø $-Vol 50T) der Finviz-Industry-Listen
+  // als Naeherung (Konvention - Russell-Mitgliedschaft ist nicht verfuegbar).
+  RS_UNIVERSE_N: 3000,
+  WL: {
+    RS_MIN: 90,            // Chris: RS > 90 (Studie: validiert)
+    RS_STRONG: 95,         // hervorgehoben - Studie: Trefferquote 20 % statt 12 %
+    P6M_BARS: 126,
+    P6M_MIN: 50,           // 6M-Performance > +50 % (Studie: validiert)
+    DIST_MAX_PCT: 20,      // <= 20 % unter 52W-Hoch (Chris; Studie: 15 %, Konvention)
+    ABOVE_SMA50: true,     // Konvention
+    ABOVE_SMA200: true,    // Konvention
+    MIN_PRICE: 10,         // Studie: deskriptiv (+0,65 % statt +0,55 % pro Trade)
+    MIN_DVOL50: 5e6,       // Studie: Ersatz fuer Russell-Mitgliedschaft, Konvention
+  },
+  // -- Stufe 2: Trigger am Breakout-Tag (Studie: validiert in der RS-95-Variante)
+  TRIGGER: {
+    PIVOT_BARS: 20,        // Close ueber dem Hoch der 20 Vortage
+    RVOL_MIN: 3,           // Volumen >= 3x Ø der 50 Vortage …
+    GAP_MIN_PCT: 4,        // … ODER Gap (Open vs. Vortages-Close) >= 4 %
+    VOL_BASE_BARS: 50,
+    WEAK_VOL_MAX: 1,       // Trigger mit Volumen < 1x = "meiden" (validiert)
+  },
+  // -- EP (Episodic Pivot, Earnings-Proxy der Studie): Gap >= 4 % bei >= 3x Volumen
+  EP: { GAP_MIN_PCT: 4, VOL_MULT: 3, WINDOW: 6 },
+  // -- RMV = ATR5 / ATR50: < 1 Kontraktion (nur Spalte, deskriptiv)
+  RMV: { SHORT: 5, LONG: 50, CONTRACTION_MAX: 1 },
 
   // Breadth-Sortierung: Mittel aus pct_above_50ma und pct_near_high
   BREADTH_SORT_KEYS: ["pct_above_50ma", "pct_near_high"],
@@ -68,7 +107,18 @@ export const LEADERS = {
     new_highs_5d:      "convention",
     rank_change_4w:    "validated",
     rs_vs_theme:       "validated",
-    rs_vs_spy:         "overfit",
+    rs_vs_spy:         "validated",   // IBD-Gewichtung, Performer Study
+    rs_rating:         "validated",
+    p6m:               "validated",
+    wl_dist:           "convention",
+    sma_trend:         "convention",
+    min_price:         "descriptive",
+    dollar_vol_50d:    "convention",
+    trigger:           "validated",
+    ep:                "validated",
+    rmv:               "descriptive",
+    rvol_50d:          "validated",
+    best_theme:        "descriptive",  // Studie: Gruppen-Rang nur als Spalte, als Filter fragil
     dist_52wh:         "validated",
     first_to_high:     "convention",
     down_day_strength: "convention",

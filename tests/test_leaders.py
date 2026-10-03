@@ -57,14 +57,30 @@ class TestCompact(unittest.TestCase):
     def test_lengths_and_rounding(self):
         cfg = {**leaders.LEADERS_CONFIG, "LONG_BARS": 4, "SHORT_BARS": 2}
         b = {"c": [1.234, 2.345, 3.456, 4.567, 15.678], "h": [1, 2, 3, 4, 5],
-             "l": [1, 2, 3, 4, 5], "v_full": [1.0, 2.0, None, 4.0, 5.9]}
+             "o": [1, 2, 3, 4.444, 5], "l": [1, 2, 3, 4, 5], "v": [1.0, 2.0, None, 4.0, 5.9]}
         out = leaders.compact_series(b, cfg)
         self.assertEqual(out["c"], [2.35, 3.46, 4.57, 15.68])
         self.assertEqual(len(out["h"]), 4)
+        self.assertEqual(out["o"], [4.44, 5])
         self.assertEqual(out["l"], [4, 5])
         self.assertEqual(out["v"], [4, 5])
         self.assertEqual(leaders._round_px(0.123456), 0.1235)
         self.assertIsNone(leaders._round_px(None))
+
+
+class TestRsSummary(unittest.TestCase):
+    CFG = {**leaders.LEADERS_CONFIG, "RS_ROCS": [1, 2], "RS_DVOL_BARS": 2, "RS_MIN_PRICE": 1.0}
+
+    def test_values(self):
+        out = leaders.rs_summary([100, 110, 121], [1, 2, 3], self.CFG)
+        self.assertEqual(out[:2], [10.0, 21.0])
+        self.assertEqual(out[2], round((110 * 2 + 121 * 3) / 2))
+
+    def test_missing_or_cheap_is_none(self):
+        self.assertIsNone(leaders.rs_summary([100, 121], [1, 2], self.CFG))        # zu kurz
+        self.assertIsNone(leaders.rs_summary([None, 110, 121], [1, 2, 3], self.CFG))
+        self.assertIsNone(leaders.rs_summary([1, 1, 0.5], [1, 2, 3], self.CFG))    # < 1 $
+        self.assertIsNone(leaders.rs_summary([100, 110, 121], [1, None, 3], self.CFG))
 
 
 if __name__ == "__main__":

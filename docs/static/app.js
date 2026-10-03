@@ -140,7 +140,7 @@ const I18N = {
     hintTickers:   "Universum: Ticker aus den Industries UND Themes, die aktuell in der Top-30-%-Schnittmenge nach 1W UND 1M liegen (★ 1W∩1M).\nGefiltert: Market Cap > 1 Mrd. $ und ATR% (20 Tage) > 4 % — beides vollautomatisch, keine manuelle Liste.\nX-Achse: 3M- oder 1W-Performance, Y-Achse: 1M-Performance.\nGröße = Market Cap (log-skaliert). Farbe = Theme/Industry-Gruppe (siehe Legende unten) — gehört ein Ticker zu mehreren Gruppen, zählt die erste (Industries vor Themes), alle stehen im Tooltip.\n„Not Extended“-Toggle: blendet Ticker aus, die weit über ihrem SMA50 laufen (Jeff-Sun-Konvention, siehe eigener Tooltip).\n„Copy Tickers“: kopiert die aktuell sichtbaren Ticker als kommagetrennte Liste zum Einfügen in eine TradingView-Watchlist.\nRechnet einmal pro Handelstag nach US-Close (braucht settled Tageskerzen, wie der Experimental-Tab). Klick auf Bubble öffnet die Finviz-Aktienseite.",
     topLeaders:    "🏆 Leading Stocks",
     leadTitle:     "🏆 Leading Stocks",
-    hintLeaders:   "Welche Einzelaktien führen die stärksten Themes an?\nKonstituenten: alle Finviz-Mitglieder des Themes, 1:1 wie Finviz sie zuordnet. „×N“ hinter dem Ticker = Finviz führt ihn in N Themes (z. B. AMZN in 21) — solche Ticker stecken in mehreren Baskets und bewegen deren Breadth gemeinsam. Datei: data/theme_constituents.json.\nKopfzeile = Breadth über alle Konstituenten, Tabelle = Leader-Ranking nach RS vs. Theme (Gleichstand: RS vs. SPY).\nGrün = Leader (Rang 1). Grau = Mitläufer: RS unter dem Theme UND ≥ 3 ADR unter dem 52W-Hoch.\nFilter (Dollarvolumen, ATR%) wirken nur auf die Tabelle, nicht auf die Breadth.\nFehlende Kursdaten = n/a, nie interpoliert. Alle Schwellen: static/config.js.\nRechnet einmal pro Handelstag nach US-Close.",
+    hintLeaders:   "Welche Einzelaktien führen die stärksten Themes an?\nKonstituenten: alle Finviz-Mitglieder des Themes, 1:1 wie Finviz sie zuordnet. „×N“ hinter dem Ticker = Finviz führt ihn in N Themes (z. B. AMZN in 21) — solche Ticker stecken in mehreren Baskets und bewegen deren Breadth gemeinsam. Datei: data/theme_constituents.json.\nOben: Leader-Watchlist nach der Performer Study — jede Aktie einmal, die alle Kriterien erfüllt (RS ≥ 90, 6M > +50 %, ≤ 20 % unter dem 52W-Hoch, über SMA50/SMA200, Preis ≥ 10 $, $-Vol ≥ 5 Mio). „In Play heute“ = zusätzlich der validierte Breakout-Trigger.\nDarunter je Theme: Breadth über alle Konstituenten und die qualifizierten Aktien nach RS vs. Theme. 👑 = Leader = bester qualifizierter Ticker; erfüllt keiner die Kriterien, hat das Theme keinen Leader.\nFilter (Dollarvolumen, ATR%) wirken nur auf die Tabelle, nicht auf die Breadth.\nFehlende Kursdaten = n/a, nie interpoliert. Alle Schwellen: static/config.js.\nRechnet einmal pro Handelstag nach US-Close.",
     leadSortLabel: "Sortierung",
     leadSortScore: "Theme-Score",
     leadSortBreadth: "Breadth",
@@ -162,8 +162,25 @@ const I18N = {
     leadEvidence:  { validated: "validiert", convention: "Konvention", overfit: "potenziell überangepasst" },
     leadEvidenceLabel: "Evidenz",
     leadMultiTitle: (n) => `Finviz führt diesen Ticker in ${n} Themes`,
+    leadWlTitle:   "🎯 Leader-Watchlist",
+    leadWlCriteria:(W) => `RS ≥ ${W.RS_MIN} · 6M > +${W.P6M_MIN} % · ≤ ${W.DIST_MAX_PCT} % unter 52W-Hoch · über SMA50 und SMA200 · Preis ≥ ${W.MIN_PRICE} $ · Ø $-Vol 50T ≥ ${W.MIN_DVOL50 / 1e6} Mio — Kriterien aus der Performer Study. Themes sind Kontext, kein Filter.`,
+    leadWlAll:     "Alle",
+    leadWlInPlay:  "In Play heute",
+    leadWlEp:      "EP 6T",
+    leadWlEmpty:   "Keine Aktie erfüllt aktuell alle Kriterien.",
+    leadWlNoUniverse: "RS-Rating nicht verfügbar: Die Kursdatei enthält noch kein RS-Universum (entsteht beim nächsten Post-Close-Lauf).",
+    leadThemesTitle: "Themes und ihre Leader",
+    leadTrigYes:   "Breakout",
+    leadTrigWeak:  "⚠ Vol < 1×",
+    leadSetupNone: "Nicht im Setup-Screener: außerhalb seines Universums (Top-Themes je 1W/1M/3M) oder OUT/EXTENDED.",
+    leadQualified: (q, n) => `${q} von ${n} erfüllen die Leader-Kriterien`,
+    leadShowAll:   (n) => `alle ${n} zeigen`,
+    leadShowQualified: "nur qualifizierte",
+    leadNoLeader:  "Kein qualifizierter Leader — keine Aktie dieses Themes erfüllt die Watchlist-Kriterien.",
+    leadFailsTitle:(s) => `Verfehlt: ${s}`,
+    leadFails:     { rs_rating: "RS", p6m: "6M-Performance", wl_dist: "Abstand 52W-Hoch", sma50: "SMA50", sma200: "SMA200", min_price: "Preis", dollar_vol_50d: "$-Vol 50T", no_data: "keine Kursdaten" },
     leadWatchlist: "📥 TradingView Watchlist",
-    leadWatchlistTitle: "Lädt eine .txt mit ###Theme-Sektionen und EXCHANGE:SYMBOL je Zeile herunter (TradingView: Watchlist → Liste importieren). Themes nach Stärke, Ticker nach RS — exakt die aktuell angezeigte Auswahl.",
+    leadWatchlistTitle: "Lädt die angezeigte Leader-Watchlist als .txt herunter (TradingView: Watchlist → Liste importieren). Erst ###In Play heute, dann je Ticker sein stärkstes Theme als Sektion; jeder Ticker genau einmal, nach RS sortiert.",
     leadWatchlistDone: (n) => `Watchlist mit ${n} Tickern heruntergeladen`,
     leadCols: {
       pct_above_50ma: ["% > SMA50", "Anteil der Konstituenten mit Close über SMA50."],
@@ -179,6 +196,16 @@ const I18N = {
       adr_pct:        ["ADR%", "Ø (High − Low) ÷ Close über 20 Tage."],
       atr_pct:        ["ATR%", "Ø True Range ÷ Close über das gewählte Fenster (1W = 5, 14T = 14, 1M = 20 Tage)."],
       dollar_vol_20d: ["$-Vol", "Ø Close × Volumen über 20 Tage (Liquiditätsfilter)."],
+      rs_rating:      ["RS", "RS-Rating 1–99: IBD-Gewichtung (0,4·3M + 0,2·6M + 0,2·9M + 0,2·12M) als Perzentil gegen die 3.000 liquidesten Aktien der Finviz-Industries (Näherung an den Russell 3000 der Studie). Fett = RS ≥ 95. Studie: RS ≥ 90 validiert, RS ≥ 95 Trefferquote 20 % statt 12 %."],
+      p6m:            ["6M", "Kursveränderung über 126 Handelstage. Studie: > +50 % verkleinert die Watchlist, ohne Gewinner zu verlieren."],
+      wl_dist:        ["Abst. 52WH", "Abstand zum 52W-Hoch in %. Kriterium: höchstens 20 % darunter (Studie definiert Leader mit ≤ 15 %)."],
+      rmv:            ["RMV", "ATR5 ÷ ATR50. Unter 1 (grün) = die Schwankung zieht sich zusammen (VCP). Studie: weniger Signale, aber besserer Erwartungswert — nur Spalte, kein Filter."],
+      rvol_50d:       ["RVOL", "Heutiges Volumen ÷ Ø der 50 Vortage. Studie: ≥ 3× ist Teil des Triggers, < 1× am Ausbruch = meiden."],
+      trigger:        ["Trigger", "In Play heute: Close über dem Hoch der 20 Vortage UND (RVOL ≥ 3 ODER Gap ≥ 4 %). Studie (RS-95-Variante): 29–31 % der Signale lagen in einem Top-100-Run, positiv in beiden Teilperioden. ⚠ = Volumen unter 1× (meiden)."],
+      ep:             ["EP", "Episodic Pivot in den letzten 6 Tagen: Gap ≥ 4 % über dem Vortages-Close bei ≥ 3× Volumen (Earnings-Proxy der Studie). Stärkstes Einzelmerkmal: bei Leadern +0,95 % pro Trade; mit RS ≥ 90 die 6,4-fache Trefferquote."],
+      setup:          ["Setup", "Urteil des Setup-Screeners (Experimental-Tab): READY / BREAKOUT / WATCH. — = nicht in dessen Universum oder OUT/EXTENDED."],
+      dollar_vol_50d: ["$-Vol 50T", "Ø Close × Volumen über 50 Tage. Kriterium ≥ 5 Mio $ (Studie: Ersatz für die Russell-Mitgliedschaft)."],
+      best_theme:     ["Themes", "Alle Finviz-Themes des Tickers, nach Theme-Rang. ★ = Leader dieses Themes. Studie: Gruppen-Rang nur als Kontext — als Filter halbiert er die Abdeckung ohne bessere Trefferquote."],
     },
     tickersNoData: "Noch keine tickers.json — die Datei entsteht beim nächsten Post-Close-Lauf.",
     tickersMeta:   (n, cap, atr, atrDays, date) => `${n} Ticker · Market Cap > $${cap} Mrd. · ATR% (${atrDays}T) > ${atr}% · Stand: ${date}`,
@@ -432,7 +459,7 @@ const I18N = {
     hintTickers:   "Universe: tickers from the industries AND themes currently in the top-30% intersection by 1W AND 1M (★ 1W∩1M).\nFiltered: Market Cap > $1B and ATR% (20 days) > 4% — both fully automatic, no manual list.\nX-axis: 3M or 1W performance, Y-axis: 1M performance.\nSize = Market Cap (log-scaled). Color = Theme/Industry group (see legend below) — a ticker in several groups counts under the first (industries before themes), all of them show in the tooltip.\n\"Not Extended\" toggle: hides tickers running far above their SMA50 (Jeff Sun convention, see its own tooltip).\n\"Copy Tickers\": copies the currently visible tickers as a comma-separated list to paste into a TradingView watchlist.\nRuns once per trading day after US close (needs settled daily candles, like the Experimental tab). Click a bubble to open the Finviz stock page.",
     topLeaders:    "🏆 Leading Stocks",
     leadTitle:     "🏆 Leading Stocks",
-    hintLeaders:   "Which single stocks lead the strongest themes?\nConstituents: all Finviz members of the theme, 1:1 as Finviz assigns them. “×N” after the ticker = Finviz lists it in N themes (e.g. AMZN in 21) — such tickers sit in several baskets and move their breadth together. File: data/theme_constituents.json.\nHeader = breadth across all constituents, table = leader ranking by RS vs theme (tie: RS vs SPY).\nGreen = leader (rank 1). Grey = laggard: RS below the theme AND ≥ 3 ADR below the 52W high.\nFilters (dollar volume, ATR%) only affect the table, not breadth.\nMissing price data = n/a, never interpolated. All thresholds: static/config.js.\nRuns once per trading day after US close.",
+    hintLeaders:   "Which single stocks lead the strongest themes?\nConstituents: all Finviz members of the theme, 1:1 as Finviz assigns them. “×N” after the ticker = Finviz lists it in N themes (e.g. AMZN in 21) — such tickers sit in several baskets and move their breadth together. File: data/theme_constituents.json.\nTop: leader watchlist per the Performer Study — each stock once that passes all criteria (RS ≥ 90, 6M > +50%, ≤ 20% below the 52W high, above SMA50/SMA200, price ≥ $10, $ vol ≥ $5M). “In play today” = plus the validated breakout trigger.\nBelow, per theme: breadth across all constituents and the qualified stocks by RS vs theme. 👑 = leader = best qualified ticker; if none qualifies, the theme has no leader.\nFilters (dollar volume, ATR%) only affect the table, not breadth.\nMissing price data = n/a, never interpolated. All thresholds: static/config.js.\nRuns once per trading day after US close.",
     leadSortLabel: "Sort",
     leadSortScore: "Theme score",
     leadSortBreadth: "Breadth",
@@ -454,8 +481,25 @@ const I18N = {
     leadEvidence:  { validated: "validated", convention: "convention", overfit: "potentially overfit" },
     leadEvidenceLabel: "Evidence",
     leadMultiTitle: (n) => `Finviz lists this ticker in ${n} themes`,
+    leadWlTitle:   "🎯 Leader watchlist",
+    leadWlCriteria:(W) => `RS ≥ ${W.RS_MIN} · 6M > +${W.P6M_MIN}% · ≤ ${W.DIST_MAX_PCT}% below 52W high · above SMA50 and SMA200 · price ≥ $${W.MIN_PRICE} · avg $ vol 50d ≥ ${W.MIN_DVOL50 / 1e6}M — criteria from the Performer Study. Themes are context, not a filter.`,
+    leadWlAll:     "All",
+    leadWlInPlay:  "In play today",
+    leadWlEp:      "EP 6d",
+    leadWlEmpty:   "No stock currently passes all criteria.",
+    leadWlNoUniverse: "RS rating unavailable: the price file has no RS universe yet (created by the next post-close run).",
+    leadThemesTitle: "Themes and their leaders",
+    leadTrigYes:   "Breakout",
+    leadTrigWeak:  "⚠ Vol < 1×",
+    leadSetupNone: "Not in the setup screener: outside its universe (top themes per 1W/1M/3M) or OUT/EXTENDED.",
+    leadQualified: (q, n) => `${q} of ${n} pass the leader criteria`,
+    leadShowAll:   (n) => `show all ${n}`,
+    leadShowQualified: "qualified only",
+    leadNoLeader:  "No qualified leader — no stock in this theme passes the watchlist criteria.",
+    leadFailsTitle:(s) => `Fails: ${s}`,
+    leadFails:     { rs_rating: "RS", p6m: "6M performance", wl_dist: "distance to 52W high", sma50: "SMA50", sma200: "SMA200", min_price: "price", dollar_vol_50d: "$ vol 50d", no_data: "no price data" },
     leadWatchlist: "📥 TradingView Watchlist",
-    leadWatchlistTitle: "Downloads a .txt with ###Theme sections and one EXCHANGE:SYMBOL per line (TradingView: watchlist → import list). Themes by strength, tickers by RS — exactly the current selection.",
+    leadWatchlistTitle: "Downloads the shown leader watchlist as .txt (TradingView: watchlist → import list). First ###In play today, then each ticker under its strongest theme; every ticker exactly once, sorted by RS.",
     leadWatchlistDone: (n) => `Watchlist with ${n} tickers downloaded`,
     leadCols: {
       pct_above_50ma: ["% > SMA50", "Share of constituents closing above SMA50."],
@@ -471,6 +515,16 @@ const I18N = {
       adr_pct:        ["ADR%", "Avg (high − low) ÷ close over 20 days."],
       atr_pct:        ["ATR%", "Avg true range ÷ close over the chosen window (1W = 5, 14D = 14, 1M = 20 days)."],
       dollar_vol_20d: ["$ vol", "Avg close × volume over 20 days (liquidity filter)."],
+      rs_rating:      ["RS", "RS rating 1–99: IBD weighting (0.4·3M + 0.2·6M + 0.2·9M + 0.2·12M) as a percentile against the 3,000 most liquid stocks of the Finviz industries (approximating the study's Russell 3000). Bold = RS ≥ 95. Study: RS ≥ 90 validated, RS ≥ 95 hit rate 20% vs 12%."],
+      p6m:            ["6M", "Price change over 126 trading days. Study: > +50% shrinks the watchlist without losing winners."],
+      wl_dist:        ["Dist 52WH", "Distance to the 52W high in %. Criterion: at most 20% below (the study defines leaders as ≤ 15%)."],
+      rmv:            ["RMV", "ATR5 ÷ ATR50. Below 1 (green) = volatility contracting (VCP). Study: fewer signals but better expectancy — column only, no filter."],
+      rvol_50d:       ["RVOL", "Today's volume ÷ avg of the prior 50 days. Study: ≥ 3× is part of the trigger, < 1× on a breakout = avoid."],
+      trigger:        ["Trigger", "In play today: close above the high of the prior 20 days AND (RVOL ≥ 3 OR gap ≥ 4%). Study (RS-95 variant): 29–31% of signals were in a top-100 run, positive in both sub-periods. ⚠ = volume below 1× (avoid)."],
+      ep:             ["EP", "Episodic pivot within the last 6 days: gap ≥ 4% over the prior close on ≥ 3× volume (the study's earnings proxy). Strongest single feature: +0.95% per trade for leaders; 6.4× hit rate combined with RS ≥ 90."],
+      setup:          ["Setup", "Verdict of the setup screener (Experimental tab): READY / BREAKOUT / WATCH. — = outside its universe or OUT/EXTENDED."],
+      dollar_vol_50d: ["$ vol 50d", "Avg close × volume over 50 days. Criterion ≥ $5M (study: stand-in for Russell membership)."],
+      best_theme:     ["Themes", "All Finviz themes of the ticker, by theme rank. ★ = leader of that theme. Study: group rank as context only — as a filter it halves coverage without a better hit rate."],
     },
     tickersNoData: "No tickers.json yet — the file appears after the next post-close run.",
     tickersMeta:   (n, cap, atr, atrDays, date) => `${n} tickers · Market Cap > $${cap}B · ATR% (${atrDays}D) > ${atr}% · as of: ${date}`,
@@ -3794,7 +3848,7 @@ let _leadersCons = null;
 let _leadersLoad = null;      // laufendes Promise (Doppelklick-Schutz)
 let _leadersFailed = false;
 let _leadersCache = {};       // atrPeriod -> computeLeaders()-Ergebnis
-let _leadersUi = null;        // {sort, topN, minDvol, minAtr, atrPeriod}
+let _leadersUi = null;        // {sort, topN, minDvol, minAtr, atrPeriod, wlView}
 
 async function ensureLeadersData() {
   if (_leadersBars && _LM) return true;
@@ -3827,6 +3881,7 @@ async function ensureLeadersData() {
           minDvol: num("leadMinDvol", _LCFG.MIN_DOLLAR_VOL),
           minAtr: num("leadMinAtr", _LCFG.MIN_ATR_PCT),
           atrPeriod: _LCFG.ATR_PERIODS[per] ? per : _LCFG.ATR_PERIOD,
+          wlView: ["all", "strong", "inplay", "ep"].includes(prefGet("leadWlView")) ? prefGet("leadWlView") : "all",
         };
       } catch (e) {
         console.error("Leading Stocks konnte nicht geladen werden:", e);
@@ -3885,6 +3940,86 @@ function leadInfo(key) {
   return `<span class="lead-info lead-ev--${ev}" data-key="${key}" title="${esc(tip)}" tabindex="0">i</span>`;
 }
 
+// Setup-Urteil je Ticker aus setups.json (Experimental-Tab). Fehlt ein Ticker,
+// ist er nicht im Screener-Universum oder OUT/EXTENDED — beides heißt "—".
+function leadSetupMap() {
+  const m = {};
+  for (const r of _setupsData?.rows ?? []) m[r.t] = r.verdict;
+  return m;
+}
+const leadSym = (tv) => (tv.includes(":") ? tv.split(":")[1] : tv);
+
+// Leader-Watchlist (Performer Study): jeder qualifizierte Ticker einmal.
+function leadersWatchlist() {
+  const ui = _leadersUi;
+  return _LM.buildWatchlist(leadersResult(), { minDollarVol: ui.minDvol, minAtrPct: ui.minAtr });
+}
+function leadersWatchlistShown(list) {
+  const v = _leadersUi.wlView;
+  return list.filter(e => v === "strong" ? e.strong : v === "inplay" ? e.trigger === true
+    : v === "ep" ? e.ep === true : true);
+}
+
+function leadersWatchlistHtml() {
+  const ui = _leadersUi, W = _LCFG.WL;
+  if (!_leadersBars.rs_universe) {
+    return `<div class="lead-wl"><p class="pick-empty">${t("leadWlNoUniverse")}</p></div>`;
+  }
+  const list = leadersWatchlist();
+  const shown = leadersWatchlistShown(list);
+  const n = {
+    all: list.length, strong: list.filter(e => e.strong).length,
+    inplay: list.filter(e => e.trigger === true).length, ep: list.filter(e => e.ep === true).length,
+  };
+  const seg = [["all", t("leadWlAll")], ["strong", `RS ≥ ${W.RS_STRONG}`], ["inplay", t("leadWlInPlay")], ["ep", t("leadWlEp")]]
+    .map(([k, label]) => `<button class="xaxis-btn${ui.wlView === k ? " active" : ""}" data-lwl="${k}">${label} <span class="lead-count">${n[k]}</span></button>`).join("");
+  const setups = leadSetupMap();
+  const cols = ["rs_rating", "best_theme", "p6m", "wl_dist", "rmv", "rvol_50d", "trigger", "ep", "setup", "atr_pct", "dollar_vol_50d"];
+  const head = `<th>#</th><th>Ticker</th>` + cols.map(k =>
+    `<th>${t("leadCols")[k][0]}${k === "atr_pct" ? ` ${ui.atrPeriod}` : ""} ${leadInfo(k)}</th>`).join("");
+  const body = shown.length ? shown.map((e, i) => {
+    const sym = leadSym(e.ticker);
+    const trig = e.trigger === null ? leadNa() : e.trigger
+      ? `<span class="lead-pos" title="RVOL ${e.rvol_50d?.toFixed(1) ?? "n/a"} · Gap ${e.gap_pct?.toFixed(1) ?? "n/a"} %">▲ ${t("leadTrigYes")}</span>${e.weak_volume ? ` <span class="lead-warn">${t("leadTrigWeak")}</span>` : ""}`
+      : "—";
+    const ep = e.ep === null ? leadNa() : e.ep ? `<span class="lead-ep">⚡ ${leadDate(e.ep_date)}</span>` : "—";
+    const setup = setups[sym] ? `<span class="lead-setup lead-setup--${setups[sym].toLowerCase()}">${setups[sym]}</span>`
+      : `<span class="lead-dim" title="${esc(t("leadSetupNone"))}">—</span>`;
+    const rmv = e.rmv === null ? leadNa()
+      : `<span class="${e.rmv < _LCFG.RMV.CONTRACTION_MAX ? "lead-pos" : ""}">${e.rmv.toFixed(2)}</span>`;
+    const chips = e.themes.slice(0, 2).map(th =>
+      `<span class="lead-theme-chip${th.leader ? " lead-theme-chip--leader" : ""}">${th.leader ? "★ " : ""}${esc(th.name)} #${th.rank ?? "–"}</span>`).join("");
+    const more = e.themes.length > 2
+      ? ` <span class="lead-dim" title="${esc(e.themes.slice(2).map(th => `${th.name} #${th.rank}`).join(" · "))}">+${e.themes.length - 2}</span>` : "";
+    return `<tr class="${e.trigger === true ? "lead-wl-row--inplay" : ""}">
+      <td>${i + 1}</td>
+      <td><a href="${finvizQuoteUrl(sym.replace(".", "-"))}" target="_blank" rel="noopener" class="lead-sym">${esc(e.ticker)}</a>${leadMulti(e.ticker)}</td>
+      <td>${e.strong ? `<b class="lead-rs-strong">${e.rs_rating}</b>` : e.rs_rating}</td>
+      <td class="lead-theme-cell">${chips}${more}</td>
+      <td>${leadNum(e.p6m, 0, " %")}</td>
+      <td>${leadNum(e.dist_52wh_pct, 1, " %")}</td>
+      <td>${rmv}</td>
+      <td>${e.rvol_50d === null ? leadNa() : e.rvol_50d.toFixed(1) + "×"}</td>
+      <td>${trig}</td>
+      <td>${ep}</td>
+      <td>${setup}</td>
+      <td>${leadNum(e.atr_pct, 1, "", false)}</td>
+      <td>${leadDvol(e.dollar_vol_50d)}</td>
+    </tr>`;
+  }).join("") : `<tr><td colspan="13" class="empty-msg">${t("leadWlEmpty")}</td></tr>`;
+
+  return `<div class="lead-wl">
+    <div class="lead-wl__head">
+      <span class="lead-name">${t("leadWlTitle")}</span>
+      <span class="lead-group">${seg}</span>
+    </div>
+    <p class="lead-dim lead-wl__criteria">${t("leadWlCriteria", W)}</p>
+    <div class="table-scroll"><table class="lead-table lead-wl-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
+  </div>`;
+}
+
+let _leadersExpanded = new Set();   // Theme-Karten, die auch nicht-qualifizierte Zeilen zeigen
+
 function leadersCardHtml(theme) {
   const b = theme.breadth;
   const pct = (v) => v === null ? leadNa() : Math.round(v) + " %";
@@ -3901,33 +4036,45 @@ function leadersCardHtml(theme) {
     theme.thin ? `<span class="lead-tag">${t("leadThin")}</span>` : "",
   ].join("");
 
-  const cols = ["rs_vs_theme", "rs_vs_spy", "dist_52wh", "first_to_high", "down_day_strength",
-    "rvol_20d", "adr_pct", "atr_pct", "dollar_vol_20d"];
+  const expanded = _leadersExpanded.has(theme.name);
+  const qualified = theme.rows.filter(r => r.qualified);
+  const rows = expanded ? theme.rows : qualified;
+  const failText = (r) => (r.wl_fails || []).map(k => t("leadFails")[k] ?? k).join(", ");
+
+  const cols = ["rs_vs_theme", "rs_rating", "p6m", "dist_52wh", "first_to_high", "down_day_strength",
+    "rvol_50d", "adr_pct", "atr_pct", "dollar_vol_20d"];
   const head = `<th>#</th><th>Ticker</th>` + cols.map(k =>
     `<th>${t("leadCols")[k][0]}${k === "atr_pct" ? ` ${_leadersUi.atrPeriod}` : ""} ${leadInfo(k)}</th>`).join("");
-  const body = theme.rows.length ? theme.rows.map(r => {
-    const sym = r.ticker.includes(":") ? r.ticker.split(":")[1] : r.ticker;
-    const cls = r.leader ? "lead-row--leader" : r.laggard ? "lead-row--laggard" : "";
+  const body = rows.map((r, i) => {
+    const sym = leadSym(r.ticker);
+    const cls = r.leader ? "lead-row--leader" : !r.qualified ? "lead-row--laggard" : "";
     const fth = r.first_to_high === null ? leadNa()
       : `${r.first_to_high ? `<span class="lead-pos">✓</span> ` : ""}${r.first_high_date ? leadDate(r.first_high_date) : "—"}`;
     const dist = r.dist_52wh_adr === null ? leadNa()
       : `${r.dist_52wh_adr.toFixed(1)} <span class="lead-dim">(${r.dist_52wh_pct.toFixed(1)} %)</span>`;
     const dd = r.down_day_strength === null ? leadNa()
       : `${leadNum(r.down_day_strength)} <span class="lead-dim">(${r.down_days})</span>`;
-    return `<tr class="${cls}">
-      <td>${r.rank}</td>
+    const why = r.qualified ? "" : ` title="${esc(t("leadFailsTitle", failText(r)))}"`;
+    return `<tr class="${cls}"${why}>
+      <td>${i + 1}</td>
       <td>${r.leader ? "👑 " : ""}<a href="${finvizQuoteUrl(sym.replace(".", "-"))}" target="_blank" rel="noopener" class="lead-sym">${esc(r.ticker)}</a>${leadMulti(r.ticker)}</td>
       <td>${leadNum(r.rs_vs_theme)}</td>
-      <td>${leadNum(r.rs_vs_spy)}</td>
+      <td>${r.rs_rating ?? leadNa()}</td>
+      <td>${leadNum(r.p6m, 0, " %")}</td>
       <td>${dist}</td>
       <td>${fth}</td>
       <td>${dd}</td>
-      <td>${r.rvol_20d === null ? leadNa() : r.rvol_20d.toFixed(1) + "×"}</td>
+      <td>${r.rvol_50d === null ? leadNa() : r.rvol_50d.toFixed(1) + "×"}</td>
       <td>${leadNum(r.adr_pct, 1, "", false)}</td>
       <td>${leadNum(r.atr_pct, 1, "", false)}</td>
       <td>${leadDvol(r.dollar_vol_20d)}</td>
     </tr>`;
-  }).join("") : `<tr><td colspan="11" class="empty-msg">${t("leadEmptyRows")}</td></tr>`;
+  }).join("");
+  const table = rows.length
+    ? `<div class="table-scroll"><table class="lead-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`
+    : `<p class="lead-noleader">${theme.rows.length ? t("leadNoLeader") : t("leadEmptyRows")}</p>`;
+  const toggle = theme.rows.length > qualified.length
+    ? `<button class="xaxis-btn lead-expand" data-ltheme="${esc(theme.name)}">${expanded ? t("leadShowQualified") : t("leadShowAll", theme.rows.length)}</button>` : "";
 
   return `<div class="lead-card">
     <div class="lead-card__head">
@@ -3942,7 +4089,8 @@ function leadersCardHtml(theme) {
       ${chip("new_highs_5d", b.new_highs_5d ?? leadNa())}
       ${chip("rank_change_4w", rcTxt)}
     </div>
-    <div class="table-scroll"><table class="lead-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
+    <div class="lead-qual"><span class="lead-dim">${t("leadQualified", qualified.length, theme.rows.length)}</span> ${toggle}</div>
+    ${table}
   </div>`;
 }
 
@@ -3992,6 +4140,7 @@ function leadersExportFields(name) {
       rank_change_4w: b.rank_change_4w,
       members: b.members,
       members_with_data: b.members_with_data,
+      qualified_count: th.qualified_count,
       basket_low: th.basket_low ? { date: th.basket_low.date, drawdown_pct: r2(th.basket_low.drawdown) } : null,
       constituents_source: th.source,
       data_date: leadersDataDate(),
@@ -4002,19 +4151,33 @@ function leadersExportFields(name) {
       ticker: r.ticker,
       theme_count: _leadersCons?.memberships?.[r.ticker] ?? null,
       leader: r.leader,
+      qualified: r.qualified,
+      wl_fails: r.wl_fails,
       laggard: r.laggard,
+      rs_rating: r.rs_rating,
       rs_vs_theme: r2(r.rs_vs_theme),
       rs_vs_spy: r2(r.rs_vs_spy),
+      p6m: r2(r.p6m),
       dist_52wh_pct: r2(r.dist_52wh_pct),
       dist_52wh_adr: r2(r.dist_52wh_adr),
+      above_sma50: r.above_sma50,
+      above_sma200: r.above_sma200,
+      trigger: r.trigger,
+      weak_volume: r.weak_volume,
+      gap_pct: r2(r.gap_pct),
+      ep: r.ep,
+      ep_date: r.ep_date,
+      rmv: r2(r.rmv),
       first_to_high: r.first_to_high,
       first_high_date: r.first_high_date,
       down_day_strength: r2(r.down_day_strength),
       down_days: r.down_days,
       rvol_20d: r2(r.rvol_20d),
+      rvol_50d: r2(r.rvol_50d),
       adr_pct: r2(r.adr_pct),
       atr_pct: r2(r.atr_pct),
       dollar_vol_20d: r.dollar_vol_20d === null ? null : Math.round(r.dollar_vol_20d),
+      dollar_vol_50d: r.dollar_vol_50d === null ? null : Math.round(r.dollar_vol_50d),
     })),
   };
 }
@@ -4024,9 +4187,12 @@ function exportLeadersJson() {
   exportSelectionJson(rows);
 }
 
-// TradingView-Watchlist als .txt-Download (Import-Dialog von TradingView).
+// TradingView-Watchlist als .txt-Download (Import-Dialog von TradingView):
+// exakt die angezeigte Leader-Watchlist, jeder Ticker genau einmal.
 function downloadLeadersWatchlist() {
-  const txt = _LM.tradingViewWatchlist(leadersVisibleThemes());
+  const shown = leadersWatchlistShown(leadersWatchlist());
+  if (!shown.length) { showToast(t("leadWlEmpty")); return; }
+  const txt = _LM.tradingViewFromWatchlist(shown, t("leadWlInPlay"));
   const blob = new Blob([txt], { type: "text/plain" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -4034,8 +4200,7 @@ function downloadLeadersWatchlist() {
   document.body.appendChild(a);
   a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
-  const n = (txt.match(/^[^#\n].*$/gm) || []).length;
-  showToast(t("leadWatchlistDone", n));
+  showToast(t("leadWatchlistDone", shown.length));
 }
 
 async function renderLeadersTab() {
@@ -4052,6 +4217,8 @@ async function renderLeadersTab() {
   box.innerHTML = `${leadersBarHtml()}
     <p class="picks-subtitle lead-meta">${t("leadMeta", leadersDataDate(), nCons, nUniq, Object.keys(_leadersCons.themes).length)}</p>
     <p class="lead-tip" id="lead-tip">${t("leadTipDefault")}</p>
+    ${leadersWatchlistHtml()}
+    <h3 class="lead-section-title">${t("leadThemesTitle")}</h3>
     ${themes.map(leadersCardHtml).join("")}`;
   wireLeadersControls(box);
 }
@@ -4062,6 +4229,14 @@ function wireLeadersControls(box) {
   box.querySelector(".lead-tv-btn").onclick = downloadLeadersWatchlist;
   box.querySelectorAll("[data-lsort]").forEach(b => b.onclick = () => {
     ui.sort = b.dataset.lsort; prefSet("leadSort", ui.sort); renderLeadersTab();
+  });
+  box.querySelectorAll("[data-lwl]").forEach(b => b.onclick = () => {
+    ui.wlView = b.dataset.lwl; prefSet("leadWlView", ui.wlView); renderLeadersTab();
+  });
+  box.querySelectorAll("[data-ltheme]").forEach(b => b.onclick = () => {
+    const n = b.dataset.ltheme;
+    if (_leadersExpanded.has(n)) _leadersExpanded.delete(n); else _leadersExpanded.add(n);
+    renderLeadersTab();
   });
   box.querySelectorAll("[data-lperiod]").forEach(b => b.onclick = () => {
     ui.atrPeriod = b.dataset.lperiod; prefSet("leadAtrPeriod", ui.atrPeriod); renderLeadersTab();

@@ -314,7 +314,8 @@ def main():
         print(f"  SKIPPED leaders ({why3}) — letzter Stand bleibt liegen")
     else:
         try:
-            bars_out = leaders.write_leaders(etf_payload["themes"])
+            # scored (Industries) liefert das breite RS-Universum (~5.600 Ticker)
+            bars_out = leaders.write_leaders(etf_payload["themes"], scored)
             print(f"  Saved theme_constituents.json + leaders_bars.json "
                   f"({len(bars_out['tickers'])} Ticker, {len(bars_out['dates'])} Bars)")
         except Exception as e:

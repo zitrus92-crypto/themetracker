@@ -2,9 +2,9 @@
 Leading-Stocks-Tab: Konstituenten je Theme + kompakte Kursreihen.
 
 Python liefert hier bewusst NUR Rohdaten - alle Kennzahlen (RS, Breadth,
-first_to_high, Down-Day-Staerke ...) rechnet docs/static/leadersMetrics.js,
-alle Schwellen/Gewichte stehen in docs/static/config.js. Gleiche Teilung wie
-bei themeMetrics.js: eine einzige Implementierung der Mathematik, im Client.
+Leader-Watchlist, Trigger ...) rechnet docs/static/leadersMetrics.js, alle
+Schwellen/Gewichte stehen in docs/static/config.js. Gleiche Teilung wie bei
+themeMetrics.js: eine einzige Implementierung der Mathematik, im Client.
 
 Zwei Dateien unter docs/data/ (GitHub Pages serviert nur docs/):
 
@@ -19,8 +19,14 @@ Zwei Dateien unter docs/data/ (GitHub Pages serviert nur docs/):
   leaders_bars.json - Tages-Kursreihen der Konstituenten + SPY, alle auf
       die SPY-Handelstage ausgerichtet. Fehlt ein Tag fuer einen Ticker,
       steht dort null - es wird nie interpoliert.
+      Dazu "rs_universe": je Aktie des breiten Finviz-Industry-Universums
+      (~5.600 Ticker) die vier Renditen ROC 63/126/189/252 und das
+      Ø Dollarvolumen 50 Tage. Daraus bildet der Client das RS-Perzentil wie
+      in der Performer Study (dort: Russell 3000) - die Gewichte und die
+      Universums-Groesse stehen in config.js, nicht hier.
 """
 import json
+import math
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
@@ -29,7 +35,7 @@ DATA_DIR = Path(__file__).parent / "docs" / "data"
 CONSTITUENTS_PATH = DATA_DIR / "theme_constituents.json"
 BARS_PATH = DATA_DIR / "leaders_bars.json"
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2   # v2: o/l/v ueber SHORT_BARS=57, rs_universe
 
 LEADERS_CONFIG = {
     # -- Konstituenten -------------------------------------------------------
@@ -41,11 +47,20 @@ LEADERS_CONFIG = {
     "PERIOD": "2y",
     # Close + High: 378 Bars (~1,5 Jahre). 252 fuer das 52W-Hoch, der Rest ist
     # das Fenster, in dem first_to_high ein Theme-Tief samt neuem Hoch suchen
-    # kann (126 Tage). Low + Volumen braucht nur ADR/ATR/RVOL/$-Vol (<= 21 Tage).
+    # kann (126 Tage).
     "LONG_BARS": 378,
-    "SHORT_BARS": 22,
+    # Open/Low/Volumen: 57 Bars. RVOL und EP-Gap messen gegen den Ø der
+    # 50 Vortage (Performer Study: "≥ 3× Volumen (SMA50)"), und das EP-Fenster
+    # umfasst 6 Tage -> der aelteste braucht selbst 50 Vortage: 50 + 6 + 1.
+    # RMV = ATR5/ATR50 braucht 50 True Ranges + Vortages-Close.
+    "SHORT_BARS": 57,
     "CHUNK": 150,
     "EXCHANGE_WORKERS": 8,
+
+    # -- RS-Universum --------------------------------------------------------
+    "RS_ROCS": [63, 126, 189, 252],
+    "RS_DVOL_BARS": 50,
+    "RS_MIN_PRICE": 1.0,       # wie die Studie: unadjustierter Kurs >= 1 $
 }
 
 # yfinance fast_info.exchange -> TradingView-Praefix
@@ -116,14 +131,39 @@ def align(dates_master: list, dates: list, values: list):
     return [m.get(d) for d in dates_master]
 
 
-def fetch_aligned_bars(tickers: list, cfg: dict = LEADERS_CONFIG):
-    """(master_dates, {ticker: {c, h, l, v_full}}) - auf die Benchmark-Tage ausgerichtet.
+def rs_summary(c: list, v: list, cfg: dict = LEADERS_CONFIG):
+    """[ROC63, ROC126, ROC189, ROC252, Ø$-Vol50] fuer das RS-Universum.
 
-    Gleiche Blocklogik wie setups.fetch_bars (sequenzielle Bulk-Bloecke,
-    fehlende Ticker einzeln nachholen), aber mit erhaltenem Datumsindex statt
-    dropna(), damit Luecken als None sichtbar bleiben.
+    None, sobald ein Wert fehlt (zu kurze Historie, Luecke am Stichtag,
+    Kurs unter RS_MIN_PRICE) - solche Aktien zaehlen nicht ins Perzentil.
+    Rohwerte, keine Gewichtung: die steht in config.js.
     """
-    import math
+    last = c[-1] if c else None
+    if last is None or last < cfg["RS_MIN_PRICE"]:
+        return None
+    rocs = []
+    for n in cfg["RS_ROCS"]:
+        if len(c) <= n or c[-1 - n] is None or c[-1 - n] <= 0:
+            return None
+        rocs.append(round((last / c[-1 - n] - 1) * 100, 2))
+    k = cfg["RS_DVOL_BARS"]
+    pairs = list(zip(c[-k:], v[-k:]))
+    if len(pairs) < k or any(a is None or b is None for a, b in pairs):
+        return None
+    dvol = sum(a * b for a, b in pairs) / k
+    return rocs + [round(dvol)]
+
+
+def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG):
+    """(master_dates, bars, rs_universe).
+
+    keep  = Theme-Konstituenten: volle Reihen (c/h/o/l/v), fehlende werden
+            einzeln nachgeholt.
+    broad = RS-Universum: nur rs_summary() je Ticker, Rohreihen werden sofort
+            verworfen (5.600 x 500 Tage voll im Speicher waeren ~0,5 GB).
+    Gleiche Blocklogik wie setups.fetch_bars (sequenzielle Bulk-Bloecke), aber
+    mit erhaltenem Datumsindex statt dropna(), damit Luecken None bleiben.
+    """
     import yfinance as yf
 
     def _download(chunk):
@@ -147,48 +187,70 @@ def fetch_aligned_bars(tickers: list, cfg: dict = LEADERS_CONFIG):
             def col(name):
                 return [None if (x is None or (isinstance(x, float) and math.isnan(x))) else float(x)
                         for x in sub[name]]
-            res[tk] = {"dates": ds, "c": col("Close"), "h": col("High"),
+            res[tk] = {"dates": ds, "c": col("Close"), "h": col("High"), "o": col("Open"),
                        "l": col("Low"), "v": col("Volume")}
         return res
 
+    # Benchmark mit Wiederholung: ohne SPY gibt es keine Datumsachse, und ein
+    # einzelner leerer Yahoo-Response (lokal am 03.10.2026 direkt nach einem
+    # grossen Abruf beobachtet) wuerde sonst den ganzen Tageslauf kosten.
+    import time
     bench = cfg["BENCHMARK"]
-    got_bench = _download([bench])
+    got_bench = {}
+    for attempt in range(3):
+        try:
+            got_bench = _download([bench])
+        except Exception as e:
+            print(f"      WARNING: {bench}-Abruf fehlgeschlagen ({e})")
+        if bench in got_bench:
+            break
+        time.sleep(20 * (attempt + 1))
     if bench not in got_bench:
-        raise RuntimeError(f"Benchmark {bench} ohne Kursdaten")
+        raise RuntimeError(f"Benchmark {bench} ohne Kursdaten (3 Versuche)")
     master = got_bench[bench]["dates"]
 
-    raw = {bench: got_bench[bench]}
-    rest = [tk for tk in tickers if tk != bench]
-    chunks = [rest[i:i + cfg["CHUNK"]] for i in range(0, len(rest), cfg["CHUNK"])]
+    def _aligned(r):
+        return {k: align(master, r["dates"], r[k]) for k in ("c", "h", "o", "l", "v")}
+
+    keep_set = set(keep)
+    bars = {bench: _aligned(got_bench[bench])}
+    universe = {}
+
+    def _absorb(got):
+        for tk, r in got.items():
+            a = _aligned(r)
+            if tk in keep_set:
+                bars[tk] = a
+            if tk in broad_set:
+                s = rs_summary(a["c"], a["v"], cfg)
+                if s is not None:
+                    universe[tk] = s
+
+    broad_set = set(broad)
+    order = [tk for tk in dict.fromkeys(list(keep) + list(broad)) if tk != bench]
+    chunks = [order[i:i + cfg["CHUNK"]] for i in range(0, len(order), cfg["CHUNK"])]
     for i, chunk in enumerate(chunks, 1):
         try:
             got = _download(chunk)
-            raw.update(got)
-            print(f"      Block {i}/{len(chunks)}: {len(got)}/{len(chunk)} Ticker")
+            _absorb(got)
+            if i % 5 == 0 or i == len(chunks):
+                print(f"      Block {i}/{len(chunks)}: {len(bars) - 1} Konstituenten, "
+                      f"{len(universe)} RS-Universum")
         except Exception as e:
             print(f"      WARNING: leaders bar chunk {i} failed: {e}")
-    missing = [tk for tk in rest if tk not in raw]
+
+    # Nur Konstituenten einzeln nachholen - im breiten Universum sind
+    # Ausfaelle (Delistings, Sonderfaelle) normal und kosten nur Laufzeit.
+    missing = [tk for tk in keep if tk not in bars and tk != bench]
     if missing:
-        recovered = 0
+        before = len(bars)
         for tk in missing:
             try:
-                got = _download([tk])
-                if tk in got:
-                    raw[tk] = got[tk]
-                    recovered += 1
+                _absorb(_download([tk]))
             except Exception as e:
                 print(f"      WARNING: retry failed for {tk}: {e}")
-        print(f"      Retry: {recovered}/{len(missing)} nachgeholt.")
-
-    out = {}
-    for tk, r in raw.items():
-        out[tk] = {
-            "c": align(master, r["dates"], r["c"]),
-            "h": align(master, r["dates"], r["h"]),
-            "l": align(master, r["dates"], r["l"]),
-            "v_full": align(master, r["dates"], r["v"]),
-        }
-    return master, out
+        print(f"      Retry: {len(bars) - before}/{len(missing)} nachgeholt.")
+    return master, bars, universe
 
 
 def fetch_exchanges(tickers: list, known: dict, cfg: dict = LEADERS_CONFIG) -> dict:
@@ -213,13 +275,14 @@ def fetch_exchanges(tickers: list, known: dict, cfg: dict = LEADERS_CONFIG) -> d
 
 
 def compact_series(b: dict, cfg: dict = LEADERS_CONFIG) -> dict:
-    """Kurze Feldnamen + Kappung: c/h ueber LONG_BARS, l/v ueber SHORT_BARS."""
+    """Kurze Feldnamen + Kappung: c/h ueber LONG_BARS, o/l/v ueber SHORT_BARS."""
     L, S = cfg["LONG_BARS"], cfg["SHORT_BARS"]
     return {
         "c": [_round_px(x) for x in b["c"][-L:]],
         "h": [_round_px(x) for x in b["h"][-L:]],
+        "o": [_round_px(x) for x in b["o"][-S:]],
         "l": [_round_px(x) for x in b["l"][-S:]],
-        "v": [None if x is None else int(x) for x in b["v_full"][-S:]],
+        "v": [None if x is None else int(x) for x in b["v"][-S:]],
     }
 
 
@@ -233,30 +296,43 @@ def _read_json(path: Path):
         return None
 
 
-def build_leaders(themes: dict, cfg: dict = LEADERS_CONFIG):
-    """Kompletter Lauf -> (constituents_payload, bars_payload)."""
+def build_leaders(themes: dict, industries: dict | None = None, cfg: dict = LEADERS_CONFIG):
+    """Kompletter Lauf -> (constituents_payload, bars_payload).
+
+    industries: data.json-Industries mit "tickers" - das breite RS-Universum.
+    Fehlt es, faellt das RS-Universum auf die Theme-Mitglieder zurueck (und
+    die Datei sagt das in rs_universe.source).
+    """
     prev_const = _read_json(CONSTITUENTS_PATH) or {}
     prev_bars = _read_json(BARS_PATH) or {}
     overrides = prev_const.get("overrides") or {}
     known_ex = {tk: row.get("x") for tk, row in (prev_bars.get("tickers") or {}).items()}
 
-    universe = []
+    keep = []
     seen = set()
     for row in themes.values():
         for tk in row.get("tickers") or []:
             if tk not in seen:
                 seen.add(tk)
-                universe.append(tk)
+                keep.append(tk)
     for ov in overrides.values():
         for s in ov.get("tickers") or []:
             tk = s.split(":")[-1]
             if tk not in seen:
                 seen.add(tk)
-                universe.append(tk)
-    print(f"    Leading Stocks: {len(universe)} Theme-Mitglieder, lade {cfg['PERIOD']} Kursdaten…")
+                keep.append(tk)
 
-    master, bars = fetch_aligned_bars(universe, cfg)
-    print(f"    Kursdaten: {len(bars) - 1}/{len(universe)} Ticker + {cfg['BENCHMARK']}.")
+    broad = list(dict.fromkeys(
+        tk for row in (industries or {}).values() for tk in (row.get("tickers") or [])))
+    rs_source = "finviz_industries"
+    if not broad:
+        broad, rs_source = list(keep), "theme_members"
+    print(f"    Leading Stocks: {len(keep)} Theme-Mitglieder + RS-Universum "
+          f"{len(broad)} Ticker ({rs_source}), lade {cfg['PERIOD']} Kursdaten…")
+
+    master, bars, universe = fetch_bars_and_universe(keep, broad, cfg)
+    print(f"    Kursdaten: {len(bars) - 1}/{len(keep)} Konstituenten, "
+          f"RS-Universum {len(universe)}/{len(broad)} mit vollstaendiger Historie.")
 
     const = select_constituents(themes, overrides, cfg)
     picked = sorted({tk for c in const.values() for tk in c["tickers"]})
@@ -304,12 +380,18 @@ def build_leaders(themes: dict, cfg: dict = LEADERS_CONFIG):
             tk: {"x": exchanges.get(tk), **compact_series(bars[tk], cfg)}
             for tk in picked if tk in bars
         },
+        "rs_universe": {
+            "source": rs_source,
+            "fields": [f"roc{n}" for n in cfg["RS_ROCS"]] + [f"dvol{cfg['RS_DVOL_BARS']}"],
+            "min_price": cfg["RS_MIN_PRICE"],
+            "rows": universe,
+        },
     }
     return const_out, bars_out
 
 
-def write_leaders(themes: dict, cfg: dict = LEADERS_CONFIG) -> dict:
-    const_out, bars_out = build_leaders(themes, cfg)
+def write_leaders(themes: dict, industries: dict | None = None, cfg: dict = LEADERS_CONFIG) -> dict:
+    const_out, bars_out = build_leaders(themes, industries, cfg)
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     CONSTITUENTS_PATH.write_text(
         json.dumps(const_out, ensure_ascii=False, indent=1), encoding="utf-8")

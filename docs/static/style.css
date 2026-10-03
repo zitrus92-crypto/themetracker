@@ -820,9 +820,43 @@ details.wp-details { margin-bottom: 18px; }
 .lead-dim { color: var(--text-dim); font-size: 11.5px; }
 .lead-na  { color: #59616b; font-style: italic; }
 
+/* Leader-Watchlist (Performer Study) */
+.lead-wl {
+  background: var(--bg2); border: 1px solid #1f6f2f; border-radius: 8px;
+  padding: 12px 14px; margin-bottom: 22px;
+}
+.lead-wl__head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 6px; }
+.lead-wl__criteria { margin-bottom: 10px; line-height: 1.5; }
+.lead-count { opacity: 0.75; font-weight: 400; margin-left: 2px; }
+.lead-rs-strong { color: var(--green-1); }
+.lead-warn { color: #fbbf24; font-size: 11px; }
+.lead-ep { color: #fbbf24; font-weight: 600; }
+.lead-setup { font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+.lead-setup--ready    { background: #0d4429; color: #39d353; }
+.lead-setup--breakout { background: #1a2a4a; color: #58a6ff; }
+.lead-setup--watch    { background: #2a2000; color: #fbbf24; }
+.lead-theme-cell { text-align: left !important; white-space: normal; min-width: 200px; max-width: 260px; }
+.lead-wl-table th:nth-child(4) { text-align: left; }
+.lead-theme-chip {
+  display: inline-block; font-size: 11px; padding: 1px 6px; margin: 1px 3px 1px 0;
+  border-radius: 4px; background: var(--bg3); color: var(--text-dim);
+}
+.lead-theme-chip--leader { color: var(--green-1); border: 1px solid var(--green-4); }
+.lead-wl-row--inplay td { background: #0f2a1a; }
+.lead-wl-row--inplay td:first-child { box-shadow: inset 3px 0 0 var(--green-2); }
+.lead-section-title {
+  font-size: 13px; font-weight: 600; color: var(--text-dim); text-transform: uppercase;
+  letter-spacing: 0.05em; margin: 4px 0 12px;
+}
+.lead-qual { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+.lead-noleader { color: var(--text-dim); font-size: 12.5px; font-style: italic; padding: 6px 0 2px; }
+
 /* Mobil: Top-Navigation horizontal scrollbar statt umbrechen (5. Button) */
 @media (max-width: 640px) {
   .top-nav { overflow-x: auto; padding: 0 8px; }
   .top-btn { padding: 12px 14px; font-size: 14px; white-space: nowrap; }
   .lead-card { padding: 10px; }
+  .lead-wl { padding: 10px; }
+  .lead-theme-cell { min-width: 150px; }
+  .lead-theme-chip { font-size: 10.5px; }
 }

@@ -166,8 +166,98 @@ export function rankChange(days, name, lookback = LEADERS.RANK_CHANGE_DAYS) {
   return isNum(a) && isNum(b) ? a - b : null;
 }
 
+// ── Leader-Watchlist (Performer Study) ────────────────────────────────────
+
+/** Sortierte IBD-Scores des RS-Universums (aufsteigend) oder null.
+ *  Universum = die n liquidesten Zeilen (Ø $-Vol 50T) aus bars.rs_universe,
+ *  Score mit denselben RS_WEIGHTS wie weightedRs(). */
+export function rsUniverse(bars, n = LEADERS.RS_UNIVERSE_N, weights = LEADERS.RS_WEIGHTS) {
+  const u = bars?.rs_universe;
+  if (!u?.rows) return null;
+  const idx = weights.map(({ bars: b }) => u.fields.indexOf(`roc${b}`));
+  const dIdx = u.fields.findIndex((f) => f.startsWith("dvol"));
+  if (idx.some((k) => k < 0) || dIdx < 0) return null;
+  const rows = Object.values(u.rows).filter((r) => isNum(r[dIdx]))
+    .sort((a, b) => b[dIdx] - a[dIdx]).slice(0, n);
+  const scores = rows.map((r) => weights.reduce((s, { w }, k) => s + w * r[idx[k]], 0));
+  return scores.length ? Float64Array.from(scores).sort() : null;
+}
+
+/** RS-Rating 1–99: Anteil des Universums mit Score <= score. */
+export function rsRating(score, sorted) {
+  if (!isNum(score) || !sorted?.length) return null;
+  let lo = 0, hi = sorted.length;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (sorted[m] <= score) lo = m + 1; else hi = m; }
+  return Math.min(99, Math.max(1, Math.round((100 * lo) / sorted.length)));
+}
+
+/** Ø Volumen der n Tage VOR Index k (kurzes Array); null bei Luecke. */
+function volBase(v, k, n) {
+  const w = windowOf(v, k - n, k);
+  return w ? mean(w) : null;
+}
+
+/** Stufe-2-Kennzahlen am letzten Tag + EP-Suche im Fenster.
+ *  c/h lang, o/l/v kurz - alle am Ende ausgerichtet. */
+export function triggerMetrics(t, dates, cfg = LEADERS) {
+  const T = cfg.TRIGGER, E = cfg.EP;
+  const c = t.c, h = t.h, o = t.o, v = t.v;
+  const out = { rvol_50d: null, gap_pct: null, breakout_20d: null, trigger: null,
+                weak_volume: null, ep: null, ep_date: null, dollar_vol_50d: null, rmv: null };
+  if (!o || !v || !c) return out;
+  const off = c.length - v.length;
+  const k = v.length - 1, i = k + off;
+  const gapAt = (kk) => {
+    const ii = kk + off;
+    return isNum(o[kk]) && isNum(c[ii - 1]) && c[ii - 1] > 0 ? (o[kk] / c[ii - 1] - 1) * 100 : null;
+  };
+  const base = volBase(v, k, T.VOL_BASE_BARS);
+  out.rvol_50d = base && isNum(v[k]) ? v[k] / base : null;
+  out.gap_pct = gapAt(k);
+  const piv = windowOf(h, i - T.PIVOT_BARS, i);
+  out.breakout_20d = piv && isNum(c[i]) ? c[i] > Math.max(...piv) : null;
+  if (out.breakout_20d === null || (out.rvol_50d === null && out.gap_pct === null)) {
+    out.trigger = null;
+  } else {
+    out.trigger = out.breakout_20d
+      && ((out.rvol_50d ?? 0) >= T.RVOL_MIN || (out.gap_pct ?? -Infinity) >= T.GAP_MIN_PCT);
+  }
+  out.weak_volume = out.trigger === true && out.rvol_50d !== null ? out.rvol_50d < T.WEAK_VOL_MAX : null;
+
+  // EP: Gap >= GAP_MIN_PCT bei Volumen >= VOL_MULT x Ø 50 Vortage, juengster Treffer zaehlt
+  let epKnown = false;
+  for (let kk = k; kk > k - E.WINDOW; kk--) {
+    const g = gapAt(kk), b = volBase(v, kk, T.VOL_BASE_BARS);
+    if (g === null || b === null || !isNum(v[kk])) continue;
+    epKnown = true;
+    if (g >= E.GAP_MIN_PCT && v[kk] >= E.VOL_MULT * b) { out.ep = true; out.ep_date = dates?.[kk + off] ?? null; break; }
+  }
+  if (out.ep === null && epKnown) out.ep = false;
+
+  const cw = windowOf(c, c.length - T.VOL_BASE_BARS, c.length);
+  const vw = windowOf(v, v.length - T.VOL_BASE_BARS, v.length);
+  out.dollar_vol_50d = cw && vw ? mean(cw.map((x, j) => x * vw[j])) : null;
+  const a5 = atrPct(h, t.l, c, cfg.RMV.SHORT), a50 = atrPct(h, t.l, c, cfg.RMV.LONG);
+  out.rmv = isNum(a5) && isNum(a50) && a50 > 0 ? a5 / a50 : null;
+  return out;
+}
+
+/** Stufe-1-Kriterien. Liefert die Schluessel der NICHT erfuellten Kriterien;
+ *  ein fehlender Wert gilt als nicht erfuellt (er kann nichts belegen). */
+export function watchlistFails(r, wl = LEADERS.WL) {
+  const f = [];
+  if (!(r.rs_rating >= wl.RS_MIN)) f.push("rs_rating");
+  if (!(r.p6m > wl.P6M_MIN)) f.push("p6m");
+  if (!(r.dist_52wh_pct >= -wl.DIST_MAX_PCT)) f.push("wl_dist");
+  if (wl.ABOVE_SMA50 && r.above_sma50 !== true) f.push("sma50");
+  if (wl.ABOVE_SMA200 && r.above_sma200 !== true) f.push("sma200");
+  if (!(r.close >= wl.MIN_PRICE)) f.push("min_price");
+  if (!(r.dollar_vol_50d >= wl.MIN_DVOL50)) f.push("dollar_vol_50d");
+  return f;
+}
+
 /** Alle Ticker-Metriken eines Konstituenten. */
-export function tickerMetrics(t, spy, basket, atrBars) {
+export function tickerMetrics(t, spy, basket, atrBars, dates = null) {
   const c = t.c, h = t.h, i = c.length - 1;
   const hi = high52(h);
   const last = c[i];
@@ -177,6 +267,7 @@ export function tickerMetrics(t, spy, basket, atrBars) {
   const rBasket = retOver(basket, LEADERS.RS_THEME_BARS);
   const wsStock = weightedRs(c), wsSpy = weightedRs(spy);
   const sma = smaLast(c, LEADERS.SMA_BREADTH);
+  const sma200 = smaLast(c, 200);
   const dd = downDayStrength(c, spy);
   let newHigh5 = null;
   for (let k = i - LEADERS.NEW_HIGH_DAYS + 1; k <= i; k++) {
@@ -199,6 +290,10 @@ export function tickerMetrics(t, spy, basket, atrBars) {
     above_sma50: sma !== null && isNum(last) ? last > sma : null,
     near_high: dist !== null ? dist >= -LEADERS.NEAR_HIGH_PCT : null,
     new_high_5d: newHigh5,
+    rs_score: wsStock,
+    p6m: retOver(c, LEADERS.WL.P6M_BARS),
+    above_sma200: sma200 !== null && isNum(last) ? last > sma200 : null,
+    ...triggerMetrics(t, dates),
   };
 }
 
@@ -236,6 +331,9 @@ const EMPTY_ROW = {
   close: null, rs_vs_theme: null, rs_vs_spy: null, dist_52wh_pct: null, dist_52wh_adr: null,
   down_day_strength: null, down_days: null, rvol_20d: null, adr_pct: null, atr_pct: null,
   dollar_vol_20d: null, above_sma50: null, near_high: null, new_high_5d: null,
+  rs_score: null, p6m: null, above_sma200: null, rvol_50d: null, gap_pct: null,
+  breakout_20d: null, trigger: null, weak_volume: null, ep: null, ep_date: null,
+  dollar_vol_50d: null, rmv: null, rs_rating: null,
 };
 
 const sortDesc = (a, b) => (b ?? -Infinity) - (a ?? -Infinity);
@@ -250,6 +348,7 @@ const sortDesc = (a, b) => (b ?? -Infinity) - (a ?? -Infinity);
 export function computeLeaders(bars, constituents, themeRows, snapDays, opts = {}) {
   const atrBars = LEADERS.ATR_PERIODS[opts.atrPeriod ?? LEADERS.ATR_PERIOD];
   const spy = bars.bench.c;
+  const uni = rsUniverse(bars);
   const out = {};
   for (const [name, row] of Object.entries(themeRows || {})) {
     const cons = constituents.themes?.[name];
@@ -266,12 +365,18 @@ export function computeLeaders(bars, constituents, themeRows, snapDays, opts = {
 
     const rows = members.map((m) => {
       const base = { ticker: m.tv, has_data: !!m.b };
-      if (!m.b) return { ...base, ...EMPTY_ROW, first_to_high: null, first_high_date: null };
-      const mt = tickerMetrics(m.b, spy, basket, atrBars);
+      if (!m.b) {
+        return { ...base, ...EMPTY_ROW, first_to_high: null, first_high_date: null,
+          qualified: false, wl_fails: ["no_data"] };
+      }
+      const mt = tickerMetrics(m.b, spy, basket, atrBars, bars.dates);
+      mt.rs_rating = rsRating(mt.rs_score, uni);
+      const fails = watchlistFails(mt);
       const f = fth.low && !fth.reason ? fth.perTicker[m.sym] : null;
       return { ...base, ...mt,
         first_to_high: f ? f.is_first : null,
-        first_high_date: f ? f.date : null };
+        first_high_date: f ? f.date : null,
+        qualified: fails.length === 0, wl_fails: fails };
     });
 
     const frac = (key) => {
@@ -290,7 +395,13 @@ export function computeLeaders(bars, constituents, themeRows, snapDays, opts = {
     const bKeys = LEADERS.BREADTH_SORT_KEYS.map((k) => breadth[k]);
     breadth.sort_value = bKeys.every(isNum) ? mean(bKeys) : null;
 
-    rows.sort((a, b) => sortDesc(a.rs_vs_theme, b.rs_vs_theme) || sortDesc(a.rs_vs_spy, b.rs_vs_spy));
+    // Reihenfolge (und damit der Leader) laut config.js LEADER_SORT:
+    // "rs_rating" = wie die Performer Study (RS absteigend), "rs_vs_theme" =
+    // 3M relativ zum Theme-Basket (urspruengliche Brief-Vorgabe).
+    rows.sort(LEADERS.LEADER_SORT === "rs_vs_theme"
+      ? (a, b) => sortDesc(a.rs_vs_theme, b.rs_vs_theme) || sortDesc(a.rs_vs_spy, b.rs_vs_spy)
+      : (a, b) => sortDesc(a.rs_rating, b.rs_rating) || sortDesc(a.rs_score, b.rs_score)
+        || sortDesc(a.rs_vs_theme, b.rs_vs_theme));
     for (const r of rows) {
       r.laggard = isNum(r.rs_vs_theme) && isNum(r.dist_52wh_adr)
         && r.rs_vs_theme < LEADERS.LAGGARD_RS_THEME_MAX && r.dist_52wh_adr <= LEADERS.LAGGARD_DIST_ADR;
@@ -298,6 +409,7 @@ export function computeLeaders(bars, constituents, themeRows, snapDays, opts = {
 
     out[name] = {
       name, rank: row.rank ?? null, score: row.score ?? null,
+      qualified_count: rows.filter((r) => r.qualified).length,
       source: cons.source, thin: !!cons.thin,
       breadth, basket_low: fth.low, fth_reason: fth.reason,
       basket_3m: retOver(basket, LEADERS.RS_THEME_BARS),
@@ -308,12 +420,41 @@ export function computeLeaders(bars, constituents, themeRows, snapDays, opts = {
 }
 
 /** UI-/Export-Filter: Liquiditaet + ATR. Fehlender Wert faellt bei aktivem
- *  Filter heraus (er kann die Schwelle nicht belegen), Rang wird neu vergeben. */
+ *  Filter heraus (er kann die Schwelle nicht belegen), Rang wird neu vergeben.
+ *  Leader = der hoechstplatzierte Ticker, der die Watchlist-Kriterien erfuellt -
+ *  erfuellt sie keiner, hat das Theme keinen Leader (ehrliche Aussage). */
 export function filterRows(rows, { minDollarVol = 0, minAtrPct = 0 } = {}) {
   const kept = rows.filter((r) =>
     (minDollarVol <= 0 || (isNum(r.dollar_vol_20d) && r.dollar_vol_20d >= minDollarVol)) &&
     (minAtrPct <= 0 || (isNum(r.atr_pct) && r.atr_pct >= minAtrPct)));
-  return kept.map((r, k) => ({ ...r, rank: k + 1, leader: k === 0 && isNum(r.rs_vs_theme) }));
+  const lead = kept.findIndex((r) => r.qualified);
+  return kept.map((r, k) => ({ ...r, rank: k + 1, leader: k === lead }));
+}
+
+/** Leader-Watchlist: jeder qualifizierte Ticker genau einmal, mit allen
+ *  Themes, in denen Finviz ihn fuehrt (Rang aufsteigend), sortiert nach
+ *  RS-Rating (Studie: "Sortierung: RS absteigend"). Themes sind Kontext,
+ *  kein Filter (Studie: Gruppen-Rang als Filter fragil). */
+export function buildWatchlist(result, { minDollarVol = 0, minAtrPct = 0 } = {}) {
+  const per = new Map();
+  for (const t of Object.values(result)) {
+    const leaderTk = filterRows(t.rows, { minDollarVol, minAtrPct }).find((r) => r.leader)?.ticker;
+    for (const r of t.rows) {
+      if (!r.qualified) continue;
+      if (minDollarVol > 0 && !(r.dollar_vol_20d >= minDollarVol)) continue;
+      if (minAtrPct > 0 && !(r.atr_pct >= minAtrPct)) continue;
+      const e = per.get(r.ticker) ?? { ...r, themes: [] };
+      e.themes.push({ name: t.name, rank: t.rank, leader: r.ticker === leaderTk });
+      per.set(r.ticker, e);
+    }
+  }
+  const list = [...per.values()];
+  for (const e of list) {
+    e.themes.sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
+    e.best_theme_rank = e.themes[0]?.rank ?? null;
+    e.strong = e.rs_rating >= LEADERS.WL.RS_STRONG;
+  }
+  return list.sort((a, b) => sortDesc(a.rs_rating, b.rs_rating) || sortDesc(a.rs_score, b.rs_score));
 }
 
 /** Themes in Anzeigereihenfolge: "score" = Theme-Rang, "breadth" = Breadth-Mittel. */
@@ -323,6 +464,32 @@ export function orderThemes(result, sortBy = "score") {
     return list.sort((a, b) => sortDesc(a.breadth.sort_value, b.breadth.sort_value) || (a.rank ?? 99) - (b.rank ?? 99));
   }
   return list.sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
+}
+
+/** TradingView aus der Leader-Watchlist: jeder Ticker genau EINMAL.
+ *  Erst "###In Play" (Trigger heute), dann je Ticker sein staerkstes Theme
+ *  als Sektion; Sektionen nach Theme-Rang, Ticker nach RS-Rating. */
+export function tradingViewFromWatchlist(entries, inPlayLabel = "In Play") {
+  const clean = (s) => String(s).replace(/,/g, " ");
+  const lines = [];
+  const inPlay = entries.filter((e) => e.trigger === true);
+  if (inPlay.length) {
+    lines.push(`###${clean(inPlayLabel)}`);
+    for (const e of inPlay) lines.push(e.ticker);
+  }
+  const groups = new Map();
+  for (const e of entries) {
+    if (e.trigger === true) continue;
+    const top = e.themes[0];
+    if (!top) continue;
+    if (!groups.has(top.name)) groups.set(top.name, { rank: top.rank, items: [] });
+    groups.get(top.name).items.push(e.ticker);
+  }
+  for (const [name, g] of [...groups.entries()].sort((a, b) => (a[1].rank ?? 99) - (b[1].rank ?? 99))) {
+    lines.push(`###${clean(name)}`);
+    lines.push(...g.items);
+  }
+  return lines.join("\n") + "\n";
 }
 
 /** TradingView-Watchlist: ###Theme-Sektionen (ohne Kommas), EXCHANGE:SYMBOL

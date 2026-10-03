@@ -4,6 +4,7 @@ import {
   retOver, smaLast, high52, isNewHigh, basketIndex, lastBasketLow, atrPct, adrPct,
   rvol, dollarVol, weightedRs, downDayStrength, rankChange, firstToHigh,
   computeLeaders, filterRows, orderThemes, tradingViewWatchlist,
+  rsUniverse, rsRating, triggerMetrics, watchlistFails, buildWatchlist, tradingViewFromWatchlist,
 } from "./leadersMetrics.js";
 import { LEADERS } from "./config.js";
 
@@ -135,16 +136,18 @@ test("computeLeaders: Ranking, Breadth, n/a fuer fehlende Ticker", () => {
 
 test("filterRows: Liquiditaet + ATR, n/a faellt bei aktivem Filter raus", () => {
   const rows = [
-    { ticker: "A", rs_vs_theme: 5, dollar_vol_20d: 50e6, atr_pct: 5 },
-    { ticker: "B", rs_vs_theme: 3, dollar_vol_20d: 1e6, atr_pct: 6 },
-    { ticker: "C", rs_vs_theme: 1, dollar_vol_20d: null, atr_pct: 6 },
-    { ticker: "D", rs_vs_theme: 0, dollar_vol_20d: 90e6, atr_pct: 3 },
+    { ticker: "A", rs_vs_theme: 5, dollar_vol_20d: 50e6, atr_pct: 5, qualified: false },
+    { ticker: "B", rs_vs_theme: 3, dollar_vol_20d: 1e6, atr_pct: 6, qualified: true },
+    { ticker: "C", rs_vs_theme: 1, dollar_vol_20d: null, atr_pct: 6, qualified: true },
+    { ticker: "D", rs_vs_theme: 0, dollar_vol_20d: 90e6, atr_pct: 3, qualified: false },
   ];
   assert.deepEqual(filterRows(rows, { minDollarVol: 20e6, minAtrPct: 4 }).map((r) => r.ticker), ["A"]);
   const all = filterRows(rows, {});
   assert.equal(all.length, 4);
-  assert.equal(all[0].leader, true);
-  assert.equal(all[1].leader, false);
+  // Leader = erster QUALIFIZIERTER Ticker, nicht einfach Rang 1
+  assert.deepEqual(all.map((r) => r.leader), [false, true, false, false]);
+  // erfuellt nach Filter keiner die Kriterien -> kein Leader
+  assert.ok(filterRows(rows, { minDollarVol: 20e6 }).every((r) => !r.leader));
 });
 
 test("orderThemes + tradingViewWatchlist", () => {
@@ -156,4 +159,91 @@ test("orderThemes + tradingViewWatchlist", () => {
   assert.deepEqual(orderThemes(themes, "breadth").map((t) => t.name), ["X, Y", "Z"]);
   assert.equal(tradingViewWatchlist(Object.values(themes)),
     "###Z\nNASDAQ:A\nNASDAQ:C\n###X  Y\nNYSE:B\n");
+});
+
+test("rsUniverse + rsRating: IBD-Gewichte, Top-N nach Dollarvolumen", () => {
+  const rows = {};
+  for (let i = 1; i <= 100; i++) rows["T" + i] = [i, i, i, i, 1e6 * i];   // Score = i
+  rows.ILLIQ = [1000, 1000, 1000, 1000, 1];                              // faellt bei n=100 raus
+  const bars = { rs_universe: { fields: ["roc63", "roc126", "roc189", "roc252", "dvol50"], rows } };
+  const u = rsUniverse(bars, 100);
+  assert.equal(u.length, 100);
+  near(u[0], 1);
+  assert.equal(rsRating(90, u), 90);
+  assert.equal(rsRating(1000, u), 99);   // gekappt auf 99
+  assert.equal(rsRating(-5, u), 1);      // gekappt auf 1
+  assert.equal(rsRating(null, u), null);
+  assert.equal(rsUniverse({}), null);
+});
+
+function trigBars({ lastClose = 120, lastOpen = 101, lastVol = 1e6, epAt = null } = {}) {
+  const n = 80, S = 57;
+  const c = range(n, () => 100), h = range(n, () => 101);
+  c[n - 1] = lastClose; h[n - 1] = Math.max(lastClose, 101);
+  const o = range(S, () => 100), l = range(S, () => 99), v = range(S, () => 1e6);
+  o[S - 1] = lastOpen; v[S - 1] = lastVol;
+  if (epAt !== null) { o[epAt] = 110; v[epAt] = 4e6; }
+  return { c, h, o, l, v };
+}
+
+test("triggerMetrics: Breakout + (RVOL >= 3 ODER Gap >= 4 %)", () => {
+  const dates = range(80, (i) => "d" + i);
+  const volT = triggerMetrics(trigBars({ lastVol: 3e6 }), dates);
+  assert.equal(volT.breakout_20d, true);
+  near(volT.rvol_50d, 3);
+  assert.equal(volT.trigger, true);
+  assert.equal(volT.weak_volume, false);
+  const gapT = triggerMetrics(trigBars({ lastOpen: 105, lastVol: 0.5e6 }), dates);
+  assert.equal(gapT.trigger, true);               // Gap 5 % reicht
+  assert.equal(gapT.weak_volume, true);           // aber Volumen < 1x -> meiden
+  const none = triggerMetrics(trigBars({ lastVol: 1.2e6 }), dates);
+  assert.equal(none.trigger, false);              // Breakout ohne Energie
+  const noBo = triggerMetrics(trigBars({ lastClose: 100, lastVol: 5e6 }), dates);
+  assert.equal(noBo.trigger, false);              // kein Close ueber dem 20T-Hoch
+});
+
+test("triggerMetrics: EP = Gap >= 4 % bei >= 3x Volumen im 6-Tage-Fenster", () => {
+  const dates = range(80, (i) => "d" + i);
+  const ep = triggerMetrics(trigBars({ epAt: 53 }), dates);   // 4 Tage vor heute
+  assert.equal(ep.ep, true);
+  assert.equal(ep.ep_date, "d76");
+  const old = triggerMetrics(trigBars({ epAt: 50 }), dates);  // 7 Tage zurueck: ausserhalb
+  assert.equal(old.ep, false);
+});
+
+test("watchlistFails: alle Kriterien, fehlender Wert = nicht erfuellt", () => {
+  const ok = { rs_rating: 91, p6m: 60, dist_52wh_pct: -12, above_sma50: true, above_sma200: true,
+               close: 25, dollar_vol_50d: 6e6 };
+  assert.deepEqual(watchlistFails(ok), []);
+  assert.deepEqual(watchlistFails({ ...ok, rs_rating: 89 }), ["rs_rating"]);
+  assert.deepEqual(watchlistFails({ ...ok, p6m: 50 }), ["p6m"]);              // > 50, nicht >=
+  assert.deepEqual(watchlistFails({ ...ok, dist_52wh_pct: -21 }), ["wl_dist"]);
+  assert.deepEqual(watchlistFails({ ...ok, above_sma200: null }), ["sma200"]);
+  assert.deepEqual(watchlistFails({ ...ok, close: 9 }), ["min_price"]);
+  assert.deepEqual(watchlistFails({ ...ok, dollar_vol_50d: null }), ["dollar_vol_50d"]);
+});
+
+test("buildWatchlist: jeder Ticker einmal, alle Themes als Kontext", () => {
+  const q = (ticker, rs, extra = {}) => ({ ticker, rs_vs_theme: 1, rs_rating: rs, rs_score: rs, qualified: true,
+    dollar_vol_20d: 1e9, atr_pct: 5, ...extra });
+  const res = {
+    A: { name: "A", rank: 3, rows: [q("X:CRWD", 97), { ticker: "X:JUNK", qualified: false }] },
+    B: { name: "B", rank: 1, rows: [q("X:NET", 92), q("X:CRWD", 97)] },
+  };
+  const wl = buildWatchlist(res);
+  assert.deepEqual(wl.map((e) => e.ticker), ["X:CRWD", "X:NET"]);
+  assert.deepEqual(wl[0].themes.map((t) => [t.name, t.leader]), [["B", false], ["A", true]]);
+  assert.equal(wl[0].strong, true);
+  assert.equal(wl[1].strong, false);
+  assert.equal(buildWatchlist(res, { minAtrPct: 6 }).length, 0);
+});
+
+test("tradingViewFromWatchlist: In Play zuerst, danach staerkstes Theme, keine Dubletten", () => {
+  const e = (ticker, trigger, themes) => ({ ticker, trigger, themes });
+  const txt = tradingViewFromWatchlist([
+    e("X:A", true, [{ name: "Cyber, Sec", rank: 1 }]),
+    e("X:B", false, [{ name: "Semis", rank: 2 }, { name: "Cyber, Sec", rank: 1 }].sort((a, b) => a.rank - b.rank)),
+    e("X:C", false, [{ name: "Semis", rank: 2 }]),
+  ]);
+  assert.equal(txt, ["###In Play", "X:A", "###Cyber  Sec", "X:B", "###Semis", "X:C", ""].join("\n"));
 });
