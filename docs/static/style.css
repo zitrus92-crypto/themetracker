@@ -768,6 +768,7 @@ details.wp-details { margin-bottom: 18px; }
 /* ── Leading Stocks Tab ─────────────────────────────────────────────────── */
 .lead-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin: 12px 0 10px; }
 .lead-group { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.lead-actions { margin-left: auto; }
 .lead-select {
   background: var(--bg3); border: 1px solid var(--border); color: var(--text);
   border-radius: 6px; padding: 3px 6px; font-size: 12px;

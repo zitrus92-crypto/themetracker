@@ -161,6 +161,9 @@ const I18N = {
     leadEmptyRows: "Kein Ticker erfüllt die Filter.",
     leadEvidence:  { validated: "validiert", convention: "Konvention", overfit: "potenziell überangepasst" },
     leadEvidenceLabel: "Evidenz",
+    leadWatchlist: "📥 TradingView Watchlist",
+    leadWatchlistTitle: "Lädt eine .txt mit ###Theme-Sektionen und EXCHANGE:SYMBOL je Zeile herunter (TradingView: Watchlist → Liste importieren). Themes nach Stärke, Ticker nach RS — exakt die aktuell angezeigte Auswahl.",
+    leadWatchlistDone: (n) => `Watchlist mit ${n} Tickern heruntergeladen`,
     leadCols: {
       pct_above_50ma: ["% > SMA50", "Anteil der Konstituenten mit Close über SMA50."],
       pct_near_high:  ["% nahe Hoch", "Anteil der Konstituenten höchstens 10 % unter dem 52W-Hoch (George/Hwang 2004: Nähe zum 52W-Hoch sagt Renditen voraus)."],
@@ -449,6 +452,9 @@ const I18N = {
     leadEmptyRows: "No ticker passes the filters.",
     leadEvidence:  { validated: "validated", convention: "convention", overfit: "potentially overfit" },
     leadEvidenceLabel: "Evidence",
+    leadWatchlist: "📥 TradingView Watchlist",
+    leadWatchlistTitle: "Downloads a .txt with ###Theme sections and one EXCHANGE:SYMBOL per line (TradingView: watchlist → import list). Themes by strength, tickers by RS — exactly the current selection.",
+    leadWatchlistDone: (n) => `Watchlist with ${n} tickers downloaded`,
     leadCols: {
       pct_above_50ma: ["% > SMA50", "Share of constituents closing above SMA50."],
       pct_near_high:  ["% near high", "Share of constituents at most 10% below the 52W high (George/Hwang 2004: 52W-high proximity predicts returns)."],
@@ -1564,10 +1570,46 @@ function showToast(msg) {
 // Build a structured JSON array for the currently selected rows and copy it to
 // the clipboard. `rows` is an array of {name, score, accel, ranks?, perfs, tickers}
 // objects (already shaped by the caller). Each row keeps its own ticker grouping.
+// Eine Theme-Zeile des JSON-Exports (Themes-Tab UND Leading-Stocks-Tab).
+// Felder bis "tickers" sind Schema v1 und bleiben unverändert; ab v2 kommen
+// leading_breadth + leaders hinzu (null, solange die Leader-Daten nicht
+// geladen sind — der Leading-Stocks-Tab lädt sie beim ersten Öffnen).
+function themeExportRow(name) {
+  const row  = _etfData?.themes?.[name];
+  if (!row) return null;
+  const m = _themeMetrics?.[name];
+  return {
+    type: "theme",
+    name,
+    score: row.score,
+    accel: _themeAccel[name],
+    // Themes only have a single overall rank, not per-timeframe ranks.
+    ranks: { overall: row.rank },
+    perfs: { "1W": row.perfs?.["1W"], "1M": row.perfs?.["1M"], "3M": row.perfs?.["3M"], "6M": row.perfs?.["6M"], "YTD": row.perfs?.["YTD"] },
+    // Kennzahlen-Kern (SPEC §4.4) — null, falls das Modul nicht lud.
+    segments: m?.segments ?? null,
+    damage: m?.damage ?? null,
+    freshness: m?.freshness ?? null,
+    stage: m?.stage ?? null,
+    daysInStage: m?.daysInStage ?? null,
+    density: m?.density ?? null,
+    breadth: m?.breadth ?? null,
+    breadthDelta: m?.breadthDelta ?? null,
+    concentration: m?.concentration ?? null,
+    tickers: row.tickers ?? [],
+    ...leadersExportFields(name),
+  };
+}
+
+// Schema-Version jeder Export-Zeile. v1 = ohne Feld (bis 2026-10),
+// v2 = Theme-Zeilen tragen leading_breadth + leaders (Leading-Stocks-Tab).
+const EXPORT_SCHEMA_VERSION = 2;
+
 function exportSelectionJson(rows) {
   if (!rows || !rows.length) return;
   // Aktuelles Regime in jede Zeile stempeln (Kontext für den Leader-Analyst).
   if (_regimeData?.state) rows.forEach(r => { r.regime = _regimeData.state; });
+  rows.forEach(r => { r.schema_version = EXPORT_SCHEMA_VERSION; });
   const json = JSON.stringify(rows, null, 2);
   navigator.clipboard.writeText(json).then(() => {
     const n = rows.length;
@@ -1787,32 +1829,7 @@ function renderEtfThemes(data) {
   const themeExportBtn = themeBar.querySelector(".selection-bar__export-btn");
   if (themeExportBtn) themeExportBtn.onclick = () => {
     const checked = [...document.querySelectorAll("#etf-themes-body .row-check:checked")];
-    const rows = checked.map(cb => {
-      const name = cb.dataset.key;
-      const row  = _etfData?.themes?.[name];
-      if (!row) return null;
-      const m = _themeMetrics?.[name];
-      return {
-        type: "theme",
-        name,
-        score: row.score,
-        accel: _themeAccel[name],
-        // Themes only have a single overall rank, not per-timeframe ranks.
-        ranks: { overall: row.rank },
-        perfs: { "1W": row.perfs?.["1W"], "1M": row.perfs?.["1M"], "3M": row.perfs?.["3M"], "6M": row.perfs?.["6M"], "YTD": row.perfs?.["YTD"] },
-        // Kennzahlen-Kern (SPEC §4.4) — null, falls das Modul nicht lud.
-        segments: m?.segments ?? null,
-        damage: m?.damage ?? null,
-        freshness: m?.freshness ?? null,
-        stage: m?.stage ?? null,
-        daysInStage: m?.daysInStage ?? null,
-        density: m?.density ?? null,
-        breadth: m?.breadth ?? null,
-        breadthDelta: m?.breadthDelta ?? null,
-        concentration: m?.concentration ?? null,
-        tickers: row.tickers ?? [],
-      };
-    }).filter(Boolean);
+    const rows = checked.map(cb => themeExportRow(cb.dataset.key)).filter(Boolean);
     exportSelectionJson(rows);
   };
   themeBar.querySelector(".selection-bar__clear-btn").onclick = () => {
@@ -3936,7 +3953,80 @@ function leadersBarHtml() {
     <span class="lead-group"><span class="xaxis-toggle-label">${t("leadAtr")}</span>
       ${seg("lperiod", Object.keys(_LCFG.ATR_PERIODS).map(k => [k, _lang === "de" ? k : k.replace("T", "D")]), ui.atrPeriod)}
       <select class="lead-select" data-lfilter="minAtr">${opt(_LCFG.MIN_ATR_OPTIONS, ui.minAtr, v => v ? "> " + v + " %" : t("leadAll"))}</select></span>
+    <span class="lead-group lead-actions">
+      <button class="selection-bar__export-btn lead-export-btn">${t("exportJson")}</button>
+      <button class="top20-btn lead-tv-btn" title="${esc(t("leadWatchlistTitle"))}">${t("leadWatchlist")}</button>
+    </span>
   </div>`;
+}
+
+// Letzter Handelstag in den Kursdaten (nicht das Laufdatum: der Post-Close-
+// Lauf kann nach Mitternacht UTC landen).
+function leadersDataDate() {
+  return _leadersBars?.dates?.[_leadersBars.dates.length - 1] ?? _leadersBars?.date ?? null;
+}
+
+// Export-Felder (Schema v2) für ein Theme. Gefiltert wie im Tab angezeigt.
+function leadersExportFields(name) {
+  if (!_leadersBars || !_LM || !_leadersUi || !_etfData?.themes) {
+    return { leading_breadth: null, leaders: null };
+  }
+  const th = leadersResult()[name];
+  if (!th) return { leading_breadth: null, leaders: null };
+  const ui = _leadersUi;
+  const r2 = (v) => (v === null || v === undefined || !Number.isFinite(v)) ? null : Math.round(v * 100) / 100;
+  const b = th.breadth;
+  return {
+    leading_breadth: {
+      pct_above_50ma: r2(b.pct_above_50ma),
+      pct_near_high: r2(b.pct_near_high),
+      new_highs_5d: b.new_highs_5d,
+      rank_change_4w: b.rank_change_4w,
+      members: b.members,
+      members_with_data: b.members_with_data,
+      basket_low: th.basket_low ? { date: th.basket_low.date, drawdown_pct: r2(th.basket_low.drawdown) } : null,
+      constituents_source: th.source,
+      data_date: leadersDataDate(),
+      filters: { min_dollar_vol: ui.minDvol, min_atr_pct: ui.minAtr, atr_period: ui.atrPeriod },
+    },
+    leaders: _LM.filterRows(th.rows, { minDollarVol: ui.minDvol, minAtrPct: ui.minAtr }).map(r => ({
+      rank: r.rank,
+      ticker: r.ticker,
+      leader: r.leader,
+      laggard: r.laggard,
+      rs_vs_theme: r2(r.rs_vs_theme),
+      rs_vs_spy: r2(r.rs_vs_spy),
+      dist_52wh_pct: r2(r.dist_52wh_pct),
+      dist_52wh_adr: r2(r.dist_52wh_adr),
+      first_to_high: r.first_to_high,
+      first_high_date: r.first_high_date,
+      down_day_strength: r2(r.down_day_strength),
+      down_days: r.down_days,
+      rvol_20d: r2(r.rvol_20d),
+      adr_pct: r2(r.adr_pct),
+      atr_pct: r2(r.atr_pct),
+      dollar_vol_20d: r.dollar_vol_20d === null ? null : Math.round(r.dollar_vol_20d),
+    })),
+  };
+}
+
+function exportLeadersJson() {
+  const rows = leadersVisibleThemes().map(t => themeExportRow(t.name)).filter(Boolean);
+  exportSelectionJson(rows);
+}
+
+// TradingView-Watchlist als .txt-Download (Import-Dialog von TradingView).
+function downloadLeadersWatchlist() {
+  const txt = _LM.tradingViewWatchlist(leadersVisibleThemes());
+  const blob = new Blob([txt], { type: "text/plain" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `leading_stocks_${leadersDataDate()}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  const n = (txt.match(/^[^#\n].*$/gm) || []).length;
+  showToast(t("leadWatchlistDone", n));
 }
 
 async function renderLeadersTab() {
@@ -3950,7 +4040,7 @@ async function renderLeadersTab() {
   const themes = leadersVisibleThemes();
   const nCons = Object.values(_leadersCons.themes).reduce((s, c) => s + c.tickers.length, 0);
   box.innerHTML = `${leadersBarHtml()}
-    <p class="picks-subtitle lead-meta">${t("leadMeta", _leadersBars.date, nCons, Object.keys(_leadersCons.themes).length)}</p>
+    <p class="picks-subtitle lead-meta">${t("leadMeta", leadersDataDate(), nCons, Object.keys(_leadersCons.themes).length)}</p>
     <p class="lead-tip" id="lead-tip">${t("leadTipDefault")}</p>
     ${themes.map(leadersCardHtml).join("")}`;
   wireLeadersControls(box);
@@ -3958,6 +4048,8 @@ async function renderLeadersTab() {
 
 function wireLeadersControls(box) {
   const ui = _leadersUi;
+  box.querySelector(".lead-export-btn").onclick = exportLeadersJson;
+  box.querySelector(".lead-tv-btn").onclick = downloadLeadersWatchlist;
   box.querySelectorAll("[data-lsort]").forEach(b => b.onclick = () => {
     ui.sort = b.dataset.lsort; prefSet("leadSort", ui.sort); renderLeadersTab();
   });
