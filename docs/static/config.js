@@ -108,6 +108,28 @@ export const LEADERS = {
   // Standard-Sortierung der Theme-Karten: "group_rs" | "score" | "breadth"
   DEFAULT_SORT: "group_rs",
 
+  // -- Mini-Charts der Watchlist (Finviz chart API) ----------------------------
+  // Finviz rendert jede Groesse von 250 x 180 bis Breite 2000 px / Flaeche 2 Mio. px
+  // (getestet 03.10.2026), hat aber KEINEN Retina-Parameter: ein groesseres
+  // Bild zeigt mehr Historie bei gleich kleiner Schrift. Deshalb wird das Bild
+  // in der angezeigten Breite angefordert und der Zeitraum fest auf RANGE
+  // gesetzt (Parameter r: m1/m3/m6/ytd/y1 …) - so wird aus Breite Lesbarkeit.
+  // S = bisheriges Format (466 x 219, Finviz-Standardzeitraum).
+  CHARTS: {
+    DEFAULT_SIZE: "M",
+    SIZES: {
+      S: { min: 300 },
+      M: { min: 520 },
+      L: { min: 900, max: 1100 },
+    },
+    RANGE: "m6",
+    ASPECT: 1.75,          // Breite : Hoehe
+    MAX_W: 2000,
+    MAX_AREA: 2e6,
+    MIN_W: 250,            // darunter antwortet Finviz mit HTTP 400
+    MIN_H: 180,
+  },
+
   // Breadth-Sortierung: Mittel aus pct_above_50ma und pct_near_high
   BREADTH_SORT_KEYS: ["pct_above_50ma", "pct_near_high"],
 

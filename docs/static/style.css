@@ -845,6 +845,11 @@ details.wp-details { margin-bottom: 18px; }
 .lead-wl-row--inplay td { background: #0f2a1a; }
 .lead-wl-row--inplay td:first-child { box-shadow: inset 3px 0 0 var(--green-2); }
 .lead-chart { cursor: default; }
+/* Groessen: min(…, 100%) verhindert Overflow auf schmalen Bildschirmen */
+.lead-charts--M { grid-template-columns: repeat(auto-fill, minmax(min(520px, 100%), 1fr)); }
+.lead-charts--L { grid-template-columns: minmax(0, 1fr); max-width: 1100px; margin: 0 auto; }
+.lead-charts img { width: 100%; height: auto; }
+.lead-chart .exp-chart-groups { flex-wrap: nowrap; overflow: hidden; white-space: nowrap; }
 .lead-chart figcaption { font-size: 12px; }
 .lead-chart--inplay { border-color: var(--green-3); box-shadow: 0 0 0 1px var(--green-3); }
 .lead-section-title {

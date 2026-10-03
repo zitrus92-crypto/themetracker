@@ -167,6 +167,8 @@ const I18N = {
     leadWlTitle:   "🎯 Leader-Watchlist",
     leadWlTable:   "📋 Tabelle",
     leadWlCharts:  "📈 Charts",
+    leadSizeTitle: { S: "Klein: Überblick, viele Charts nebeneinander (bisheriges Format)", M: "Mittel: Karten ab ~520 px, auf großen Bildschirmen 3 Spalten", L: "Groß: ein Chart pro Zeile, bis 1100 px breit" },
+    leadChartsRange: "Zeitraum 6 Monate, Bild in Kartenbreite gerendert.",
     leadCopy:      "📋 Ticker kopieren",
     leadThemesTvTitle: "Lädt die angezeigten Theme-Karten als .txt herunter (TradingView: Watchlist → Liste importieren): je Karte eine ###Theme-Sektion in der aktuellen Sortierung, darunter genau die Ticker der Karte (aufgeklappte Karten mit allen Zeilen). Ein Ticker kann in mehreren Sektionen stehen.",
     leadCopyTitle: "Kopiert genau die angezeigten Ticker als kommagetrennte EXCHANGE:SYMBOL-Liste — direkt in eine TradingView-Watchlist einfügbar.",
@@ -498,6 +500,8 @@ const I18N = {
     leadWlTitle:   "🎯 Leader watchlist",
     leadWlTable:   "📋 Table",
     leadWlCharts:  "📈 Charts",
+    leadSizeTitle: { S: "Small: overview, many charts side by side (previous format)", M: "Medium: cards from ~520 px, 3 columns on large screens", L: "Large: one chart per row, up to 1100 px wide" },
+    leadChartsRange: "Range 6 months, image rendered at card width.",
     leadCopy:      "📋 Copy tickers",
     leadThemesTvTitle: "Downloads the shown theme cards as .txt (TradingView: watchlist → import list): one ###Theme section per card in the current sort order, with exactly the card's tickers (expanded cards with all rows). A ticker can appear in several sections.",
     leadCopyTitle: "Copies exactly the shown tickers as a comma-separated EXCHANGE:SYMBOL list — paste straight into a TradingView watchlist.",
@@ -834,10 +838,12 @@ function finvizUrl(ticker) {
 // ta = Finviz "Technical Analysis": zusätzlich SMA20 und die automatische
 // Muster-/Trendlinien-Erkennung (Overlay "patterns"). Parameter abgeleitet
 // aus Finvizs eigener Weiterleitung des alten chart.ashx?ta=1-Links.
-function finvizChartUrl(ticker, scale = 1, ta = false) {
-  const w = 466 * scale, h = 219 * scale;
+// size = {w, h, range}: freie Pixelgroesse + fester Zeitraum (r=m6 …) fuer
+// die grossen Watchlist-Charts; ohne size bleibt alles wie bisher.
+function finvizChartUrl(ticker, scale = 1, ta = false, size = null) {
+  const w = size?.w ?? 466 * scale, h = size?.h ?? 219 * scale;
   const base = `https://charts2-node.finviz.com/chart?w=${w}&h=${h}&bw=1&bm=1&bb=1&t=${encodeURIComponent(ticker)}`
-       + `&tf=d&s=linear&pm=240&am=1200&tl=1&ct=candle_stick&tm=d`
+       + `&tf=d&s=linear&pm=240&am=1200&tl=1&ct=candle_stick&tm=d${size?.range ? `&r=${size.range}` : ""}`
        + `&o[0][ot]=sma&o[0][op]=50&o[0][oc]=FF8F33C6&o[1][ot]=sma&o[1][op]=200&o[1][oc]=DCB3326D`;
   return ta
     ? base + `&o[2][ot]=sma&o[2][op]=20&o[2][oc]=DC32B363&o[3][ot]=patterns&o[3][op]=&o[3][oc]=000`
@@ -3878,7 +3884,8 @@ let _leadersCons = null;
 let _leadersLoad = null;      // laufendes Promise (Doppelklick-Schutz)
 let _leadersFailed = false;
 let _leadersCache = {};       // atrPeriod -> computeLeaders()-Ergebnis
-let _leadersUi = null;        // {sort, topN, minDvol, minAtr, atrPeriod, wlView, wlMode, ta}
+let _leadersUi = null;        // {sort, topN, minDvol, minAtr, atrPeriod, wlView, wlMode, ta, chartSize}
+let _leadersChartWidth = null; // Containerbreite beim letzten Chart-Rendern (Resize-Erkennung)
 
 async function ensureLeadersData() {
   if (_leadersBars && _LM) return true;
@@ -3914,6 +3921,7 @@ async function ensureLeadersData() {
           wlView: ["all", "strong", "inplay", "ep"].includes(prefGet("leadWlView")) ? prefGet("leadWlView") : "all",
           wlMode: prefGet("leadWlMode") === "charts" ? "charts" : "table",
           ta: prefGet("leadTa") === "1",
+          chartSize: _LCFG.CHARTS.SIZES[prefGet("leadChartSize")] ? prefGet("leadChartSize") : _LCFG.CHARTS.DEFAULT_SIZE,
         };
       } catch (e) {
         console.error("Leading Stocks konnte nicht geladen werden:", e);
@@ -4044,12 +4052,15 @@ function leadersWatchlistHtml() {
     .map(([k, label]) => `<button class="xaxis-btn${ui.wlMode === k ? " active" : ""}" data-lwlmode="${k}">${label}</button>`).join("");
   const taBtn = ui.wlMode === "charts"
     ? `<button class="inst-toggle-btn${ui.ta ? " active" : ""}" data-lta="1" title="${esc(t("leadTaTitle"))}">📐 Technical Analysis</button>` : "";
+  const sizeBtns = ui.wlMode === "charts"
+    ? Object.keys(_LCFG.CHARTS.SIZES).map(k =>
+        `<button class="xaxis-btn${ui.chartSize === k ? " active" : ""}" data-lsize="${k}" title="${esc(t("leadSizeTitle")[k])}">${k}</button>`).join("") : "";
   return `<div class="lead-wl">
     <div class="lead-wl__head">
       <span class="lead-name">${t("leadWlTitle")}</span>
       <span class="lead-group">${seg}</span>
       <span class="lead-group lead-actions">
-        ${mode}${taBtn}
+        ${mode}${sizeBtns}${taBtn}
         <button class="top20-btn lead-copy-btn" title="${esc(t("leadCopyTitle"))}">${t("leadCopy")}</button>
         <button class="top20-btn lead-tv-btn" title="${esc(t("leadWatchlistTitle"))}">${t("leadWatchlist")}</button>
       </span>
@@ -4060,10 +4071,44 @@ function leadersWatchlistHtml() {
   </div>`;
 }
 
+// Pixelgroesse der Chart-Bilder fuer die gewaehlte Groesse: gleiche Spalten-
+// rechnung wie das CSS-Raster (auto-fill, minmax), Bild = Kartenbreite.
+// Bei S bleibt das alte feste Format (null).
+const LEAD_CHART_GAP = 12, LEAD_CHART_PAD = 18;
+function leadersChartSize() {
+  const C = _LCFG.CHARTS, key = _leadersUi.chartSize, sz = C.SIZES[key];
+  if (key === "S") return null;
+  const box = document.getElementById("leaders-container");
+  const avail = Math.max(280, (box?.clientWidth || 1000) - 30);   // Innenabstand der Watchlist-Box
+  const width = Math.min(avail, sz.max ?? Infinity);
+  const min = Math.min(sz.min, width);
+  const cols = Math.max(1, Math.floor((width + LEAD_CHART_GAP) / (min + LEAD_CHART_GAP)));
+  let w = Math.round((width - LEAD_CHART_GAP * (cols - 1)) / cols - LEAD_CHART_PAD);
+  w = Math.min(Math.max(w, C.MIN_W), C.MAX_W);
+  let h = Math.max(Math.round(w / C.ASPECT), C.MIN_H);
+  if (w * h > C.MAX_AREA) h = Math.floor(C.MAX_AREA / w);
+  return { w, h, range: C.RANGE };
+}
+
+// Lehnt Finviz die freie Groesse ab, einmal auf das Standardformat
+// (466 x 219) zurueckfallen; erst wenn auch das scheitert, "chart n/a".
+function leadChartFallback(img) {
+  const fb = img.dataset.fallback;
+  if (fb) {
+    img.removeAttribute("data-fallback");
+    img.removeAttribute("width"); img.removeAttribute("height");
+    img.src = fb;
+    return;
+  }
+  img.closest(".exp-chart")?.classList.add("exp-chart--failed");
+}
+
 // Mini-Charts der angezeigten Watchlist — Kartenformat wie im Experimental-Tab.
 function leadersChartsHtml(list, setups) {
   if (!list.length) return `<p class="pick-empty">${t("leadWlEmpty")}</p>`;
   const ta = _leadersUi.ta;
+  const size = leadersChartSize();
+  _leadersChartWidth = document.getElementById("leaders-container")?.clientWidth ?? null;
   const cards = list.map((e, i) => {
     const sym = leadSym(e.ticker).replace(".", "-");
     const tags = [
@@ -4072,8 +4117,9 @@ function leadersChartsHtml(list, setups) {
       e.ep ? `<span class="lead-ep">⚡ EP ${leadDate(e.ep_date)}</span>` : "",
       setups[leadSym(e.ticker)] ? `<span class="lead-setup lead-setup--${setups[leadSym(e.ticker)].toLowerCase()}">${setups[leadSym(e.ticker)]}</span>` : "",
     ].filter(Boolean).join(" ");
-    const themes = e.themes.slice(0, 3).map(th =>
-      `<span class="lead-theme-chip${th.leader ? " lead-theme-chip--leader" : ""}">${th.leader ? "★ " : ""}${esc(th.name)} #${th.rank ?? "–"}</span>`).join("");
+    const themes = e.themes.slice(0, 2).map(th =>
+      `<span class="lead-theme-chip${th.leader ? " lead-theme-chip--leader" : ""}">${th.leader ? "★ " : ""}${esc(th.name)} #${th.rank ?? "–"}</span>`).join("")
+      + (e.themes.length > 2 ? ` <span class="lead-dim" title="${esc(e.themes.slice(2).map(th => `${th.name} #${th.rank}`).join(" · "))}">+${e.themes.length - 2}</span>` : "");
     return `<figure class="exp-chart lead-chart${e.trigger ? " lead-chart--inplay" : ""}">
       <figcaption>
         <span class="lead-dim">${i + 1}</span>
@@ -4083,12 +4129,14 @@ function leadersChartsHtml(list, setups) {
       </figcaption>
       <div class="exp-chart-groups">${themes}</div>
       <a href="${finvizQuoteUrl(sym)}${ta ? "&ta=1" : ""}" target="_blank" rel="noopener">
-        <img src="${finvizChartUrl(sym, 1, ta)}" alt="${esc(e.ticker)}" loading="lazy" referrerpolicy="no-referrer"
-             onerror="this.closest('.exp-chart').classList.add('exp-chart--failed')">
+        <img src="${finvizChartUrl(sym, 1, ta, size)}" alt="${esc(e.ticker)}" loading="lazy" referrerpolicy="no-referrer"
+             ${size ? `width="${size.w}" height="${size.h}" data-fallback="${esc(finvizChartUrl(sym, 1, ta))}"` : ""}
+             onerror="leadChartFallback(this)">
       </a>
     </figure>`;
   }).join("");
-  return `<p class="lead-dim lead-wl__criteria">${t(ta ? "leadChartsHintTa" : "leadChartsHint")}</p><div class="exp-charts">${cards}</div>`;
+  return `<p class="lead-dim lead-wl__criteria">${t(ta ? "leadChartsHintTa" : "leadChartsHint")}${size ? " " + t("leadChartsRange") : ""}</p>
+    <div class="exp-charts lead-charts lead-charts--${_leadersUi.chartSize}">${cards}</div>`;
 }
 
 let _leadersExpanded = new Set();
@@ -4348,6 +4396,9 @@ function wireLeadersControls(box) {
   box.querySelectorAll("[data-lta]").forEach(b => b.onclick = () => {
     ui.ta = !ui.ta; prefSet("leadTa", ui.ta ? "1" : "0"); renderLeadersTab();
   });
+  box.querySelectorAll("[data-lsize]").forEach(b => b.onclick = () => {
+    ui.chartSize = b.dataset.lsize; prefSet("leadChartSize", ui.chartSize); renderLeadersTab();
+  });
   box.querySelectorAll("[data-lsort]").forEach(b => b.onclick = () => {
     ui.sort = b.dataset.lsort; prefSet("leadSort", ui.sort); renderLeadersTab();
   });
@@ -4379,6 +4430,19 @@ function wireLeadersControls(box) {
     el.addEventListener("focus", () => show(el));
   });
 }
+
+// Chart-Bilder werden in Kartenbreite angefordert -> bei spuerbar anderer
+// Fensterbreite neu rendern (entprellt), sonst bleiben sie zu klein/zu gross.
+let _leadersResizeTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(_leadersResizeTimer);
+  _leadersResizeTimer = setTimeout(() => {
+    if (_leadersUi?.wlMode !== "charts" || _leadersUi.chartSize === "S") return;
+    if (document.querySelector('[data-panel="leaders"]')?.classList.contains("hidden")) return;
+    const w = document.getElementById("leaders-container")?.clientWidth;
+    if (w && _leadersChartWidth && Math.abs(w - _leadersChartWidth) > 40) renderLeadersTab();
+  }, 300);
+});
 
 async function loadData() {
   const loading = document.getElementById("loading");
