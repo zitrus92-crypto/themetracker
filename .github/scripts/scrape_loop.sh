@@ -31,6 +31,7 @@ DATA_PATHS=(
   docs/regime.json
   docs/setups.json
   docs/snapshots
+  docs/data
 )
 
 today="$(date -u +%F)"

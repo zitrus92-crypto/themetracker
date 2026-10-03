@@ -8,6 +8,7 @@ Fetches Finviz industry data AND Finviz thematic map data in parallel, writes:
   docs/regime.json      — daily Regime-Gate states (header badge)
   docs/setups.json      — Einzelaktien-Setups der stärksten Gruppen (Experimental-Tab)
   docs/tickers.json     — Einzelaktien-Bubble-Chart der stärksten Gruppen (Tickers-Tab)
+  docs/data/theme_constituents.json + docs/data/leaders_bars.json — Leading-Stocks-Tab
 """
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -15,6 +16,7 @@ from pathlib import Path
 from datetime import date, datetime, timedelta, timezone
 
 import scraper
+import leaders
 import setups
 import ticker_metrics
 from market_calendar import is_trading_day
@@ -298,6 +300,25 @@ def main():
             print(f"  Saved tickers.json ({tickers_payload['count']} Ticker)")
         except Exception as e:
             print(f"  WARNING: tickers.json nicht aktualisiert ({e}) — alte Datei bleibt.")
+
+    # ── Leading-Stocks-Tab (docs/data/) ──────────────────────────────────────
+    # Konstituenten aller 40 Themes + 1,5 Jahre Close/High. Gleiche Post-Close-
+    # Kadenz und eigener Idempotenz-Stand wie tickers.json. Rechnen tut der
+    # Client (leadersMetrics.js) — hier entstehen nur Rohdaten.
+    due3, why3 = setups_due(
+        datetime.now(timezone.utc), today, trading_day, leaders.load_existing_bars()
+    )
+    if not (etf_payload and etf_payload.get("themes")):
+        print("  SKIPPED leaders (Theme-Daten fehlen)")
+    elif not due3:
+        print(f"  SKIPPED leaders ({why3}) — letzter Stand bleibt liegen")
+    else:
+        try:
+            bars_out = leaders.write_leaders(etf_payload["themes"])
+            print(f"  Saved theme_constituents.json + leaders_bars.json "
+                  f"({len(bars_out['tickers'])} Ticker, {len(bars_out['dates'])} Bars)")
+        except Exception as e:
+            print(f"  WARNING: leaders nicht aktualisiert ({e}) — alte Dateien bleiben.")
 
     # ── Write regime.json ─────────────────────────────────────────────────────
     if not trading_day:
