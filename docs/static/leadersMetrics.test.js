@@ -272,3 +272,13 @@ test("rs3mUniverse: nur ROC63, gleiche Liquiditaetsauswahl", () => {
   const bars = { rs_universe: { fields: ["roc63", "roc126", "roc189", "roc252", "dvol50"], rows } };
   assert.deepEqual([...rs3mUniverse(bars, 2)], [10, 20]);
 });
+
+test("tradingViewWatchlist keepOrder: Reihenfolge wie angezeigt", () => {
+  const th = [
+    { name: "B", rank: 5, rows: [{ ticker: "X:2" }] },
+    { name: "A", rank: 1, rows: [{ ticker: "X:1" }, { ticker: "X:2" }] },
+    { name: "Leer", rank: 2, rows: [] },
+  ];
+  assert.equal(tradingViewWatchlist(th, { keepOrder: true }), ["###B", "X:2", "###A", "X:1", "X:2", ""].join("\n"));
+  assert.equal(tradingViewWatchlist(th), ["###A", "X:1", "X:2", "###B", "X:2", ""].join("\n"));
+});

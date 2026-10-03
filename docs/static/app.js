@@ -168,6 +168,7 @@ const I18N = {
     leadWlTable:   "📋 Tabelle",
     leadWlCharts:  "📈 Charts",
     leadCopy:      "📋 Ticker kopieren",
+    leadThemesTvTitle: "Lädt die angezeigten Theme-Karten als .txt herunter (TradingView: Watchlist → Liste importieren): je Karte eine ###Theme-Sektion in der aktuellen Sortierung, darunter genau die Ticker der Karte (aufgeklappte Karten mit allen Zeilen). Ein Ticker kann in mehreren Sektionen stehen.",
     leadCopyTitle: "Kopiert genau die angezeigten Ticker als kommagetrennte EXCHANGE:SYMBOL-Liste — direkt in eine TradingView-Watchlist einfügbar.",
     leadCopied:    (n) => `${n} Ticker kopiert`,
     leadTaTitle:   "Finviz Technical Analysis: blendet SMA20 und die automatische Erkennung von Trendlinien und Chartmustern (Kanäle, Keile, Dreiecke …) in die Charts ein.",
@@ -498,6 +499,7 @@ const I18N = {
     leadWlTable:   "📋 Table",
     leadWlCharts:  "📈 Charts",
     leadCopy:      "📋 Copy tickers",
+    leadThemesTvTitle: "Downloads the shown theme cards as .txt (TradingView: watchlist → import list): one ###Theme section per card in the current sort order, with exactly the card's tickers (expanded cards with all rows). A ticker can appear in several sections.",
     leadCopyTitle: "Copies exactly the shown tickers as a comma-separated EXCHANGE:SYMBOL list — paste straight into a TradingView watchlist.",
     leadCopied:    (n) => `${n} tickers copied`,
     leadTaTitle:   "Finviz Technical Analysis: adds SMA20 and the automatic detection of trendlines and chart patterns (channels, wedges, triangles …) to the charts.",
@@ -4089,7 +4091,30 @@ function leadersChartsHtml(list, setups) {
   return `<p class="lead-dim lead-wl__criteria">${t(ta ? "leadChartsHintTa" : "leadChartsHint")}</p><div class="exp-charts">${cards}</div>`;
 }
 
-let _leadersExpanded = new Set();   // Theme-Karten, die auch nicht-qualifizierte Zeilen zeigen
+let _leadersExpanded = new Set();
+
+// Zeilen, die eine Theme-Karte gerade zeigt: nur qualifizierte, aufgeklappt alle.
+function leadersCardRows(theme) {
+  return _leadersExpanded.has(theme.name) ? theme.rows : theme.rows.filter(r => r.qualified);
+}
+
+// Oberer Export: die angezeigten Theme-Karten als TradingView-Watchlist —
+// je Karte eine ###Theme-Sektion in der aktuellen Sortierung, Ticker wie in
+// der Karte. Ein Ticker kann in mehreren Sektionen stehen (Finviz-Zuordnung).
+function downloadThemeCardsWatchlist() {
+  const themes = leadersVisibleThemes().map(th => ({ ...th, rows: leadersCardRows(th) }));
+  const txt = _LM.tradingViewWatchlist(themes, { keepOrder: true });
+  const n = (txt.match(/^[^#\n].*$/gm) || []).length;
+  if (!n) { showToast(t("leadEmptyRows")); return; }
+  const blob = new Blob([txt], { type: "text/plain" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `leading_themes_${leadersDataDate()}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  showToast(t("leadWatchlistDone", n));
+}   // Theme-Karten, die auch nicht-qualifizierte Zeilen zeigen
 
 function leadersCardHtml(theme) {
   const b = theme.breadth;
@@ -4109,7 +4134,7 @@ function leadersCardHtml(theme) {
 
   const expanded = _leadersExpanded.has(theme.name);
   const qualified = theme.rows.filter(r => r.qualified);
-  const rows = expanded ? theme.rows : qualified;
+  const rows = leadersCardRows(theme);
   const failText = (r) => (r.wl_fails || []).map(k => t("leadFails")[k] ?? k).join(", ");
 
   const cols = ["rs_vs_theme", "rs_rating", "p6m", "dist_52wh", "first_to_high", "down_day_strength",
@@ -4185,6 +4210,7 @@ function leadersBarHtml() {
       <select class="lead-select" data-lfilter="minAtr">${opt(_LCFG.MIN_ATR_OPTIONS, ui.minAtr, v => v ? "> " + v + " %" : t("leadAll"))}</select></span>
     <span class="lead-group lead-actions">
       <button class="selection-bar__export-btn lead-export-btn">${t("exportJson")}</button>
+      <button class="top20-btn lead-tv-themes-btn" title="${esc(t("leadThemesTvTitle"))}">${t("leadWatchlist")}</button>
     </span>
   </div>`;
 }
@@ -4313,6 +4339,7 @@ function wireLeadersControls(box) {
   const ui = _leadersUi;
   box.querySelector(".lead-export-btn").onclick = exportLeadersJson;
   box.querySelector(".lead-tv-btn").onclick = downloadLeadersWatchlist;
+  box.querySelector(".lead-tv-themes-btn").onclick = downloadThemeCardsWatchlist;
   const copyBtn = box.querySelector(".lead-copy-btn");
   copyBtn.onclick = () => copyLeadersWatchlist(copyBtn);
   box.querySelectorAll("[data-lwlmode]").forEach(b => b.onclick = () => {

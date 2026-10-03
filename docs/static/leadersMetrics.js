@@ -528,9 +528,11 @@ export function tradingViewFromWatchlist(entries, inPlayLabel = "In Play") {
 
 /** TradingView-Watchlist: ###Theme-Sektionen (ohne Kommas), EXCHANGE:SYMBOL
  *  je Zeile; Sektionen nach Theme-Staerke, Ticker in Ranking-Reihenfolge. */
-export function tradingViewWatchlist(themes) {
+export function tradingViewWatchlist(themes, { keepOrder = false } = {}) {
   const lines = [];
-  for (const t of [...themes].sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99))) {
+  // keepOrder: Reihenfolge wie uebergeben (= aktuelle Sortierung im Tab)
+  const ordered = keepOrder ? themes : [...themes].sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
+  for (const t of ordered) {
     if (!t.rows.length) continue;
     lines.push(`###${String(t.name).replace(/,/g, " ")}`);
     for (const r of t.rows) lines.push(r.ticker);
