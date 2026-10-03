@@ -140,7 +140,7 @@ const I18N = {
     hintTickers:   "Universum: Ticker aus den Industries UND Themes, die aktuell in der Top-30-%-Schnittmenge nach 1W UND 1M liegen (★ 1W∩1M).\nGefiltert: Market Cap > 1 Mrd. $ und ATR% (20 Tage) > 4 % — beides vollautomatisch, keine manuelle Liste.\nX-Achse: 3M- oder 1W-Performance, Y-Achse: 1M-Performance.\nGröße = Market Cap (log-skaliert). Farbe = Theme/Industry-Gruppe (siehe Legende unten) — gehört ein Ticker zu mehreren Gruppen, zählt die erste (Industries vor Themes), alle stehen im Tooltip.\n„Not Extended“-Toggle: blendet Ticker aus, die weit über ihrem SMA50 laufen (Jeff-Sun-Konvention, siehe eigener Tooltip).\n„Copy Tickers“: kopiert die aktuell sichtbaren Ticker als kommagetrennte Liste zum Einfügen in eine TradingView-Watchlist.\nRechnet einmal pro Handelstag nach US-Close (braucht settled Tageskerzen, wie der Experimental-Tab). Klick auf Bubble öffnet die Finviz-Aktienseite.",
     topLeaders:    "🏆 Leading Stocks",
     leadTitle:     "🏆 Leading Stocks",
-    hintLeaders:   "Welche Einzelaktien führen die stärksten Themes an?\nKonstituenten: je Theme bis zu 20 Finviz-Mitglieder, automatisch gewählt nach Ø Dollarvolumen ÷ Anzahl Theme-Mitgliedschaften (drückt Megacaps, die Finviz in fast jedem Theme führt). Datei: data/theme_constituents.json.\nKopfzeile = Breadth über alle Konstituenten, Tabelle = Leader-Ranking nach RS vs. Theme (Gleichstand: RS vs. SPY).\nGrün = Leader (Rang 1). Grau = Mitläufer: RS unter dem Theme UND ≥ 3 ADR unter dem 52W-Hoch.\nFilter (Dollarvolumen, ATR%) wirken nur auf die Tabelle, nicht auf die Breadth.\nFehlende Kursdaten = n/a, nie interpoliert. Alle Schwellen: static/config.js.\nRechnet einmal pro Handelstag nach US-Close.",
+    hintLeaders:   "Welche Einzelaktien führen die stärksten Themes an?\nKonstituenten: alle Finviz-Mitglieder des Themes, 1:1 wie Finviz sie zuordnet. „×N“ hinter dem Ticker = Finviz führt ihn in N Themes (z. B. AMZN in 21) — solche Ticker stecken in mehreren Baskets und bewegen deren Breadth gemeinsam. Datei: data/theme_constituents.json.\nKopfzeile = Breadth über alle Konstituenten, Tabelle = Leader-Ranking nach RS vs. Theme (Gleichstand: RS vs. SPY).\nGrün = Leader (Rang 1). Grau = Mitläufer: RS unter dem Theme UND ≥ 3 ADR unter dem 52W-Hoch.\nFilter (Dollarvolumen, ATR%) wirken nur auf die Tabelle, nicht auf die Breadth.\nFehlende Kursdaten = n/a, nie interpoliert. Alle Schwellen: static/config.js.\nRechnet einmal pro Handelstag nach US-Close.",
     leadSortLabel: "Sortierung",
     leadSortScore: "Theme-Score",
     leadSortBreadth: "Breadth",
@@ -150,7 +150,7 @@ const I18N = {
     leadAll:       "alle",
     leadNoData:    "Noch keine Leading-Stocks-Daten — sie entstehen beim nächsten Post-Close-Lauf.",
     leadLoading:   "Lade Kursdaten…",
-    leadMeta:      (date, n, themes) => `Stand ${date} · ${n} Konstituenten in ${themes} Themes · RS-Gewichtung IBD-Nachbildung (0,4·3M + 0,2·6M + 0,2·9M + 0,2·12M)`,
+    leadMeta:      (date, n, uniq, themes) => `Stand ${date} · ${n} Finviz-Zuordnungen (${uniq} eindeutige Ticker) in ${themes} Themes · RS-Gewichtung IBD-Nachbildung (0,4·3M + 0,2·6M + 0,2·9M + 0,2·12M)`,
     leadTipDefault:"Tippe oder fahre über ein ⓘ für Definition und Evidenzbasis.",
     leadMembers:   (n, m) => `${n} Konstituenten${m < n ? ` · ${n - m} ohne Kursdaten` : ""}`,
     leadManual:    "manuell",
@@ -161,6 +161,7 @@ const I18N = {
     leadEmptyRows: "Kein Ticker erfüllt die Filter.",
     leadEvidence:  { validated: "validiert", convention: "Konvention", overfit: "potenziell überangepasst" },
     leadEvidenceLabel: "Evidenz",
+    leadMultiTitle: (n) => `Finviz führt diesen Ticker in ${n} Themes`,
     leadWatchlist: "📥 TradingView Watchlist",
     leadWatchlistTitle: "Lädt eine .txt mit ###Theme-Sektionen und EXCHANGE:SYMBOL je Zeile herunter (TradingView: Watchlist → Liste importieren). Themes nach Stärke, Ticker nach RS — exakt die aktuell angezeigte Auswahl.",
     leadWatchlistDone: (n) => `Watchlist mit ${n} Tickern heruntergeladen`,
@@ -431,7 +432,7 @@ const I18N = {
     hintTickers:   "Universe: tickers from the industries AND themes currently in the top-30% intersection by 1W AND 1M (★ 1W∩1M).\nFiltered: Market Cap > $1B and ATR% (20 days) > 4% — both fully automatic, no manual list.\nX-axis: 3M or 1W performance, Y-axis: 1M performance.\nSize = Market Cap (log-scaled). Color = Theme/Industry group (see legend below) — a ticker in several groups counts under the first (industries before themes), all of them show in the tooltip.\n\"Not Extended\" toggle: hides tickers running far above their SMA50 (Jeff Sun convention, see its own tooltip).\n\"Copy Tickers\": copies the currently visible tickers as a comma-separated list to paste into a TradingView watchlist.\nRuns once per trading day after US close (needs settled daily candles, like the Experimental tab). Click a bubble to open the Finviz stock page.",
     topLeaders:    "🏆 Leading Stocks",
     leadTitle:     "🏆 Leading Stocks",
-    hintLeaders:   "Which single stocks lead the strongest themes?\nConstituents: up to 20 Finviz members per theme, picked automatically by avg dollar volume ÷ number of theme memberships (pushes down megacaps Finviz lists in almost every theme). File: data/theme_constituents.json.\nHeader = breadth across all constituents, table = leader ranking by RS vs theme (tie: RS vs SPY).\nGreen = leader (rank 1). Grey = laggard: RS below the theme AND ≥ 3 ADR below the 52W high.\nFilters (dollar volume, ATR%) only affect the table, not breadth.\nMissing price data = n/a, never interpolated. All thresholds: static/config.js.\nRuns once per trading day after US close.",
+    hintLeaders:   "Which single stocks lead the strongest themes?\nConstituents: all Finviz members of the theme, 1:1 as Finviz assigns them. “×N” after the ticker = Finviz lists it in N themes (e.g. AMZN in 21) — such tickers sit in several baskets and move their breadth together. File: data/theme_constituents.json.\nHeader = breadth across all constituents, table = leader ranking by RS vs theme (tie: RS vs SPY).\nGreen = leader (rank 1). Grey = laggard: RS below the theme AND ≥ 3 ADR below the 52W high.\nFilters (dollar volume, ATR%) only affect the table, not breadth.\nMissing price data = n/a, never interpolated. All thresholds: static/config.js.\nRuns once per trading day after US close.",
     leadSortLabel: "Sort",
     leadSortScore: "Theme score",
     leadSortBreadth: "Breadth",
@@ -441,7 +442,7 @@ const I18N = {
     leadAll:       "all",
     leadNoData:    "No Leading Stocks data yet — it is created by the next post-close run.",
     leadLoading:   "Loading price data…",
-    leadMeta:      (date, n, themes) => `As of ${date} · ${n} constituents in ${themes} themes · RS weighting IBD replica (0.4·3M + 0.2·6M + 0.2·9M + 0.2·12M)`,
+    leadMeta:      (date, n, uniq, themes) => `As of ${date} · ${n} Finviz assignments (${uniq} unique tickers) in ${themes} themes · RS weighting IBD replica (0.4·3M + 0.2·6M + 0.2·9M + 0.2·12M)`,
     leadTipDefault:"Tap or hover an ⓘ for definition and evidence base.",
     leadMembers:   (n, m) => `${n} constituents${m < n ? ` · ${n - m} without price data` : ""}`,
     leadManual:    "manual",
@@ -452,6 +453,7 @@ const I18N = {
     leadEmptyRows: "No ticker passes the filters.",
     leadEvidence:  { validated: "validated", convention: "convention", overfit: "potentially overfit" },
     leadEvidenceLabel: "Evidence",
+    leadMultiTitle: (n) => `Finviz lists this ticker in ${n} themes`,
     leadWatchlist: "📥 TradingView Watchlist",
     leadWatchlistTitle: "Downloads a .txt with ###Theme sections and one EXCHANGE:SYMBOL per line (TradingView: watchlist → import list). Themes by strength, tickers by RS — exactly the current selection.",
     leadWatchlistDone: (n) => `Watchlist with ${n} tickers downloaded`,
@@ -3870,6 +3872,12 @@ function leadDate(iso) {
   const [y, m, d] = iso.split("-");
   return _lang === "de" ? `${d}.${m}.` : `${m}/${d}`;
 }
+// "×N" = Finviz führt den Ticker in N Themes (nur bei N > 1).
+function leadMulti(tv) {
+  const n = _leadersCons?.memberships?.[tv];
+  return n > 1 ? ` <span class="lead-multi" title="${esc(t("leadMultiTitle", n))}">×${n}</span>` : "";
+}
+
 function leadInfo(key) {
   const col = t("leadCols")[key];
   const ev = _LCFG.EVIDENCE[key] || "convention";
@@ -3908,7 +3916,7 @@ function leadersCardHtml(theme) {
       : `${leadNum(r.down_day_strength)} <span class="lead-dim">(${r.down_days})</span>`;
     return `<tr class="${cls}">
       <td>${r.rank}</td>
-      <td>${r.leader ? "👑 " : ""}<a href="${finvizQuoteUrl(sym.replace(".", "-"))}" target="_blank" rel="noopener" class="lead-sym">${esc(r.ticker)}</a></td>
+      <td>${r.leader ? "👑 " : ""}<a href="${finvizQuoteUrl(sym.replace(".", "-"))}" target="_blank" rel="noopener" class="lead-sym">${esc(r.ticker)}</a>${leadMulti(r.ticker)}</td>
       <td>${leadNum(r.rs_vs_theme)}</td>
       <td>${leadNum(r.rs_vs_spy)}</td>
       <td>${dist}</td>
@@ -3992,6 +4000,7 @@ function leadersExportFields(name) {
     leaders: _LM.filterRows(th.rows, { minDollarVol: ui.minDvol, minAtrPct: ui.minAtr }).map(r => ({
       rank: r.rank,
       ticker: r.ticker,
+      theme_count: _leadersCons?.memberships?.[r.ticker] ?? null,
       leader: r.leader,
       laggard: r.laggard,
       rs_vs_theme: r2(r.rs_vs_theme),
@@ -4039,8 +4048,9 @@ async function renderLeadersTab() {
 
   const themes = leadersVisibleThemes();
   const nCons = Object.values(_leadersCons.themes).reduce((s, c) => s + c.tickers.length, 0);
+  const nUniq = new Set(Object.values(_leadersCons.themes).flatMap(c => c.tickers)).size;
   box.innerHTML = `${leadersBarHtml()}
-    <p class="picks-subtitle lead-meta">${t("leadMeta", leadersDataDate(), nCons, Object.keys(_leadersCons.themes).length)}</p>
+    <p class="picks-subtitle lead-meta">${t("leadMeta", leadersDataDate(), nCons, nUniq, Object.keys(_leadersCons.themes).length)}</p>
     <p class="lead-tip" id="lead-tip">${t("leadTipDefault")}</p>
     ${themes.map(leadersCardHtml).join("")}`;
   wireLeadersControls(box);

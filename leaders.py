@@ -8,9 +8,10 @@ bei themeMetrics.js: eine einzige Implementierung der Mathematik, im Client.
 
 Zwei Dateien unter docs/data/ (GitHub Pages serviert nur docs/):
 
-  theme_constituents.json - je Theme 5-20 Ticker als EXCHANGE:SYMBOL.
-      Automatisch: die liquidesten Finviz-Theme-Mitglieder (Ø Dollarvolumen
-      20 Tage), "source": "finviz_theme". Optionaler Abschnitt "overrides"
+  theme_constituents.json - je Theme ALLE Finviz-Mitglieder als
+      EXCHANGE:SYMBOL, 1:1 wie Finviz sie zuordnet (auch Mehrfach-
+      Zuordnungen), "source": "finviz_theme". "memberships" zaehlt je Ticker,
+      in wie vielen Themes Finviz ihn fuehrt. Optionaler Abschnitt "overrides"
       ({theme: {"tickers": [...]}}) ersetzt die Auto-Liste eines Themes,
       "source": "manual". Er bleibt bei jedem Lauf erhalten - Notausstieg,
       keine Pflegepflicht.
@@ -32,16 +33,8 @@ SCHEMA_VERSION = 1
 
 LEADERS_CONFIG = {
     # -- Konstituenten -------------------------------------------------------
-    "MAX_CONSTITUENTS": 20,
+    # Keine Auswahl, keine Kappung: Konstituenten = Finviz-Mitglieder 1:1.
     "MIN_CONSTITUENTS": 5,     # darunter: Theme wird mit "thin": true markiert
-    "SELECT_DVOL_DAYS": 20,    # Auswahl nach Ø Dollarvolumen dieser Tage
-    # Finviz fuehrt Megacaps in bis zu 21 der 40 Themes (MSFT 18, GOOGL 20,
-    # AMZN 21). Reines Dollarvolumen wuerde jede Liste mit ihnen fuellen.
-    # Deshalb Rangfolge nach Dollarvolumen / Anzahl Theme-Mitgliedschaften:
-    # Pure Plays ruecken vor, ein echter Kern wie NVDA bleibt in Semis.
-    # MAX_THEME_MEMBERSHIPS schliesst Ticker mit mehr Mitgliedschaften ganz aus
-    # (None = aus). Getestet: 12 wirft auch NVDA aus Semis/AI - daher aus.
-    "MAX_THEME_MEMBERSHIPS": None,
 
     # -- Kursdaten -----------------------------------------------------------
     "BENCHMARK": "SPY",
@@ -82,16 +75,6 @@ def _round_px(x):
     return round(x, 2) if abs(x) >= 1 else round(x, 4)
 
 
-def dollar_vol(closes, volumes, days):
-    """Ø Close x Volumen der letzten `days` Bars; None bei Luecken im Fenster."""
-    if len(closes) < days:
-        return None
-    pairs = list(zip(closes[-days:], volumes[-days:]))
-    if any(c is None or v is None for c, v in pairs):
-        return None
-    return sum(c * v for c, v in pairs) / days
-
-
 def membership_counts(themes: dict) -> dict:
     """{ticker: Anzahl Themes, in denen Finviz ihn fuehrt}."""
     counts: dict = {}
@@ -101,34 +84,22 @@ def membership_counts(themes: dict) -> dict:
     return counts
 
 
-def select_constituents(themes: dict, bars: dict, overrides: dict, cfg: dict = LEADERS_CONFIG):
+def select_constituents(themes: dict, overrides: dict, cfg: dict = LEADERS_CONFIG):
     """{theme: {"source", "tickers": [symbol...], "members_total", "thin"}}.
 
-    Auto: Finviz-Mitglieder mit Kursdaten, absteigend nach
-    Ø Dollarvolumen / Theme-Mitgliedschaften, gekappt auf MAX_CONSTITUENTS.
-    Ticker ohne berechenbares Dollarvolumen fallen aus der Auswahl (sie
-    koennten nie ranken). Overrides gewinnen.
+    Auto: alle Finviz-Mitglieder in Finviz-Reihenfolge, 1:1 - auch Ticker,
+    die Finviz mehreren Themes zuordnet, und Ticker ohne Kursdaten (die
+    erscheinen im Tab als n/a statt still zu verschwinden). Overrides gewinnen.
     """
-    counts = membership_counts(themes)
-    cap = cfg.get("MAX_THEME_MEMBERSHIPS")
     out = {}
     for name, row in themes.items():
-        members = row.get("tickers") or []
+        members = list(dict.fromkeys(row.get("tickers") or []))
         ov = (overrides or {}).get(name)
         if ov and ov.get("tickers"):
             picked = [s.split(":")[-1] for s in ov["tickers"]]
             source = "manual"
         else:
-            scored = []
-            for tk in members:
-                b = bars.get(tk)
-                if not b or (cap is not None and counts.get(tk, 1) > cap):
-                    continue
-                dv = dollar_vol(b["c"], b["v_full"], cfg["SELECT_DVOL_DAYS"])
-                if dv is not None:
-                    scored.append((dv / counts.get(tk, 1), tk))
-            scored.sort(key=lambda x: -x[0])
-            picked = [tk for _, tk in scored[: cfg["MAX_CONSTITUENTS"]]]
+            picked = members
             source = "finviz_theme"
         out[name] = {
             "source": source,
@@ -287,9 +258,10 @@ def build_leaders(themes: dict, cfg: dict = LEADERS_CONFIG):
     master, bars = fetch_aligned_bars(universe, cfg)
     print(f"    Kursdaten: {len(bars) - 1}/{len(universe)} Ticker + {cfg['BENCHMARK']}.")
 
-    const = select_constituents(themes, bars, overrides, cfg)
+    const = select_constituents(themes, overrides, cfg)
     picked = sorted({tk for c in const.values() for tk in c["tickers"]})
     exchanges = fetch_exchanges([tk for tk in picked if tk in bars], known_ex, cfg)
+    counts = membership_counts(themes)
     print(f"    Konstituenten: {len(picked)} eindeutige Ticker, "
           f"Boerse bekannt fuer {sum(1 for v in exchanges.values() if v)}.")
 
@@ -301,10 +273,8 @@ def build_leaders(themes: dict, cfg: dict = LEADERS_CONFIG):
         "date": today,
         "generated_at": now.isoformat(),
         "selection": {
-            "rule": "Finviz-Theme-Mitglieder, absteigend nach Ø Dollarvolumen / Theme-Mitgliedschaften",
-            "max_theme_memberships": cfg.get("MAX_THEME_MEMBERSHIPS"),
-            "max": cfg["MAX_CONSTITUENTS"], "min": cfg["MIN_CONSTITUENTS"],
-            "dvol_days": cfg["SELECT_DVOL_DAYS"],
+            "rule": "alle Finviz-Theme-Mitglieder 1:1 (inkl. Mehrfach-Zuordnungen)",
+            "min": cfg["MIN_CONSTITUENTS"],
         },
         "themes": {
             name: {
@@ -315,6 +285,8 @@ def build_leaders(themes: dict, cfg: dict = LEADERS_CONFIG):
             }
             for name, c in const.items()
         },
+        # Anzahl Themes je Ticker laut Finviz (1 = exklusiv)
+        "memberships": {tv_symbol(tk, exchanges.get(tk)): counts.get(tk, 0) for tk in picked},
         "overrides": overrides,
     }
 

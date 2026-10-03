@@ -810,6 +810,7 @@ details.wp-details { margin-bottom: 18px; }
 .lead-table th { white-space: nowrap; }
 .lead-table td:nth-child(2) { max-width: none; }
 .lead-sym { color: var(--text); text-decoration: none; }
+.lead-multi { color: var(--text-dim); font-size: 10.5px; cursor: help; }
 .lead-sym:hover { color: var(--accent); text-decoration: underline; }
 .lead-row--leader td { background: var(--green-5); }
 .lead-row--leader td:first-child { box-shadow: inset 3px 0 0 var(--green-3); }
