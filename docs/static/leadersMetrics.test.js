@@ -6,6 +6,7 @@ import {
   computeLeaders, filterRows, orderThemes, tradingViewWatchlist,
   rsUniverse, rsRating, triggerMetrics, watchlistFails, buildWatchlist, tradingViewFromWatchlist,
   applyGroupRs, rs3mUniverse,
+  weekMonday, weekReference, diffWatchlist,
 } from "./leadersMetrics.js";
 import { LEADERS } from "./config.js";
 
@@ -281,4 +282,26 @@ test("tradingViewWatchlist keepOrder: Reihenfolge wie angezeigt", () => {
   ];
   assert.equal(tradingViewWatchlist(th, { keepOrder: true }), ["###B", "X:2", "###A", "X:1", "X:2", ""].join("\n"));
   assert.equal(tradingViewWatchlist(th), ["###A", "X:1", "X:2", "###B", "X:2", ""].join("\n"));
+});
+
+test("weekMonday / weekReference: letzter Protokolltag vor dem Montag der Datenwoche", () => {
+  assert.equal(weekMonday("2026-10-02"), "2026-09-28");   // Freitag
+  assert.equal(weekMonday("2026-10-05"), "2026-10-05");   // Montag
+  assert.equal(weekMonday("2026-10-07"), "2026-10-05");   // Mittwoch
+  const log = {
+    "2026-09-24": { tickers: ["A"] },
+    "2026-09-25": { tickers: ["A", "B"] },
+    "2026-10-01": { tickers: ["C"] },
+    "2026-10-02": { tickers: ["A", "C"] },
+  };
+  // Wochenend-Prep auf Freitagsdaten: Vergleich mit dem Freitag davor
+  assert.deepEqual(weekReference(log, "2026-10-02"), { date: "2026-09-25", tickers: ["A", "B"] });
+  // Unter der Woche: Vergleich mit dem letzten Freitag (= Prep-Stand)
+  assert.equal(weekReference(log, "2026-10-07").date, "2026-10-02");
+  assert.equal(weekReference(log, "2026-09-25"), null);    // noch keine Vorwoche
+  assert.equal(weekReference({}, "2026-10-02"), null);
+});
+
+test("diffWatchlist: neu und herausgefallen", () => {
+  assert.deepEqual(diffWatchlist(["A", "C", "D"], ["A", "B"]), { added: ["C", "D"], removed: ["B"] });
 });

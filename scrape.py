@@ -11,6 +11,7 @@ Fetches Finviz industry data AND Finviz thematic map data in parallel, writes:
   docs/data/theme_constituents.json + docs/data/leaders_bars.json — Leading-Stocks-Tab
 """
 import json
+import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from datetime import date, datetime, timedelta, timezone
@@ -318,6 +319,16 @@ def main():
             bars_out = leaders.write_leaders(etf_payload["themes"], scored)
             print(f"  Saved theme_constituents.json + leaders_bars.json "
                   f"({len(bars_out['tickers'])} Ticker, {len(bars_out['dates'])} Bars)")
+            # Watchlist-Protokoll ("neu seit letztem Freitag"): rechnet mit
+            # demselben JS-Kern wie die Seite. Fehler hier kosten nur den
+            # Protokolleintrag des Tages, nie die Leader-Daten.
+            try:
+                r = subprocess.run(["node", "scripts/watchlist_log.mjs"],
+                                   cwd=Path(__file__).parent, capture_output=True,
+                                   text=True, timeout=120)
+                print(r.stdout.strip() or f"  WARNING: watchlist_log ohne Ausgabe ({r.stderr.strip()[:200]})")
+            except Exception as e:
+                print(f"  WARNING: Watchlist-Protokoll nicht geschrieben ({e})")
         except Exception as e:
             print(f"  WARNING: leaders nicht aktualisiert ({e}) — alte Dateien bleiben.")
 

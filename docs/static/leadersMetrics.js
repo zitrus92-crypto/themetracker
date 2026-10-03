@@ -539,3 +539,33 @@ export function tradingViewWatchlist(themes, { keepOrder = false } = {}) {
   }
   return lines.join("\n") + "\n";
 }
+
+// ── Watchlist-Protokoll: "neu seit letztem Freitag" ───────────────────────
+
+/** Montag der Woche eines ISO-Datums (YYYY-MM-DD), als ISO-Datum. */
+export function weekMonday(iso) {
+  const d = new Date(iso + "T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  return d.toISOString().slice(0, 10);
+}
+
+/** Vergleichsbasis fuer den Wochen-Prep: der juengste Protokolltag VOR dem
+ *  Montag der Datenwoche - also in der Regel der letzte Freitag (an
+ *  Feiertagen der letzte Handelstag davor). null, wenn es keinen gibt.
+ *  log: {date: {tickers: [...]}} */
+export function weekReference(log, dataDate) {
+  const monday = weekMonday(dataDate);
+  const dates = Object.keys(log || {}).filter((d) => d < monday).sort();
+  if (!dates.length) return null;
+  const date = dates[dates.length - 1];
+  return { date, tickers: log[date].tickers || [] };
+}
+
+/** Neu hinzugekommene und herausgefallene Ticker gegenueber der Basis. */
+export function diffWatchlist(current, reference) {
+  const ref = new Set(reference), cur = new Set(current);
+  return {
+    added: current.filter((t) => !ref.has(t)),
+    removed: reference.filter((t) => !cur.has(t)),
+  };
+}

@@ -844,6 +844,12 @@ details.wp-details { margin-bottom: 18px; }
 .lead-theme-chip--leader { color: var(--green-1); border: 1px solid var(--green-4); }
 .lead-wl-row--inplay td { background: #0f2a1a; }
 .lead-wl-row--inplay td:first-child { box-shadow: inset 3px 0 0 var(--green-2); }
+.lead-new-badge {
+  font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 4px;
+  background: #1a2a4a; color: #58a6ff; border: 1px solid #58a6ff; vertical-align: 1px;
+}
+.lead-diff { color: var(--text-dim); }
+.lead-new { color: #58a6ff; }
 .lead-chart { cursor: default; }
 /* Groessen: min(…, 100%) verhindert Overflow auf schmalen Bildschirmen */
 .lead-charts--M { grid-template-columns: repeat(auto-fill, minmax(min(520px, 100%), 1fr)); }

@@ -166,6 +166,12 @@ const I18N = {
     leadMultiTitle: (n) => `Finviz führt diesen Ticker in ${n} Themes`,
     leadWlTitle:   "🎯 Leader-Watchlist",
     leadWlTable:   "📋 Tabelle",
+    leadWlNew:     "Neu",
+    leadNewBadge:  "NEU",
+    leadNewWord:   "neu",
+    leadRemoved:   "raus",
+    leadDiffHead:  (d) => `Seit Freitag ${d}:`,
+    leadNoRef:     (d) => d ? `„Neu“ startet nächste Woche — das Watchlist-Protokoll beginnt am ${d}` : "„Neu“ startet, sobald das tägliche Watchlist-Protokoll eine Vorwoche enthält.",
     leadWlCharts:  "📈 Charts",
     leadSizeTitle: { S: "Klein: Überblick, viele Charts nebeneinander (bisheriges Format)", M: "Mittel: Karten ab ~520 px, auf großen Bildschirmen 3 Spalten", L: "Groß: ein Chart pro Zeile, bis 1100 px breit" },
     leadChartsRange: "Zeitraum 6 Monate, Bild in Kartenbreite gerendert.",
@@ -499,6 +505,12 @@ const I18N = {
     leadMultiTitle: (n) => `Finviz lists this ticker in ${n} themes`,
     leadWlTitle:   "🎯 Leader watchlist",
     leadWlTable:   "📋 Table",
+    leadWlNew:     "New",
+    leadNewBadge:  "NEW",
+    leadNewWord:   "new",
+    leadRemoved:   "out",
+    leadDiffHead:  (d) => `Since Friday ${d}:`,
+    leadNoRef:     (d) => d ? `“New” starts next week — the watchlist log begins on ${d}.` : "“New” starts once the daily watchlist log covers a prior week.",
     leadWlCharts:  "📈 Charts",
     leadSizeTitle: { S: "Small: overview, many charts side by side (previous format)", M: "Medium: cards from ~520 px, 3 columns on large screens", L: "Large: one chart per row, up to 1100 px wide" },
     leadChartsRange: "Range 6 months, image rendered at card width.",
@@ -3885,7 +3897,8 @@ let _leadersLoad = null;      // laufendes Promise (Doppelklick-Schutz)
 let _leadersFailed = false;
 let _leadersCache = {};       // atrPeriod -> computeLeaders()-Ergebnis
 let _leadersUi = null;        // {sort, topN, minDvol, minAtr, atrPeriod, wlView, wlMode, ta, chartSize}
-let _leadersChartWidth = null; // Containerbreite beim letzten Chart-Rendern (Resize-Erkennung)
+let _leadersChartWidth = null;
+let _leadersLog = {};          // data/watchlist_log/*.json — {date: {tickers, rs, …}} // Containerbreite beim letzten Chart-Rendern (Resize-Erkennung)
 
 async function ensureLeadersData() {
   if (_leadersBars && _LM) return true;
@@ -3908,6 +3921,17 @@ async function ensureLeadersData() {
         if (!bRes.ok || !cRes.ok) { _leadersFailed = true; return; }
         _leadersBars = await bRes.json();
         _leadersCons = await cRes.json();
+        // Watchlist-Protokoll fuer "neu seit letztem Freitag": Datenmonat + Vormonat
+        const last = _leadersBars.dates[_leadersBars.dates.length - 1];
+        const d = new Date(last.slice(0, 7) + "-15T12:00:00Z");
+        const prev = new Date(d); prev.setUTCMonth(prev.getUTCMonth() - 1);
+        const shards = await Promise.all([prev, d].map(async (m) => {
+          try {
+            const r = await fetch(`data/watchlist_log/${m.toISOString().slice(0, 7)}.json${bust}`);
+            return r.ok ? await r.json() : {};
+          } catch { return {}; }
+        }));
+        _leadersLog = Object.assign({}, ...shards);
         _LM = lm;
         _LCFG = cfg.LEADERS;
         const num = (k, d) => { const x = Number(prefGet(k)); return prefGet(k) !== null && Number.isFinite(x) ? x : d; };
@@ -3918,7 +3942,7 @@ async function ensureLeadersData() {
           minDvol: num("leadMinDvol", _LCFG.MIN_DOLLAR_VOL),
           minAtr: num("leadMinAtr", _LCFG.MIN_ATR_PCT),
           atrPeriod: _LCFG.ATR_PERIODS[per] ? per : _LCFG.ATR_PERIOD,
-          wlView: ["all", "strong", "inplay", "ep"].includes(prefGet("leadWlView")) ? prefGet("leadWlView") : "all",
+          wlView: ["all", "strong", "inplay", "ep", "new"].includes(prefGet("leadWlView")) ? prefGet("leadWlView") : "all",
           wlMode: prefGet("leadWlMode") === "charts" ? "charts" : "table",
           ta: prefGet("leadTa") === "1",
           chartSize: _LCFG.CHARTS.SIZES[prefGet("leadChartSize")] ? prefGet("leadChartSize") : _LCFG.CHARTS.DEFAULT_SIZE,
@@ -3997,7 +4021,28 @@ function leadersWatchlist() {
 function leadersWatchlistShown(list) {
   const v = _leadersUi.wlView;
   return list.filter(e => v === "strong" ? e.strong : v === "inplay" ? e.trigger === true
-    : v === "ep" ? e.ep === true : true);
+    : v === "ep" ? e.ep === true : v === "new" ? e.is_new === true : true);
+}
+
+// Vergleich mit dem letzten Freitag (Wochen-Prep-Stand). Verglichen wird die
+// UNGEFILTERTE Watchlist mit dem ungefilterten Protokoll — UI-Filter sollen
+// keine Namen als "neu" erscheinen lassen.
+function leadersWeekDiff() {
+  const ref = _LM.weekReference(_leadersLog, leadersDataDate());
+  if (!ref) return null;
+  const all = _LM.buildWatchlist(leadersResult()).map(e => e.ticker);
+  return { date: ref.date, ..._LM.diffWatchlist(all, ref.tickers) };
+}
+
+function leadersDiffHtml(diff) {
+  if (!diff) {
+    const first = Object.keys(_leadersLog).sort()[0];
+    return `<p class="lead-dim lead-wl__criteria">${t("leadNoRef", first ? leadDate(first) : null)}</p>`;
+  }
+  const out = diff.removed.length
+    ? ` · <span title="${esc(diff.removed.join(", "))}">−${diff.removed.length} ${t("leadRemoved")}: ${esc(diff.removed.map(leadSym).join(", "))}</span>`
+    : "";
+  return `<p class="lead-wl__criteria lead-diff">${t("leadDiffHead", leadDate(diff.date))} <b class="lead-new">+${diff.added.length} ${t("leadNewWord")}</b>${out}</p>`;
 }
 
 function leadersWatchlistHtml() {
@@ -4006,12 +4051,19 @@ function leadersWatchlistHtml() {
     return `<div class="lead-wl"><p class="pick-empty">${t("leadWlNoUniverse")}</p></div>`;
   }
   const list = leadersWatchlist();
+  const diff = leadersWeekDiff();
+  if (!diff && ui.wlView === "new") ui.wlView = "all";
+  const added = new Set(diff?.added ?? []);
+  for (const e of list) e.is_new = diff ? added.has(e.ticker) : null;
   const shown = leadersWatchlistShown(list);
   const n = {
     all: list.length, strong: list.filter(e => e.strong).length,
     inplay: list.filter(e => e.trigger === true).length, ep: list.filter(e => e.ep === true).length,
+    new: list.filter(e => e.is_new === true).length,
   };
-  const seg = [["all", t("leadWlAll")], ["strong", `RS ≥ ${W.RS_STRONG}`], ["inplay", t("leadWlInPlay")], ["ep", t("leadWlEp")]]
+  const segItems = [["all", t("leadWlAll")], ["strong", `RS ≥ ${W.RS_STRONG}`], ["inplay", t("leadWlInPlay")], ["ep", t("leadWlEp")]];
+  if (diff) segItems.push(["new", t("leadWlNew")]);
+  const seg = segItems
     .map(([k, label]) => `<button class="xaxis-btn${ui.wlView === k ? " active" : ""}" data-lwl="${k}">${label} <span class="lead-count">${n[k]}</span></button>`).join("");
   const setups = leadSetupMap();
   const cols = ["rs_rating", "best_theme", "p6m", "wl_dist", "rmv", "rvol_50d", "trigger", "ep", "setup", "atr_pct", "dollar_vol_50d"];
@@ -4033,7 +4085,7 @@ function leadersWatchlistHtml() {
       ? ` <span class="lead-dim" title="${esc(e.themes.slice(2).map(th => `${th.name} #${th.rank}`).join(" · "))}">+${e.themes.length - 2}</span>` : "";
     return `<tr class="${e.trigger === true ? "lead-wl-row--inplay" : ""}">
       <td>${i + 1}</td>
-      <td><a href="${finvizQuoteUrl(sym.replace(".", "-"))}" target="_blank" rel="noopener" class="lead-sym">${esc(e.ticker)}</a>${leadMulti(e.ticker)}</td>
+      <td><a href="${finvizQuoteUrl(sym.replace(".", "-"))}" target="_blank" rel="noopener" class="lead-sym">${esc(e.ticker)}</a>${leadMulti(e.ticker)}${e.is_new ? ` <span class="lead-new-badge">${t("leadNewBadge")}</span>` : ""}</td>
       <td>${e.strong ? `<b class="lead-rs-strong">${e.rs_rating}</b>` : e.rs_rating}</td>
       <td class="lead-theme-cell">${chips}${more}</td>
       <td>${leadNum(e.p6m, 0, " %")}</td>
@@ -4066,6 +4118,7 @@ function leadersWatchlistHtml() {
       </span>
     </div>
     <p class="lead-dim lead-wl__criteria">${t("leadWlCriteria", W)}</p>
+    ${leadersDiffHtml(diff)}
     ${ui.wlMode === "charts" ? leadersChartsHtml(shown, setups)
       : `<div class="table-scroll"><table class="lead-table lead-wl-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`}
   </div>`;
@@ -4123,7 +4176,7 @@ function leadersChartsHtml(list, setups) {
     return `<figure class="exp-chart lead-chart${e.trigger ? " lead-chart--inplay" : ""}">
       <figcaption>
         <span class="lead-dim">${i + 1}</span>
-        <a class="exp-ticker" href="${finvizQuoteUrl(sym)}" target="_blank" rel="noopener">${esc(e.ticker)}</a>${leadMulti(e.ticker)}
+        <a class="exp-ticker" href="${finvizQuoteUrl(sym)}" target="_blank" rel="noopener">${esc(e.ticker)}</a>${leadMulti(e.ticker)}${e.is_new ? ` <span class="lead-new-badge">${t("leadNewBadge")}</span>` : ""}
         ${tags}
         <span class="exp-chart-nums">${leadNum(e.p6m, 0, " %")} 6M · ${e.dist_52wh_pct.toFixed(1)} %</span>
       </figcaption>
