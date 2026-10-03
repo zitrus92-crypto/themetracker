@@ -844,6 +844,9 @@ details.wp-details { margin-bottom: 18px; }
 .lead-theme-chip--leader { color: var(--green-1); border: 1px solid var(--green-4); }
 .lead-wl-row--inplay td { background: #0f2a1a; }
 .lead-wl-row--inplay td:first-child { box-shadow: inset 3px 0 0 var(--green-2); }
+.lead-chart { cursor: default; }
+.lead-chart figcaption { font-size: 12px; }
+.lead-chart--inplay { border-color: var(--green-3); box-shadow: 0 0 0 1px var(--green-3); }
 .lead-section-title {
   font-size: 13px; font-weight: 600; color: var(--text-dim); text-transform: uppercase;
   letter-spacing: 0.05em; margin: 4px 0 12px;

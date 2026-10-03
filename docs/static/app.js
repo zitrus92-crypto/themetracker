@@ -165,6 +165,14 @@ const I18N = {
     leadEvidenceLabel: "Evidenz",
     leadMultiTitle: (n) => `Finviz führt diesen Ticker in ${n} Themes`,
     leadWlTitle:   "🎯 Leader-Watchlist",
+    leadWlTable:   "📋 Tabelle",
+    leadWlCharts:  "📈 Charts",
+    leadCopy:      "📋 Ticker kopieren",
+    leadCopyTitle: "Kopiert genau die angezeigten Ticker als kommagetrennte EXCHANGE:SYMBOL-Liste — direkt in eine TradingView-Watchlist einfügbar.",
+    leadCopied:    (n) => `${n} Ticker kopiert`,
+    leadTaTitle:   "Finviz Technical Analysis: blendet SMA20 und die automatische Erkennung von Trendlinien und Chartmustern (Kanäle, Keile, Dreiecke …) in die Charts ein.",
+    leadChartsHint:"Tageschart mit SMA50 (orange) und SMA200 (braun), Quelle Finviz. Klick öffnet die Finviz-Aktienseite.",
+    leadChartsHintTa: "Technical Analysis aktiv: zusätzlich SMA20 (rosa) und Finviz-Mustererkennung (Trendlinien, Kanäle, Formationen). Die Muster zeichnet Finviz automatisch — sie sind ein Hinweis, kein geprüftes Signal.",
     leadWlCriteria:(W) => `RS ≥ ${W.RS_MIN} · 6M > +${W.P6M_MIN} % · ≤ ${W.DIST_MAX_PCT} % unter 52W-Hoch · über SMA50 und SMA200 · Preis ≥ ${W.MIN_PRICE} $ · Ø $-Vol 50T ≥ ${W.MIN_DVOL50 / 1e6} Mio — Kriterien aus der Performer Study. Themes sind Kontext, kein Filter.`,
     leadWlAll:     "Alle",
     leadWlInPlay:  "In Play heute",
@@ -487,6 +495,14 @@ const I18N = {
     leadEvidenceLabel: "Evidence",
     leadMultiTitle: (n) => `Finviz lists this ticker in ${n} themes`,
     leadWlTitle:   "🎯 Leader watchlist",
+    leadWlTable:   "📋 Table",
+    leadWlCharts:  "📈 Charts",
+    leadCopy:      "📋 Copy tickers",
+    leadCopyTitle: "Copies exactly the shown tickers as a comma-separated EXCHANGE:SYMBOL list — paste straight into a TradingView watchlist.",
+    leadCopied:    (n) => `${n} tickers copied`,
+    leadTaTitle:   "Finviz Technical Analysis: adds SMA20 and the automatic detection of trendlines and chart patterns (channels, wedges, triangles …) to the charts.",
+    leadChartsHint:"Daily chart with SMA50 (orange) and SMA200 (brown), source Finviz. Click opens the Finviz stock page.",
+    leadChartsHintTa: "Technical Analysis on: plus SMA20 (pink) and Finviz pattern recognition (trendlines, channels, formations). Finviz draws the patterns automatically — a hint, not a tested signal.",
     leadWlCriteria:(W) => `RS ≥ ${W.RS_MIN} · 6M > +${W.P6M_MIN}% · ≤ ${W.DIST_MAX_PCT}% below 52W high · above SMA50 and SMA200 · price ≥ $${W.MIN_PRICE} · avg $ vol 50d ≥ ${W.MIN_DVOL50 / 1e6}M — criteria from the Performer Study. Themes are context, not a filter.`,
     leadWlAll:     "All",
     leadWlInPlay:  "In play today",
@@ -813,11 +829,17 @@ function finvizUrl(ticker) {
 // Einzelchart wie im Screener (v=211), nur für einen Ticker — Tagesbasis,
 // Candles, SMA50/SMA200. Ohne Referrer, damit der Hotlink nicht am
 // Referer-Check hängen bleibt (siehe renderExpCharts).
-function finvizChartUrl(ticker, scale = 1) {
+// ta = Finviz "Technical Analysis": zusätzlich SMA20 und die automatische
+// Muster-/Trendlinien-Erkennung (Overlay "patterns"). Parameter abgeleitet
+// aus Finvizs eigener Weiterleitung des alten chart.ashx?ta=1-Links.
+function finvizChartUrl(ticker, scale = 1, ta = false) {
   const w = 466 * scale, h = 219 * scale;
-  return `https://charts2-node.finviz.com/chart?w=${w}&h=${h}&bw=1&bm=1&bb=1&t=${encodeURIComponent(ticker)}`
+  const base = `https://charts2-node.finviz.com/chart?w=${w}&h=${h}&bw=1&bm=1&bb=1&t=${encodeURIComponent(ticker)}`
        + `&tf=d&s=linear&pm=240&am=1200&tl=1&ct=candle_stick&tm=d`
        + `&o[0][ot]=sma&o[0][op]=50&o[0][oc]=FF8F33C6&o[1][ot]=sma&o[1][op]=200&o[1][oc]=DCB3326D`;
+  return ta
+    ? base + `&o[2][ot]=sma&o[2][op]=20&o[2][oc]=DC32B363&o[3][ot]=patterns&o[3][op]=&o[3][oc]=000`
+    : base;
 }
 
 function finvizQuoteUrl(ticker) {
@@ -3854,7 +3876,7 @@ let _leadersCons = null;
 let _leadersLoad = null;      // laufendes Promise (Doppelklick-Schutz)
 let _leadersFailed = false;
 let _leadersCache = {};       // atrPeriod -> computeLeaders()-Ergebnis
-let _leadersUi = null;        // {sort, topN, minDvol, minAtr, atrPeriod, wlView}
+let _leadersUi = null;        // {sort, topN, minDvol, minAtr, atrPeriod, wlView, wlMode, ta}
 
 async function ensureLeadersData() {
   if (_leadersBars && _LM) return true;
@@ -3888,6 +3910,8 @@ async function ensureLeadersData() {
           minAtr: num("leadMinAtr", _LCFG.MIN_ATR_PCT),
           atrPeriod: _LCFG.ATR_PERIODS[per] ? per : _LCFG.ATR_PERIOD,
           wlView: ["all", "strong", "inplay", "ep"].includes(prefGet("leadWlView")) ? prefGet("leadWlView") : "all",
+          wlMode: prefGet("leadWlMode") === "charts" ? "charts" : "table",
+          ta: prefGet("leadTa") === "1",
         };
       } catch (e) {
         console.error("Leading Stocks konnte nicht geladen werden:", e);
@@ -4014,14 +4038,55 @@ function leadersWatchlistHtml() {
     </tr>`;
   }).join("") : `<tr><td colspan="13" class="empty-msg">${t("leadWlEmpty")}</td></tr>`;
 
+  const mode = [["table", t("leadWlTable")], ["charts", t("leadWlCharts")]]
+    .map(([k, label]) => `<button class="xaxis-btn${ui.wlMode === k ? " active" : ""}" data-lwlmode="${k}">${label}</button>`).join("");
+  const taBtn = ui.wlMode === "charts"
+    ? `<button class="inst-toggle-btn${ui.ta ? " active" : ""}" data-lta="1" title="${esc(t("leadTaTitle"))}">📐 Technical Analysis</button>` : "";
   return `<div class="lead-wl">
     <div class="lead-wl__head">
       <span class="lead-name">${t("leadWlTitle")}</span>
       <span class="lead-group">${seg}</span>
+      <span class="lead-group lead-actions">
+        ${mode}${taBtn}
+        <button class="top20-btn lead-copy-btn" title="${esc(t("leadCopyTitle"))}">${t("leadCopy")}</button>
+        <button class="top20-btn lead-tv-btn" title="${esc(t("leadWatchlistTitle"))}">${t("leadWatchlist")}</button>
+      </span>
     </div>
     <p class="lead-dim lead-wl__criteria">${t("leadWlCriteria", W)}</p>
-    <div class="table-scroll"><table class="lead-table lead-wl-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
+    ${ui.wlMode === "charts" ? leadersChartsHtml(shown, setups)
+      : `<div class="table-scroll"><table class="lead-table lead-wl-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`}
   </div>`;
+}
+
+// Mini-Charts der angezeigten Watchlist — Kartenformat wie im Experimental-Tab.
+function leadersChartsHtml(list, setups) {
+  if (!list.length) return `<p class="pick-empty">${t("leadWlEmpty")}</p>`;
+  const ta = _leadersUi.ta;
+  const cards = list.map((e, i) => {
+    const sym = leadSym(e.ticker).replace(".", "-");
+    const tags = [
+      e.strong ? `<span class="lead-rs-strong">RS ${e.rs_rating}</span>` : `<span>RS ${e.rs_rating}</span>`,
+      e.trigger ? `<span class="lead-pos">▲ ${t("leadTrigYes")}</span>` : "",
+      e.ep ? `<span class="lead-ep">⚡ EP ${leadDate(e.ep_date)}</span>` : "",
+      setups[leadSym(e.ticker)] ? `<span class="lead-setup lead-setup--${setups[leadSym(e.ticker)].toLowerCase()}">${setups[leadSym(e.ticker)]}</span>` : "",
+    ].filter(Boolean).join(" ");
+    const themes = e.themes.slice(0, 3).map(th =>
+      `<span class="lead-theme-chip${th.leader ? " lead-theme-chip--leader" : ""}">${th.leader ? "★ " : ""}${esc(th.name)} #${th.rank ?? "–"}</span>`).join("");
+    return `<figure class="exp-chart lead-chart${e.trigger ? " lead-chart--inplay" : ""}">
+      <figcaption>
+        <span class="lead-dim">${i + 1}</span>
+        <a class="exp-ticker" href="${finvizQuoteUrl(sym)}" target="_blank" rel="noopener">${esc(e.ticker)}</a>${leadMulti(e.ticker)}
+        ${tags}
+        <span class="exp-chart-nums">${leadNum(e.p6m, 0, " %")} 6M · ${e.dist_52wh_pct.toFixed(1)} %</span>
+      </figcaption>
+      <div class="exp-chart-groups">${themes}</div>
+      <a href="${finvizQuoteUrl(sym)}${ta ? "&ta=1" : ""}" target="_blank" rel="noopener">
+        <img src="${finvizChartUrl(sym, 1, ta)}" alt="${esc(e.ticker)}" loading="lazy" referrerpolicy="no-referrer"
+             onerror="this.closest('.exp-chart').classList.add('exp-chart--failed')">
+      </a>
+    </figure>`;
+  }).join("");
+  return `<p class="lead-dim lead-wl__criteria">${t(ta ? "leadChartsHintTa" : "leadChartsHint")}</p><div class="exp-charts">${cards}</div>`;
 }
 
 let _leadersExpanded = new Set();   // Theme-Karten, die auch nicht-qualifizierte Zeilen zeigen
@@ -4120,7 +4185,6 @@ function leadersBarHtml() {
       <select class="lead-select" data-lfilter="minAtr">${opt(_LCFG.MIN_ATR_OPTIONS, ui.minAtr, v => v ? "> " + v + " %" : t("leadAll"))}</select></span>
     <span class="lead-group lead-actions">
       <button class="selection-bar__export-btn lead-export-btn">${t("exportJson")}</button>
-      <button class="top20-btn lead-tv-btn" title="${esc(t("leadWatchlistTitle"))}">${t("leadWatchlist")}</button>
     </span>
   </div>`;
 }
@@ -4198,6 +4262,17 @@ function exportLeadersJson() {
   exportSelectionJson(rows);
 }
 
+// Angezeigte Watchlist als kommagetrennte EXCHANGE:SYMBOL-Liste in die
+// Zwischenablage — direkt in eine TradingView-Watchlist einfügbar.
+function copyLeadersWatchlist(btn) {
+  const shown = leadersWatchlistShown(leadersWatchlist());
+  if (!shown.length) { showToast(t("leadWlEmpty")); return; }
+  navigator.clipboard.writeText(shown.map(e => e.ticker).join(",")).then(() => {
+    flashDone(btn);
+    showToast(t("leadCopied", shown.length));
+  });
+}
+
 // TradingView-Watchlist als .txt-Download (Import-Dialog von TradingView):
 // exakt die angezeigte Leader-Watchlist, jeder Ticker genau einmal.
 function downloadLeadersWatchlist() {
@@ -4238,6 +4313,14 @@ function wireLeadersControls(box) {
   const ui = _leadersUi;
   box.querySelector(".lead-export-btn").onclick = exportLeadersJson;
   box.querySelector(".lead-tv-btn").onclick = downloadLeadersWatchlist;
+  const copyBtn = box.querySelector(".lead-copy-btn");
+  copyBtn.onclick = () => copyLeadersWatchlist(copyBtn);
+  box.querySelectorAll("[data-lwlmode]").forEach(b => b.onclick = () => {
+    ui.wlMode = b.dataset.lwlmode; prefSet("leadWlMode", ui.wlMode); renderLeadersTab();
+  });
+  box.querySelectorAll("[data-lta]").forEach(b => b.onclick = () => {
+    ui.ta = !ui.ta; prefSet("leadTa", ui.ta ? "1" : "0"); renderLeadersTab();
+  });
   box.querySelectorAll("[data-lsort]").forEach(b => b.onclick = () => {
     ui.sort = b.dataset.lsort; prefSet("leadSort", ui.sort); renderLeadersTab();
   });
