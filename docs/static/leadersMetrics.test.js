@@ -5,6 +5,7 @@ import {
   rvol, dollarVol, weightedRs, downDayStrength, rankChange, firstToHigh,
   computeLeaders, filterRows, orderThemes, tradingViewWatchlist,
   rsUniverse, rsRating, triggerMetrics, watchlistFails, buildWatchlist, tradingViewFromWatchlist,
+  applyGroupRs, rs3mUniverse,
 } from "./leadersMetrics.js";
 import { LEADERS } from "./config.js";
 
@@ -246,4 +247,28 @@ test("tradingViewFromWatchlist: In Play zuerst, danach staerkstes Theme, keine D
     e("X:C", false, [{ name: "Semis", rank: 2 }]),
   ]);
   assert.equal(txt, ["###In Play", "X:A", "###Cyber  Sec", "X:B", "###Semis", "X:C", ""].join("\n"));
+});
+
+test("applyGroupRs: Median-3M-RS je Theme, Mindestzahl, Perzentil unter Themes", () => {
+  const rows = (...v) => v.map((x) => ({ rs3m: x }));
+  const res = applyGroupRs({
+    A: { name: "A", rank: 3, rows: rows(90, 80, 70, null) },     // Median 80
+    B: { name: "B", rank: 1, rows: rows(40, 60, 50, 99) },       // Median 55
+    C: { name: "C", rank: 2, rows: rows(99, 98) },               // < 3 Werte -> null
+  }, 3);
+  assert.equal(res.A.group_rs_3m, 80);
+  assert.equal(res.B.group_rs_3m, 55);
+  assert.equal(res.C.group_rs_3m, null);
+  assert.equal(res.A.group_rs_pct, 100);
+  assert.equal(res.B.group_rs_pct, 50);
+  assert.equal(res.C.group_rs_pct, null);
+  // Sortierung: hoechster Median zuerst, ohne Wert ans Ende
+  assert.deepEqual(orderThemes(res, "group_rs").map((t) => t.name), ["A", "B", "C"]);
+  assert.deepEqual(orderThemes(res, "score").map((t) => t.name), ["B", "C", "A"]);
+});
+
+test("rs3mUniverse: nur ROC63, gleiche Liquiditaetsauswahl", () => {
+  const rows = { X: [10, 99, 99, 99, 3e6], Y: [20, 0, 0, 0, 2e6], Z: [30, 0, 0, 0, 1] };
+  const bars = { rs_universe: { fields: ["roc63", "roc126", "roc189", "roc252", "dvol50"], rows } };
+  assert.deepEqual([...rs3mUniverse(bars, 2)], [10, 20]);
 });

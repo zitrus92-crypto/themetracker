@@ -143,6 +143,8 @@ const I18N = {
     hintLeaders:   "Welche Einzelaktien führen die stärksten Themes an?\nKonstituenten: alle Finviz-Mitglieder des Themes, 1:1 wie Finviz sie zuordnet. „×N“ hinter dem Ticker = Finviz führt ihn in N Themes (z. B. AMZN in 21) — solche Ticker stecken in mehreren Baskets und bewegen deren Breadth gemeinsam. Datei: data/theme_constituents.json.\nOben: Leader-Watchlist nach der Performer Study — jede Aktie einmal, die alle Kriterien erfüllt (RS ≥ 90, 6M > +50 %, ≤ 20 % unter dem 52W-Hoch, über SMA50/SMA200, Preis ≥ 10 $, $-Vol ≥ 5 Mio). „In Play heute“ = zusätzlich der validierte Breakout-Trigger.\nDarunter je Theme: Breadth über alle Konstituenten und die qualifizierten Aktien nach RS vs. Theme. 👑 = Leader = bester qualifizierter Ticker; erfüllt keiner die Kriterien, hat das Theme keinen Leader.\nFilter (Dollarvolumen, ATR%) wirken nur auf die Tabelle, nicht auf die Breadth.\nFehlende Kursdaten = n/a, nie interpoliert. Alle Schwellen: static/config.js.\nRechnet einmal pro Handelstag nach US-Close.",
     leadSortLabel: "Sortierung",
     leadSortScore: "Theme-Score",
+    leadSortGroupRs: "Gruppen-RS 3M",
+    leadGroupPct:  (p) => `Pz ${p}`,
     leadSortBreadth: "Breadth",
     leadTopN:      "Top-N",
     leadMinDvol:   "Min $-Vol",
@@ -196,6 +198,7 @@ const I18N = {
       adr_pct:        ["ADR%", "Ø (High − Low) ÷ Close über 20 Tage."],
       atr_pct:        ["ATR%", "Ø True Range ÷ Close über das gewählte Fenster (1W = 5, 14T = 14, 1M = 20 Tage)."],
       dollar_vol_20d: ["$-Vol", "Ø Close × Volumen über 20 Tage (Liquiditätsfilter)."],
+      group_rs:       ["Gruppen-RS 3M", "Median des 3M-RS (Perzentil der 63-Tage-Rendite im RS-Universum) aller Theme-Mitglieder; Pz = Perzentil unter den 40 Themes. Gleichgewichtet, daher robust gegen einzelne Megacaps. Definition und Beleg aus der Performer Study (Gruppen-Rang ≥ 90: Lift 1,7 bei Leader-Breakouts) — dort GICS-Sub-Industries, die Übertragung auf Finviz-Themes ist Konvention. Sortierung „Theme-Score“ = Finviz-Rang (1M 70 % / 1W 20 % / 3M 10 %), „Breadth“ = Mittel aus % > SMA50 und % nahe Hoch."],
       rs_rating:      ["RS", "RS-Rating 1–99: IBD-Gewichtung (0,4·3M + 0,2·6M + 0,2·9M + 0,2·12M) als Perzentil gegen die 3.000 liquidesten Aktien der Finviz-Industries (Näherung an den Russell 3000 der Studie). Fett = RS ≥ 95. Studie: RS ≥ 90 validiert, RS ≥ 95 Trefferquote 20 % statt 12 %."],
       p6m:            ["6M", "Kursveränderung über 126 Handelstage. Studie: > +50 % verkleinert die Watchlist, ohne Gewinner zu verlieren."],
       wl_dist:        ["Abst. 52WH", "Abstand zum 52W-Hoch in %. Kriterium: höchstens 20 % darunter (Studie definiert Leader mit ≤ 15 %)."],
@@ -462,6 +465,8 @@ const I18N = {
     hintLeaders:   "Which single stocks lead the strongest themes?\nConstituents: all Finviz members of the theme, 1:1 as Finviz assigns them. “×N” after the ticker = Finviz lists it in N themes (e.g. AMZN in 21) — such tickers sit in several baskets and move their breadth together. File: data/theme_constituents.json.\nTop: leader watchlist per the Performer Study — each stock once that passes all criteria (RS ≥ 90, 6M > +50%, ≤ 20% below the 52W high, above SMA50/SMA200, price ≥ $10, $ vol ≥ $5M). “In play today” = plus the validated breakout trigger.\nBelow, per theme: breadth across all constituents and the qualified stocks by RS vs theme. 👑 = leader = best qualified ticker; if none qualifies, the theme has no leader.\nFilters (dollar volume, ATR%) only affect the table, not breadth.\nMissing price data = n/a, never interpolated. All thresholds: static/config.js.\nRuns once per trading day after US close.",
     leadSortLabel: "Sort",
     leadSortScore: "Theme score",
+    leadSortGroupRs: "Group RS 3M",
+    leadGroupPct:  (p) => `pct ${p}`,
     leadSortBreadth: "Breadth",
     leadTopN:      "Top N",
     leadMinDvol:   "Min $ vol",
@@ -515,6 +520,7 @@ const I18N = {
       adr_pct:        ["ADR%", "Avg (high − low) ÷ close over 20 days."],
       atr_pct:        ["ATR%", "Avg true range ÷ close over the chosen window (1W = 5, 14D = 14, 1M = 20 days)."],
       dollar_vol_20d: ["$ vol", "Avg close × volume over 20 days (liquidity filter)."],
+      group_rs:       ["Group RS 3M", "Median 3M RS (percentile of the 63-day return in the RS universe) of all theme members; pct = percentile among the 40 themes. Equal-weighted, so robust against single megacaps. Definition and evidence from the Performer Study (group rank ≥ 90: lift 1.7 on leader breakouts) — there GICS sub-industries; transferring it to Finviz themes is a convention. Sort “Theme score” = Finviz rank (1M 70% / 1W 20% / 3M 10%), “Breadth” = mean of % > SMA50 and % near high."],
       rs_rating:      ["RS", "RS rating 1–99: IBD weighting (0.4·3M + 0.2·6M + 0.2·9M + 0.2·12M) as a percentile against the 3,000 most liquid stocks of the Finviz industries (approximating the study's Russell 3000). Bold = RS ≥ 95. Study: RS ≥ 90 validated, RS ≥ 95 hit rate 20% vs 12%."],
       p6m:            ["6M", "Price change over 126 trading days. Study: > +50% shrinks the watchlist without losing winners."],
       wl_dist:        ["Dist 52WH", "Distance to the 52W high in %. Criterion: at most 20% below (the study defines leaders as ≤ 15%)."],
@@ -3876,7 +3882,7 @@ async function ensureLeadersData() {
         const num = (k, d) => { const x = Number(prefGet(k)); return prefGet(k) !== null && Number.isFinite(x) ? x : d; };
         const per = prefGet("leadAtrPeriod");
         _leadersUi = {
-          sort: prefGet("leadSort") === "breadth" ? "breadth" : "score",
+          sort: ["group_rs", "score", "breadth"].includes(prefGet("leadSort")) ? prefGet("leadSort") : _LCFG.DEFAULT_SORT,
           topN: num("leadTopN", _LCFG.TOP_N),
           minDvol: num("leadMinDvol", _LCFG.MIN_DOLLAR_VOL),
           minAtr: num("leadMinAtr", _LCFG.MIN_ATR_PCT),
@@ -4084,6 +4090,8 @@ function leadersCardHtml(theme) {
       <span class="lead-dim">${t("leadMembers", b.members, b.members_with_data)} · ${lowTxt}</span>
     </div>
     <div class="lead-chips">
+      ${chip("group_rs", theme.group_rs_3m === null ? leadNa()
+        : `${Math.round(theme.group_rs_3m)}<span class="lead-dim"> · ${t("leadGroupPct", theme.group_rs_pct)}</span>`)}
       ${chip("pct_above_50ma", pct(b.pct_above_50ma))}
       ${chip("pct_near_high", pct(b.pct_near_high))}
       ${chip("new_highs_5d", b.new_highs_5d ?? leadNa())}
@@ -4101,7 +4109,8 @@ function leadersBarHtml() {
     `<button class="xaxis-btn${v === cur ? " active" : ""}" data-${attr}="${v}">${label}</button>`).join("");
   return `<div class="lead-bar">
     <span class="lead-group"><span class="xaxis-toggle-label">${t("leadSortLabel")}</span>
-      ${seg("lsort", [["score", t("leadSortScore")], ["breadth", t("leadSortBreadth")]], ui.sort)}</span>
+      ${seg("lsort", [["group_rs", t("leadSortGroupRs")], ["score", t("leadSortScore")], ["breadth", t("leadSortBreadth")]], ui.sort)}
+      ${leadInfo("group_rs")}</span>
     <span class="lead-group"><span class="xaxis-toggle-label">${t("leadTopN")}</span>
       <select class="lead-select" data-lfilter="topN">${opt(_LCFG.TOP_N_OPTIONS, ui.topN, v => v)}</select></span>
     <span class="lead-group"><span class="xaxis-toggle-label">${t("leadMinDvol")}</span>
@@ -4141,6 +4150,8 @@ function leadersExportFields(name) {
       members: b.members,
       members_with_data: b.members_with_data,
       qualified_count: th.qualified_count,
+      group_rs_3m: r2(th.group_rs_3m),
+      group_rs_pct: th.group_rs_pct,
       basket_low: th.basket_low ? { date: th.basket_low.date, drawdown_pct: r2(th.basket_low.drawdown) } : null,
       constituents_source: th.source,
       data_date: leadersDataDate(),

@@ -98,6 +98,16 @@ export const LEADERS = {
   // -- RMV = ATR5 / ATR50: < 1 Kontraktion (nur Spalte, deskriptiv)
   RMV: { SHORT: 5, LONG: 50, CONTRACTION_MAX: 1 },
 
+  // -- Gruppen-RS (Performer Study): Median des 3M-RS der Mitglieder ----------
+  // 3M-RS je Aktie = Perzentil ihrer 63-Tage-Rendite im RS-Universum (wie
+  // RS-Rating, nur 3M). Theme-Wert = Median, nur ab MIN_MEMBERS Werten.
+  // Studie: Gruppen-Rang >= 90 bei Leader-Breakouts Lift 1,7, Erwartungswert
+  // +0,40 % vs. +0,09 % bei Rang < 40 (validiert) - dort GICS-Sub-Industries.
+  GROUP_RS: { BARS: 63, MIN_MEMBERS: 3 },
+
+  // Standard-Sortierung der Theme-Karten: "group_rs" | "score" | "breadth"
+  DEFAULT_SORT: "group_rs",
+
   // Breadth-Sortierung: Mittel aus pct_above_50ma und pct_near_high
   BREADTH_SORT_KEYS: ["pct_above_50ma", "pct_near_high"],
 
@@ -118,6 +128,7 @@ export const LEADERS = {
     ep:                "validated",
     rmv:               "descriptive",
     rvol_50d:          "validated",
+    group_rs:          "validated",     // Performer Study (GICS; Transfer auf Themes = Konvention)
     best_theme:        "descriptive",  // Studie: Gruppen-Rang nur als Spalte, als Filter fragil
     dist_52wh:         "validated",
     first_to_high:     "convention",

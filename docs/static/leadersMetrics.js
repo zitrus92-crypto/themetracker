@@ -11,6 +11,10 @@ import { LEADERS } from "./config.js";
 
 const isNum = (x) => typeof x === "number" && Number.isFinite(x);
 const mean = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
+const median = (xs) => {
+  const s = [...xs].sort((a, b) => a - b), m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+};
 
 /** Werte [from, to) oder null, sobald einer fehlt / das Fenster nicht passt. */
 function windowOf(arr, from, to) {
@@ -183,6 +187,30 @@ export function rsUniverse(bars, n = LEADERS.RS_UNIVERSE_N, weights = LEADERS.RS
   return scores.length ? Float64Array.from(scores).sort() : null;
 }
 
+/** Sortierte 3M-Renditen (ROC63) desselben Universums wie rsUniverse() —
+ *  Grundlage fuer das 3M-RS je Aktie (Gruppen-Rang der Performer Study). */
+export function rs3mUniverse(bars, n = LEADERS.RS_UNIVERSE_N, roc = LEADERS.GROUP_RS.BARS) {
+  return rsUniverse(bars, n, [{ bars: roc, w: 1 }]);
+}
+
+/** Gruppen-RS je Theme (Performer Study: Median des 3M-RS der Mitglieder,
+ *  nur Gruppen mit >= MIN_MEMBERS Werten) + Perzentil unter allen Themes.
+ *  Schreibt group_rs_3m und group_rs_pct in jedes Theme des Ergebnisses. */
+export function applyGroupRs(result, minMembers = LEADERS.GROUP_RS.MIN_MEMBERS) {
+  const themes = Object.values(result);
+  for (const t of themes) {
+    const vals = t.rows.map((r) => r.rs3m).filter(isNum);
+    t.group_rs_3m = vals.length >= minMembers ? median(vals) : null;
+    t.group_rs_members = vals.length;
+  }
+  const all = themes.map((t) => t.group_rs_3m).filter(isNum);
+  for (const t of themes) {
+    t.group_rs_pct = isNum(t.group_rs_3m) && all.length
+      ? Math.round((100 * all.filter((v) => v <= t.group_rs_3m).length) / all.length) : null;
+  }
+  return result;
+}
+
 /** RS-Rating 1–99: Anteil des Universums mit Score <= score. */
 export function rsRating(score, sorted) {
   if (!isNum(score) || !sorted?.length) return null;
@@ -331,7 +359,7 @@ const EMPTY_ROW = {
   close: null, rs_vs_theme: null, rs_vs_spy: null, dist_52wh_pct: null, dist_52wh_adr: null,
   down_day_strength: null, down_days: null, rvol_20d: null, adr_pct: null, atr_pct: null,
   dollar_vol_20d: null, above_sma50: null, near_high: null, new_high_5d: null,
-  rs_score: null, p6m: null, above_sma200: null, rvol_50d: null, gap_pct: null,
+  rs_score: null, rs3m: null, p6m: null, above_sma200: null, rvol_50d: null, gap_pct: null,
   breakout_20d: null, trigger: null, weak_volume: null, ep: null, ep_date: null,
   dollar_vol_50d: null, rmv: null, rs_rating: null,
 };
@@ -349,6 +377,7 @@ export function computeLeaders(bars, constituents, themeRows, snapDays, opts = {
   const atrBars = LEADERS.ATR_PERIODS[opts.atrPeriod ?? LEADERS.ATR_PERIOD];
   const spy = bars.bench.c;
   const uni = rsUniverse(bars);
+  const uni3m = rs3mUniverse(bars);
   const out = {};
   for (const [name, row] of Object.entries(themeRows || {})) {
     const cons = constituents.themes?.[name];
@@ -371,6 +400,7 @@ export function computeLeaders(bars, constituents, themeRows, snapDays, opts = {
       }
       const mt = tickerMetrics(m.b, spy, basket, atrBars, bars.dates);
       mt.rs_rating = rsRating(mt.rs_score, uni);
+      mt.rs3m = rsRating(retOver(m.b.c, LEADERS.GROUP_RS.BARS), uni3m);
       const fails = watchlistFails(mt);
       const f = fth.low && !fth.reason ? fth.perTicker[m.sym] : null;
       return { ...base, ...mt,
@@ -416,7 +446,7 @@ export function computeLeaders(bars, constituents, themeRows, snapDays, opts = {
       rows,
     };
   }
-  return out;
+  return applyGroupRs(out);
 }
 
 /** UI-/Export-Filter: Liquiditaet + ATR. Fehlender Wert faellt bei aktivem
@@ -457,9 +487,13 @@ export function buildWatchlist(result, { minDollarVol = 0, minAtrPct = 0 } = {})
   return list.sort((a, b) => sortDesc(a.rs_rating, b.rs_rating) || sortDesc(a.rs_score, b.rs_score));
 }
 
-/** Themes in Anzeigereihenfolge: "score" = Theme-Rang, "breadth" = Breadth-Mittel. */
+/** Themes in Anzeigereihenfolge: "score" = Finviz-Theme-Rang, "breadth" =
+ *  Breadth-Mittel, "group_rs" = Median-3M-RS der Mitglieder (Performer Study). */
 export function orderThemes(result, sortBy = "score") {
   const list = Object.values(result);
+  if (sortBy === "group_rs") {
+    return list.sort((a, b) => sortDesc(a.group_rs_3m, b.group_rs_3m) || (a.rank ?? 99) - (b.rank ?? 99));
+  }
   if (sortBy === "breadth") {
     return list.sort((a, b) => sortDesc(a.breadth.sort_value, b.breadth.sort_value) || (a.rank ?? 99) - (b.rank ?? 99));
   }
