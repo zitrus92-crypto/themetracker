@@ -31,7 +31,7 @@ const I18N = {
     moversTitle:  "Where is the Puck going?",
     moversSubtitle: "Rank-Veränderung seit dem gewählten Zeitraum. Je größer der Sprung, desto stärker das Momentum.",
     moversRising: "Rising — Puck kommt hier an",
-    moversFading: "Fading — Puck verlässt",
+    moversFading: "Cooling — Puck verlässt",
     moversNoData: (period) => `Noch nicht genug Daten für ${period}. Bitte warte bis genug tägliche Snapshots gesammelt wurden.`,
     moversCompare:(date) => `vs. ${date}`,
     viewCards:    "📊 Karten",
@@ -43,7 +43,7 @@ const I18N = {
     hintIndBubble:"X-Achse: 3M-Performance, Y-Achse: 1M-Performance.\nGröße = Stärke (Score) — starke Industries bleiben groß, egal ob beschleunigend oder konsolidierend.\nFarbe = Accel (stabiler Rang3M−Rang1M): grün = beschleunigt, grau = konsolidiert, rot = fällt ab.\nINST-Filter (Heatmap-Toggle) wirkt auch hier. Klick auf Bubble öffnet Finviz-Screener.",
     hintIndRrg:   "X-Achse: RS-Ratio (3M relativ zum Industry-Schnitt), Y-Achse: RS-Momentum.\nRechts oben Leading, links oben Improving, links unten Lagging, rechts unten Weakening.\nTail = die letzten 10 Handelstage aus den Snapshots, Kopfpunkt = Live-Daten.\nBenchmark ist der Gleichgewichts-Schnitt aller Industries — ein Index liegt nicht mit Historie vor.\nDie beiden Buttons filtern auf die Top-30-%-Schnittmengen; beide aktiv = Vereinigung.\nMaus über eine Industry hebt sie samt Pfad hervor, Klick öffnet den Finviz-Screener.",
     hintTop10:    "Top 10 Performer pro Zeitraum — zeigt aktuelle Marktführer.\nKarten: kompakte Übersicht pro Zeitraum.\nBalken: alle Industries sortiert nach 1M und 3M Performance.\nINST-Badge zeigt institutionelles Interesse.",
-    hintMovers:   "Rang-Veränderung seit dem gewählten Zeitraum.\nRising: Industries die am stärksten gestiegen sind — frisches Kapital fließt ein. Hier suchen!\nFading: Industries die Ränge verloren haben — Kapital verlässt diesen Bereich. Meiden.\nZeitraum wählen: 1W / 2W / 1M / 3M (ausgegraut = noch nicht genug Daten).",
+    hintMovers:   "Rang-Veränderung seit dem gewählten Zeitraum.\nRising: Industries die am stärksten gestiegen sind — frisches Kapital fließt ein. Hier suchen!\nCooling: Industries die Ränge verloren haben — Kapital verlässt diesen Bereich. Meiden.\nZeitraum wählen: 1W / 2W / 1M / 3M (ausgegraut = noch nicht genug Daten).",
     tabEtfs:      "📈 Themes",
     etfTitle:     "Finviz Thematic Heatmap",
     etfViewThemes:"Themes",
@@ -58,7 +58,7 @@ const I18N = {
     matrixFreshSub: "3M schwach → 1M stark",
     matrixTrend:    "⚡ Trending (Extended)",
     matrixTrendSub: "3M stark → 1M stark",
-    matrixFading:   "🔻 Fading",
+    matrixFading:   "🔻 Cooling",
     matrixFadingSub:"3M stark → 1M schwach",
     matrixDead:     "💀 Dead",
     matrixDeadSub:  "beide schwach",
@@ -145,6 +145,8 @@ const I18N = {
     leadSortScore: "Theme-Score",
     leadSortGroupRs: "Gruppen-RS 3M",
     leadGroupPct:  (p) => `Pz ${p}`,
+    leadState:     { rising: "▲ Rising", confirmed: "✔ Confirmed", cooling: "▼ Cooling" },
+    leadStateTitle: (r3, r12, gap, n) => `Rang Gruppen-RS 3M #${r3} · 12M #${r12} (Gap ${gap > 0 ? "+" : ""}${gap}) von ${n} Themes`,
     leadSortBreadth: "Breadth",
     leadTopN:      "Top-N",
     leadMinDvol:   "Min $-Vol",
@@ -215,6 +217,8 @@ const I18N = {
       adr_pct:        ["ADR%", "Ø (High − Low) ÷ Close über 20 Tage."],
       atr_pct:        ["ATR%", "Ø True Range ÷ Close über das gewählte Fenster (1W = 5, 14T = 14, 1M = 20 Tage)."],
       dollar_vol_20d: ["$-Vol", "Ø Close × Volumen über 20 Tage (Liquiditätsfilter)."],
+      group_rs12:     ["Gruppen-RS 12M", "Median des RS-Ratings (IBD-Gewichtung 0,4·3M + 0,2·6M + 0,2·9M + 0,2·12M) aller Theme-Mitglieder; #n = Rang unter den Themes (1 = stärkstes). Gegenstück zur 3M-Spalte: zeigt, wo ein Theme langfristig steht."],
+      state:          ["Rising / Confirmed / Cooling", "Rotations-Hinweis aus den Theme-Rängen (N = Themes mit beiden Werten, Top = N/4). Confirmed: 3M- und 12M-Rang in den Top-N/4. Rising: 3M-Rang mindestens N/4 Plätze besser als 12M-Rang. Cooling: 12M-Rang in den Top-N/4, 3M-Rang schlechter als N/2. Befund (Norgate, Russell 3000, 2011–2026): neue 3M-Top-10 erreichen die 12M-Top-10 in 60 Tagen zu 56 % (Basis 36 %), im Median nach 30 statt 65 Tagen — aber der Forward-Exzess ist von „alle Themes“ nicht unterscheidbar. Kein Kauf-/Verkaufssignal, Themes sind mit Hindsight gewählt. Details: docs/rs3m_analysis.md."],
       group_rs:       ["Gruppen-RS 3M", "Median des 3M-RS (Perzentil der 63-Tage-Rendite im RS-Universum) aller Theme-Mitglieder; Pz = Perzentil unter den 40 Themes. Gleichgewichtet, daher robust gegen einzelne Megacaps. Definition und Beleg aus der Performer Study (Gruppen-Rang ≥ 90: Lift 1,7 bei Leader-Breakouts) — dort GICS-Sub-Industries, die Übertragung auf Finviz-Themes ist Konvention. Sortierung „Theme-Score“ = Finviz-Rang (1M 70 % / 1W 20 % / 3M 10 %), „Breadth“ = Mittel aus % > SMA50 und % nahe Hoch."],
       rs_rating:      ["RS", "RS-Rating 1–99: IBD-Gewichtung (0,4·3M + 0,2·6M + 0,2·9M + 0,2·12M) als Perzentil gegen die 3.000 liquidesten Aktien der Finviz-Industries (Näherung an den Russell 3000 der Studie). Fett = RS ≥ 95. Studie: RS ≥ 90 validiert, RS ≥ 95 Trefferquote 20 % statt 12 %."],
       p6m:            ["6M", "Kursveränderung über 126 Handelstage. Studie: > +50 % verkleinert die Watchlist, ohne Gewinner zu verlieren."],
@@ -370,7 +374,7 @@ const I18N = {
     moversTitle:  "Where is the Puck going?",
     moversSubtitle: "Rank change since the selected period. The bigger the jump, the stronger the momentum.",
     moversRising: "Rising — Puck heading here",
-    moversFading: "Fading — Puck leaving",
+    moversFading: "Cooling — Puck leaving",
     moversNoData: (period) => `Not enough data for ${period} yet. Wait until enough daily snapshots are collected.`,
     moversCompare:(date) => `vs. ${date}`,
     viewCards:    "📊 Cards",
@@ -379,10 +383,10 @@ const I18N = {
     infoScore:    "Weighted rank score: 1M×70% + 1W×20% + 3M×10%. Lower = better (rank 1 = strongest).",
     infoAccel:    "Accel = 3M rank minus 1W rank. High positive = was weak 3M ago, now strong = first leg, not extended. Ideal for First Flag setups.",
     hintHeatmap:  "Sort by Score: market overview — which industries are currently leading.\nSort by Accel: First Flag search — fresh momentum (weak 3M + strong 1W = first leg, not extended).\nINST filter: shows only institutionally confirmed industries (Top 40 in 1M and 3M).\nClick any column header to sort, click again to reverse.",
-    hintIndBubble:"X-axis: 3M performance, Y-axis: 1M performance.\nSize = strength (Score) — strong industries stay big regardless of accelerating or consolidating.\nColor = Accel (stable Rank3M−Rank1M): green = accelerating, gray = consolidating, red = fading.\nThe INST filter (Heatmap toggle) applies here too. Click a bubble to open the Finviz screener.",
+    hintIndBubble:"X-axis: 3M performance, Y-axis: 1M performance.\nSize = strength (Score) — strong industries stay big regardless of accelerating or consolidating.\nColor = Accel (stable Rank3M−Rank1M): green = accelerating, gray = consolidating, red = cooling.\nThe INST filter (Heatmap toggle) applies here too. Click a bubble to open the Finviz screener.",
     hintIndRrg:   "X axis: RS-Ratio (3M relative to the industry average), Y axis: RS-Momentum.\nTop right leading, top left improving, bottom left lagging, bottom right weakening.\nTail = the last 10 trading days from the snapshots, head = live data.\nBenchmark is the equal-weight average of all industries — no index is available with history.\nThe two buttons filter to the top-30% intersections; both active = union.\nHovering an industry highlights it and its path, clicking opens the Finviz screener.",
     hintTop10:    "Top 10 performers per timeframe — shows current market leaders.\nCards: compact overview per timeframe.\nBar chart: all industries sorted by 1M and 3M performance.\nINST badge shows institutional interest.",
-    hintMovers:   "Rank change since the selected period.\nRising: industries that climbed most in ranking — fresh capital flowing in. Look here!\nFading: industries that lost ranks — capital leaving. Avoid.\nSelect period: 1W / 2W / 1M / 3M (greyed out = not enough data yet).",
+    hintMovers:   "Rank change since the selected period.\nRising: industries that climbed most in ranking — fresh capital flowing in. Look here!\nCooling: industries that lost ranks — capital leaving. Avoid.\nSelect period: 1W / 2W / 1M / 3M (greyed out = not enough data yet).",
     tabEtfs:      "📈 Themes",
     etfTitle:     "Finviz Thematic Heatmap",
     etfViewThemes:"Themes",
@@ -397,7 +401,7 @@ const I18N = {
     matrixFreshSub: "3M weak → 1M strong",
     matrixTrend:    "⚡ Trending (Extended)",
     matrixTrendSub: "3M strong → 1M strong",
-    matrixFading:   "🔻 Fading",
+    matrixFading:   "🔻 Cooling",
     matrixFadingSub:"3M strong → 1M weak",
     matrixDead:     "💀 Dead",
     matrixDeadSub:  "both weak",
@@ -484,6 +488,8 @@ const I18N = {
     leadSortScore: "Theme score",
     leadSortGroupRs: "Group RS 3M",
     leadGroupPct:  (p) => `pct ${p}`,
+    leadState:     { rising: "▲ Rising", confirmed: "✔ Confirmed", cooling: "▼ Cooling" },
+    leadStateTitle: (r3, r12, gap, n) => `Rank group RS 3M #${r3} · 12M #${r12} (gap ${gap > 0 ? "+" : ""}${gap}) of ${n} themes`,
     leadSortBreadth: "Breadth",
     leadTopN:      "Top N",
     leadMinDvol:   "Min $ vol",
@@ -554,6 +560,8 @@ const I18N = {
       adr_pct:        ["ADR%", "Avg (high − low) ÷ close over 20 days."],
       atr_pct:        ["ATR%", "Avg true range ÷ close over the chosen window (1W = 5, 14D = 14, 1M = 20 days)."],
       dollar_vol_20d: ["$ vol", "Avg close × volume over 20 days (liquidity filter)."],
+      group_rs12:     ["Group RS 12M", "Median RS rating (IBD weighting 0.4·3M + 0.2·6M + 0.2·9M + 0.2·12M) of all theme members; #n = rank among themes (1 = strongest). Counterpart to the 3M column: shows where a theme stands long term."],
+      state:          ["Rising / Confirmed / Cooling", "Rotation hint from theme ranks (N = themes with both values, top = N/4). Confirmed: 3M and 12M rank both in the top N/4. Rising: 3M rank at least N/4 places better than 12M rank. Cooling: 12M rank in the top N/4, 3M rank worse than N/2. Finding (Norgate, Russell 3000, 2011–2026): new 3M top-10 themes reach the 12M top-10 within 60 days 56% of the time (base 36%), median 30 vs 65 days — but forward excess return is indistinguishable from all themes. Not a buy/sell signal; themes are chosen with hindsight. Details: docs/rs3m_analysis.md."],
       group_rs:       ["Group RS 3M", "Median 3M RS (percentile of the 63-day return in the RS universe) of all theme members; pct = percentile among the 40 themes. Equal-weighted, so robust against single megacaps. Definition and evidence from the Performer Study (group rank ≥ 90: lift 1.7 on leader breakouts) — there GICS sub-industries; transferring it to Finviz themes is a convention. Sort “Theme score” = Finviz rank (1M 70% / 1W 20% / 3M 10%), “Breadth” = mean of % > SMA50 and % near high."],
       rs_rating:      ["RS", "RS rating 1–99: IBD weighting (0.4·3M + 0.2·6M + 0.2·9M + 0.2·12M) as a percentile against the 3,000 most liquid stocks of the Finviz industries (approximating the study's Russell 3000). Bold = RS ≥ 95. Study: RS ≥ 90 validated, RS ≥ 95 hit rate 20% vs 12%."],
       p6m:            ["6M", "Price change over 126 trading days. Study: > +50% shrinks the watchlist without losing winners."],
@@ -2342,7 +2350,7 @@ function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M", legendHtml = 
         <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#4ade80" fill-opacity="0.8"/></svg> Accel ≥ +10 (First Flag)</span>
         <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#86efac" fill-opacity="0.8"/></svg> Accel +5…+9</span>
         <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#6b7280" fill-opacity="0.8"/></svg> ${neutralLabel}</span>
-        <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#f87171" fill-opacity="0.8"/></svg> Accel ≤ −10 (Extended/Fading)</span>
+        <span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#f87171" fill-opacity="0.8"/></svg> Accel ≤ −10 (Extended/Cooling)</span>
         <span class="bubble-legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#9ca3af" fill-opacity="0.5"/></svg> Größe = Stärke (Score)</span>
       `}</div>
     </div>`;
@@ -4228,7 +4236,10 @@ function leadersCardHtml(theme) {
     ? (theme.fth_reason === "low_too_old" ? t("leadLowOld", leadDate(theme.basket_low.date))
       : t("leadBasketLow", leadDate(theme.basket_low.date), theme.basket_low.drawdown.toFixed(1)))
     : t("leadNoLow");
+  const stateTag = theme.state && theme.state !== "neutral"
+    ? `<span class="lead-tag lead-state--${theme.state}" title="${esc(t("leadStateTitle", theme.rank_3m, theme.rank_12m, theme.rank_gap, theme.n_ranked))}">${t("leadState")[theme.state]}${leadInfo("state")}</span>` : "";
   const tags = [
+    stateTag,
     theme.source === "manual" ? `<span class="lead-tag">${t("leadManual")}</span>` : "",
     theme.thin ? `<span class="lead-tag">${t("leadThin")}</span>` : "",
   ].join("");
@@ -4282,7 +4293,9 @@ function leadersCardHtml(theme) {
     </div>
     <div class="lead-chips">
       ${chip("group_rs", theme.group_rs_3m === null ? leadNa()
-        : `${Math.round(theme.group_rs_3m)}<span class="lead-dim"> · ${t("leadGroupPct", theme.group_rs_pct)}</span>`)}
+        : `${Math.round(theme.group_rs_3m)}<span class="lead-dim"> · ${t("leadGroupPct", theme.group_rs_pct)}${theme.rank_3m ? ` · #${theme.rank_3m}` : ""}</span>`)}
+      ${chip("group_rs12", theme.group_rs_12m === null ? leadNa()
+        : `${Math.round(theme.group_rs_12m)}<span class="lead-dim">${theme.rank_12m ? ` · #${theme.rank_12m}` : ""}</span>`)}
       ${chip("pct_above_50ma", pct(b.pct_above_50ma))}
       ${chip("pct_near_high", pct(b.pct_near_high))}
       ${chip("new_highs_5d", b.new_highs_5d ?? leadNa())}
@@ -4343,6 +4356,12 @@ function leadersExportFields(name) {
       qualified_count: th.qualified_count,
       group_rs_3m: r2(th.group_rs_3m),
       group_rs_pct: th.group_rs_pct,
+      group_rs_12m: r2(th.group_rs_12m),
+      rank_3m: th.rank_3m,
+      rank_12m: th.rank_12m,
+      rank_gap: th.rank_gap,
+      n_ranked: th.n_ranked,
+      state: th.state,
       basket_low: th.basket_low ? { date: th.basket_low.date, drawdown_pct: r2(th.basket_low.drawdown) } : null,
       constituents_source: th.source,
       data_date: leadersDataDate(),

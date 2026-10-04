@@ -9,3 +9,6 @@ backtest_*_result.txt
 backtest_result.txt
 scrape_output.txt
 scraper_out.txt
+
+# RS3M-Analyse: Norgate-Rohdaten-Cache (lizenzierte Daten)
+data/norgate_cache/

@@ -208,6 +208,34 @@ export function applyGroupRs(result, minMembers = LEADERS.GROUP_RS.MIN_MEMBERS) 
     t.group_rs_pct = isNum(t.group_rs_3m) && all.length
       ? Math.round((100 * all.filter((v) => v <= t.group_rs_3m).length) / all.length) : null;
   }
+  return applyGroupState(result, minMembers);
+}
+
+/** Gruppen-RS 12M (Median des RS-Ratings der Mitglieder), Theme-Raenge und
+ *  Zustand rising/confirmed/cooling/neutral. Siehe config.js GROUP_STATE.
+ *  Schreibt group_rs_12m, rank_3m, rank_12m, rank_gap, n_ranked, state. */
+export function applyGroupState(result, minMembers = LEADERS.GROUP_RS.MIN_MEMBERS, cfg = LEADERS.GROUP_STATE) {
+  const themes = Object.values(result);
+  for (const t of themes) {
+    const vals = t.rows.map((r) => r.rs_rating).filter(isNum);
+    t.group_rs_12m = vals.length >= minMembers ? median(vals) : null;
+  }
+  const ranked = themes.filter((t) => isNum(t.group_rs_3m) && isNum(t.group_rs_12m));
+  const n = ranked.length;
+  const rankOf = (key) => (t) => 1 + ranked.filter((o) => o[key] > t[key]).length;   // Gleichstand = bester Rang
+  const r3 = rankOf("group_rs_3m"), r12 = rankOf("group_rs_12m");
+  const top = Math.floor(n * cfg.TOP_FRAC), cool = Math.floor(n * cfg.COOL_FRAC);
+  for (const t of themes) {
+    const ok = ranked.includes(t);
+    t.n_ranked = n;
+    t.rank_3m = ok ? r3(t) : null;
+    t.rank_12m = ok ? r12(t) : null;
+    t.rank_gap = ok ? t.rank_12m - t.rank_3m : null;
+    t.state = !ok || top < 1 ? null
+      : t.rank_3m <= top && t.rank_12m <= top ? "confirmed"
+      : t.rank_12m <= top && t.rank_3m > cool ? "cooling"
+      : t.rank_gap >= top ? "rising" : "neutral";
+  }
   return result;
 }
 

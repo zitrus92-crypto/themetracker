@@ -105,6 +105,16 @@ export const LEADERS = {
   // +0,40 % vs. +0,09 % bei Rang < 40 (validiert) - dort GICS-Sub-Industries.
   GROUP_RS: { BARS: 63, MIN_MEMBERS: 3 },
 
+  // -- Rising / Confirmed / Cooling je Theme (docs/rs3m_analysis.md) ----------
+  // Rang der Themes nach Gruppen-RS 3M (rank3) und Gruppen-RS 12M (rank12),
+  // 1 = staerkstes. N = Themes mit beiden Werten. TOP = floor(N * TOP_FRAC).
+  //   confirmed: rank3 <= TOP und rank12 <= TOP
+  //   cooling:   rank12 <= TOP und rank3 > floor(N * COOL_FRAC)
+  //   rising:    rank12 - rank3 >= TOP (und nicht confirmed)
+  // Befund (Norgate, R3000, 2011-2026): Rising/Cooling sind Rotations-Hinweise,
+  // kein Renditesignal - Forward-Exzess unterscheidet sich nicht von "alle Themes".
+  GROUP_STATE: { TOP_FRAC: 0.25, COOL_FRAC: 0.5 },
+
   // Standard-Sortierung der Theme-Karten: "group_rs" | "score" | "breadth"
   DEFAULT_SORT: "group_rs",
 
@@ -138,6 +148,8 @@ export const LEADERS = {
     pct_near_high:     "validated",
     new_highs_5d:      "convention",
     rank_change_4w:    "validated",
+    group_rs12:        "convention",
+    state:             "descriptive",
     rs_vs_theme:       "validated",
     rs_vs_spy:         "validated",   // IBD-Gewichtung, Performer Study
     rs_rating:         "validated",

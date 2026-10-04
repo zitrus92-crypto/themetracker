@@ -5,7 +5,7 @@ import {
   rvol, dollarVol, weightedRs, downDayStrength, rankChange, firstToHigh,
   computeLeaders, filterRows, orderThemes, tradingViewWatchlist,
   rsUniverse, rsRating, triggerMetrics, watchlistFails, buildWatchlist, tradingViewFromWatchlist,
-  applyGroupRs, rs3mUniverse,
+  applyGroupRs, applyGroupState, rs3mUniverse,
   weekMonday, weekReference, diffWatchlist,
 } from "./leadersMetrics.js";
 import { LEADERS } from "./config.js";
@@ -304,4 +304,24 @@ test("weekMonday / weekReference: letzter Protokolltag vor dem Montag der Datenw
 
 test("diffWatchlist: neu und herausgefallen", () => {
   assert.deepEqual(diffWatchlist(["A", "C", "D"], ["A", "B"]), { added: ["C", "D"], removed: ["B"] });
+});
+
+test("applyGroupState: Raenge, Gap und Zustand (N=8 -> Top=2, Cool=4)", () => {
+  const mk = (name, r3, r12) => [name, { name, rows: [1, 2, 3].map(() => ({ rs3m: r3, rs_rating: r12 })) }];
+  const res = applyGroupRs(Object.fromEntries([
+    mk("A", 99, 99),   // 3M #1, 12M #1 -> confirmed
+    mk("B", 50, 98),   // 3M #7, 12M #2 -> cooling (3M > 4)
+    mk("C", 98, 40),   // 3M #2, 12M #7 -> rising (gap >= 2)
+    mk("D", 90, 90), mk("E", 80, 80), mk("F", 60, 60), mk("G", 70, 70), mk("H", 20, 20),
+  ]), 3);
+  assert.equal(res.A.n_ranked, 8);
+  assert.equal(res.A.state, "confirmed");
+  assert.equal(res.B.state, "cooling");
+  assert.equal(res.C.state, "rising");
+  assert.equal(res.C.rank_3m, 2);
+  assert.equal(res.C.rank_gap, res.C.rank_12m - res.C.rank_3m);
+  assert.equal(res.H.state, "neutral");
+  const thin = applyGroupRs({ X: { name: "X", rows: [{ rs3m: 90, rs_rating: 90 }] } }, 3);
+  assert.equal(thin.X.state, null);
+  assert.equal(thin.X.rank_3m, null);
 });
