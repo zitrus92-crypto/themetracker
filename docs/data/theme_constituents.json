@@ -1,7 +1,7 @@
 {
  "schema_version": 2,
- "date": "2026-10-03",
- "generated_at": "2026-10-03T19:34:15.971637+00:00",
+ "date": "2026-10-05",
+ "generated_at": "2026-10-05T21:44:40.490808+00:00",
  "selection": {
   "rule": "alle Finviz-Theme-Mitglieder 1:1 (inkl. Mehrfach-Zuordnungen)",
   "min": 5
@@ -420,7 +420,7 @@
   },
   "Commodities — Agri": {
    "source": "finviz_theme",
-   "members_total": 25,
+   "members_total": 24,
    "thin": false,
    "tickers": [
     "NYSE:ADM",
@@ -430,7 +430,6 @@
     "NYSE:BG",
     "NASDAQ:CALM",
     "NYSE:CF",
-    "NYSE:CSAN",
     "NYSE:CTVA",
     "NYSE:DAR",
     "NYSE:DOLE",
@@ -2197,7 +2196,6 @@
   "NASDAQ:CRSR": 1,
   "NASDAQ:CRTO": 2,
   "NASDAQ:CRWD": 5,
-  "NYSE:CSAN": 1,
   "NASDAQ:CSCO": 9,
   "NASDAQ:CSGP": 1,
   "NASDAQ:CSIQ": 1,
