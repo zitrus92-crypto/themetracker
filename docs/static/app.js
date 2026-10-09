@@ -177,6 +177,11 @@ const I18N = {
     leadWlCharts:  "📈 Charts",
     leadSizeTitle: { S: "Klein: Überblick, viele Charts nebeneinander (bisheriges Format)", M: "Mittel: Karten ab ~520 px, auf großen Bildschirmen 3 Spalten", L: "Groß: ein Chart pro Zeile, bis 1100 px breit" },
     leadChartsRange: "Zeitraum 6 Monate, Bild in Kartenbreite gerendert.",
+    leadChartsRangeW: "Zeitraum 2 Jahre, Bild in Kartenbreite gerendert.",
+    leadTfTitle:   { d: "Tageschart (Kerzen = 1 Tag)", w: "Wochenchart (Kerzen = 1 Woche, Zeitraum 2 Jahre)" },
+    leadEmaTitle:  "Blendet EMA8 (cyan) und EMA20 (grün) in die Charts ein — im Tages- wie im Wochenchart auf der jeweiligen Kerzenbasis.",
+    leadChartsHintW: "Wochenchart mit SMA50 (orange) und SMA200 (braun), Quelle Finviz. Klick öffnet die Finviz-Aktienseite.",
+    leadChartsHintEma: " Zusätzlich EMA8 (cyan) und EMA20 (grün).",
     leadCopy:      "📋 Ticker kopieren",
     leadThemesTvTitle: "Lädt die angezeigten Theme-Karten als .txt herunter (TradingView: Watchlist → Liste importieren): je Karte eine ###Theme-Sektion in der aktuellen Sortierung, darunter genau die Ticker der Karte (aufgeklappte Karten mit allen Zeilen). Ein Ticker kann in mehreren Sektionen stehen.",
     leadCopyTitle: "Kopiert genau die angezeigten Ticker als kommagetrennte EXCHANGE:SYMBOL-Liste — direkt in eine TradingView-Watchlist einfügbar.",
@@ -520,6 +525,11 @@ const I18N = {
     leadWlCharts:  "📈 Charts",
     leadSizeTitle: { S: "Small: overview, many charts side by side (previous format)", M: "Medium: cards from ~520 px, 3 columns on large screens", L: "Large: one chart per row, up to 1100 px wide" },
     leadChartsRange: "Range 6 months, image rendered at card width.",
+    leadChartsRangeW: "Range 2 years, image rendered at card width.",
+    leadTfTitle:   { d: "Daily chart (1 candle = 1 day)", w: "Weekly chart (1 candle = 1 week, range 2 years)" },
+    leadEmaTitle:  "Adds EMA8 (cyan) and EMA20 (green) to the charts — on the candle basis of the chosen daily or weekly view.",
+    leadChartsHintW: "Weekly chart with SMA50 (orange) and SMA200 (brown), source Finviz. Click opens the Finviz stock page.",
+    leadChartsHintEma: " Plus EMA8 (cyan) and EMA20 (green).",
     leadCopy:      "📋 Copy tickers",
     leadThemesTvTitle: "Downloads the shown theme cards as .txt (TradingView: watchlist → import list): one ###Theme section per card in the current sort order, with exactly the card's tickers (expanded cards with all rows). A ticker can appear in several sections.",
     leadCopyTitle: "Copies exactly the shown tickers as a comma-separated EXCHANGE:SYMBOL list — paste straight into a TradingView watchlist.",
@@ -860,14 +870,18 @@ function finvizUrl(ticker) {
 // aus Finvizs eigener Weiterleitung des alten chart.ashx?ta=1-Links.
 // size = {w, h, range}: freie Pixelgroesse + fester Zeitraum (r=m6 …) fuer
 // die grossen Watchlist-Charts; ohne size bleibt alles wie bisher.
-function finvizChartUrl(ticker, scale = 1, ta = false, size = null) {
+function finvizChartUrl(ticker, scale = 1, ta = false, size = null, opts = {}) {
   const w = size?.w ?? 466 * scale, h = size?.h ?? 219 * scale;
+  const weekly = !!opts.weekly;
+  // tm bleibt "d": mit tm=w zeichnet Finviz Overlays im Wochenchart nicht.
+  const range = opts.range ?? size?.range;
   const base = `https://charts2-node.finviz.com/chart?w=${w}&h=${h}&bw=1&bm=1&bb=1&t=${encodeURIComponent(ticker)}`
-       + `&tf=d&s=linear&pm=240&am=1200&tl=1&ct=candle_stick&tm=d${size?.range ? `&r=${size.range}` : ""}`
-       + `&o[0][ot]=sma&o[0][op]=50&o[0][oc]=FF8F33C6&o[1][ot]=sma&o[1][op]=200&o[1][oc]=DCB3326D`;
-  return ta
-    ? base + `&o[2][ot]=sma&o[2][op]=20&o[2][oc]=DC32B363&o[3][ot]=patterns&o[3][op]=&o[3][oc]=000`
-    : base;
+       + `&tf=${weekly ? "w" : "d"}&s=linear&pm=240&am=1200&tl=1&ct=candle_stick&tm=d${range ? `&r=${range}` : ""}`;
+  // Overlays: SMA50/200 immer; optional EMA8/EMA20 (RRGGBBAA), SMA20 + Muster bei ta.
+  const ov = [["sma", 50, "FF8F33C6"], ["sma", 200, "DCB3326D"]];
+  if (opts.ema) ov.push(["ema", 8, "33D6FFDD"], ["ema", 20, "5BE37DDD"]);
+  if (ta) ov.push(["sma", 20, "DC32B363"], ["patterns", "", "000"]);
+  return base + ov.map(([ot, op, oc], i) => `&o[${i}][ot]=${ot}&o[${i}][op]=${op}&o[${i}][oc]=${oc}`).join("");
 }
 
 function finvizQuoteUrl(ticker) {
@@ -3953,6 +3967,8 @@ async function ensureLeadersData() {
           wlView: ["all", "strong", "inplay", "ep", "new"].includes(prefGet("leadWlView")) ? prefGet("leadWlView") : "all",
           wlMode: prefGet("leadWlMode") === "charts" ? "charts" : "table",
           ta: prefGet("leadTa") === "1",
+          weekly: prefGet("leadTf") === "w",
+          ema: prefGet("leadEma") === "1",
           chartSize: _LCFG.CHARTS.SIZES[prefGet("leadChartSize")] ? prefGet("leadChartSize") : _LCFG.CHARTS.DEFAULT_SIZE,
         };
       } catch (e) {
@@ -4115,12 +4131,17 @@ function leadersWatchlistHtml() {
   const sizeBtns = ui.wlMode === "charts"
     ? Object.keys(_LCFG.CHARTS.SIZES).map(k =>
         `<button class="xaxis-btn${ui.chartSize === k ? " active" : ""}" data-lsize="${k}" title="${esc(t("leadSizeTitle")[k])}">${k}</button>`).join("") : "";
+  const tfBtns = ui.wlMode === "charts"
+    ? ["d", "w"].map(k =>
+        `<button class="xaxis-btn${(ui.weekly ? "w" : "d") === k ? " active" : ""}" data-ltf="${k}" title="${esc(t("leadTfTitle")[k])}">${k === "d" ? "D" : "W"}</button>`).join("") : "";
+  const emaBtn = ui.wlMode === "charts"
+    ? `<button class="inst-toggle-btn${ui.ema ? " active" : ""}" data-lema="1" title="${esc(t("leadEmaTitle"))}">EMA 8/20</button>` : "";
   return `<div class="lead-wl">
     <div class="lead-wl__head">
       <span class="lead-name">${t("leadWlTitle")}</span>
       <span class="lead-group">${seg}</span>
       <span class="lead-group lead-actions">
-        ${mode}${sizeBtns}${taBtn}
+        ${mode}${sizeBtns}${tfBtns}${emaBtn}${taBtn}
         <button class="top20-btn lead-copy-btn" title="${esc(t("leadCopyTitle"))}">${t("leadCopy")}</button>
         <button class="top20-btn lead-tv-btn" title="${esc(t("leadWatchlistTitle"))}">${t("leadWatchlist")}</button>
       </span>
@@ -4169,6 +4190,7 @@ function leadersChartsHtml(list, setups) {
   if (!list.length) return `<p class="pick-empty">${t("leadWlEmpty")}</p>`;
   const ta = _leadersUi.ta;
   const size = leadersChartSize();
+  const opts = { weekly: _leadersUi.weekly, ema: _leadersUi.ema, range: _leadersUi.weekly ? _LCFG.CHARTS.RANGE_W : undefined };
   _leadersChartWidth = document.getElementById("leaders-container")?.clientWidth ?? null;
   const cards = list.map((e, i) => {
     const sym = leadSym(e.ticker).replace(".", "-");
@@ -4190,13 +4212,13 @@ function leadersChartsHtml(list, setups) {
       </figcaption>
       <div class="exp-chart-groups">${themes}</div>
       <a href="${finvizQuoteUrl(sym)}${ta ? "&ta=1" : ""}" target="_blank" rel="noopener">
-        <img src="${finvizChartUrl(sym, 1, ta, size)}" alt="${esc(e.ticker)}" loading="lazy" referrerpolicy="no-referrer"
-             ${size ? `width="${size.w}" height="${size.h}" data-fallback="${esc(finvizChartUrl(sym, 1, ta))}"` : ""}
+        <img src="${finvizChartUrl(sym, 1, ta, size, opts)}" alt="${esc(e.ticker)}" loading="lazy" referrerpolicy="no-referrer"
+             ${size ? `width="${size.w}" height="${size.h}" data-fallback="${esc(finvizChartUrl(sym, 1, ta, null, opts))}"` : ""}
              onerror="leadChartFallback(this)">
       </a>
     </figure>`;
   }).join("");
-  return `<p class="lead-dim lead-wl__criteria">${t(ta ? "leadChartsHintTa" : "leadChartsHint")}${size ? " " + t("leadChartsRange") : ""}</p>
+  return `<p class="lead-dim lead-wl__criteria">${t(ta ? "leadChartsHintTa" : _leadersUi.weekly ? "leadChartsHintW" : "leadChartsHint")}${_leadersUi.ema ? t("leadChartsHintEma") : ""}${size ? " " + t(_leadersUi.weekly ? "leadChartsRangeW" : "leadChartsRange") : ""}</p>
     <div class="exp-charts lead-charts lead-charts--${_leadersUi.chartSize}">${cards}</div>`;
 }
 
@@ -4467,6 +4489,12 @@ function wireLeadersControls(box) {
   });
   box.querySelectorAll("[data-lta]").forEach(b => b.onclick = () => {
     ui.ta = !ui.ta; prefSet("leadTa", ui.ta ? "1" : "0"); renderLeadersTab();
+  });
+  box.querySelectorAll("[data-ltf]").forEach(b => b.onclick = () => {
+    ui.weekly = b.dataset.ltf === "w"; prefSet("leadTf", ui.weekly ? "w" : "d"); renderLeadersTab();
+  });
+  box.querySelectorAll("[data-lema]").forEach(b => b.onclick = () => {
+    ui.ema = !ui.ema; prefSet("leadEma", ui.ema ? "1" : "0"); renderLeadersTab();
   });
   box.querySelectorAll("[data-lsize]").forEach(b => b.onclick = () => {
     ui.chartSize = b.dataset.lsize; prefSet("leadChartSize", ui.chartSize); renderLeadersTab();

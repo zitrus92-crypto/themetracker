@@ -133,6 +133,7 @@ export const LEADERS = {
       L: { min: 900, max: 1100 },
     },
     RANGE: "m6",
+    RANGE_W: "y2",         // Zeitraum im Wochenchart (~100 Wochenkerzen)
     ASPECT: 1.75,          // Breite : Hoehe
     MAX_W: 2000,
     MAX_AREA: 2e6,
