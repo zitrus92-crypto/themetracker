@@ -829,6 +829,8 @@ details.wp-details { margin-bottom: 18px; }
   padding: 12px 14px; margin-bottom: 22px;
 }
 .lead-wl__head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 6px; }
+.lead-chartbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin: 0 0 8px; padding: 6px 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; }
+.lead-chartbar__label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; opacity: .65; margin-right: 2px; }
 .lead-wl__criteria { margin-bottom: 10px; line-height: 1.5; }
 .lead-count { opacity: 0.75; font-weight: 400; margin-left: 2px; }
 .lead-rs-strong { color: var(--green-1); }

@@ -178,6 +178,8 @@ const I18N = {
     leadSizeTitle: { S: "Klein: Überblick, viele Charts nebeneinander (bisheriges Format)", M: "Mittel: Karten ab ~520 px, auf großen Bildschirmen 3 Spalten", L: "Groß: ein Chart pro Zeile, bis 1100 px breit" },
     leadChartsRange: "Zeitraum 6 Monate, Bild in Kartenbreite gerendert.",
     leadChartsRangeW: "Zeitraum 2 Jahre, Bild in Kartenbreite gerendert.",
+    leadBarSize: "Größe", leadBarTf: "Zeitebene", leadBarOverlay: "Indikatoren",
+    leadTfLabel: { d: "Täglich", w: "Wöchentlich" },
     leadTfTitle:   { d: "Tageschart (Kerzen = 1 Tag)", w: "Wochenchart (Kerzen = 1 Woche, Zeitraum 2 Jahre)" },
     leadEmaTitle:  "Blendet EMA8 (cyan) und EMA20 (grün) in die Charts ein — im Tages- wie im Wochenchart auf der jeweiligen Kerzenbasis.",
     leadChartsHintW: "Wochenchart mit SMA50 (orange) und SMA200 (braun), Quelle Finviz. Klick öffnet die Finviz-Aktienseite.",
@@ -526,6 +528,8 @@ const I18N = {
     leadSizeTitle: { S: "Small: overview, many charts side by side (previous format)", M: "Medium: cards from ~520 px, 3 columns on large screens", L: "Large: one chart per row, up to 1100 px wide" },
     leadChartsRange: "Range 6 months, image rendered at card width.",
     leadChartsRangeW: "Range 2 years, image rendered at card width.",
+    leadBarSize: "Size", leadBarTf: "Timeframe", leadBarOverlay: "Indicators",
+    leadTfLabel: { d: "Daily", w: "Weekly" },
     leadTfTitle:   { d: "Daily chart (1 candle = 1 day)", w: "Weekly chart (1 candle = 1 week, range 2 years)" },
     leadEmaTitle:  "Adds EMA8 (cyan) and EMA20 (green) to the charts — on the candle basis of the chosen daily or weekly view.",
     leadChartsHintW: "Weekly chart with SMA50 (orange) and SMA200 (brown), source Finviz. Click opens the Finviz stock page.",
@@ -4126,26 +4130,27 @@ function leadersWatchlistHtml() {
 
   const mode = [["table", t("leadWlTable")], ["charts", t("leadWlCharts")]]
     .map(([k, label]) => `<button class="xaxis-btn${ui.wlMode === k ? " active" : ""}" data-lwlmode="${k}">${label}</button>`).join("");
-  const taBtn = ui.wlMode === "charts"
-    ? `<button class="inst-toggle-btn${ui.ta ? " active" : ""}" data-lta="1" title="${esc(t("leadTaTitle"))}">📐 Technical Analysis</button>` : "";
-  const sizeBtns = ui.wlMode === "charts"
-    ? Object.keys(_LCFG.CHARTS.SIZES).map(k =>
-        `<button class="xaxis-btn${ui.chartSize === k ? " active" : ""}" data-lsize="${k}" title="${esc(t("leadSizeTitle")[k])}">${k}</button>`).join("") : "";
-  const tfBtns = ui.wlMode === "charts"
-    ? ["d", "w"].map(k =>
-        `<button class="xaxis-btn${(ui.weekly ? "w" : "d") === k ? " active" : ""}" data-ltf="${k}" title="${esc(t("leadTfTitle")[k])}">${k === "d" ? "D" : "W"}</button>`).join("") : "";
-  const emaBtn = ui.wlMode === "charts"
-    ? `<button class="inst-toggle-btn${ui.ema ? " active" : ""}" data-lema="1" title="${esc(t("leadEmaTitle"))}">EMA 8/20</button>` : "";
+  const grp = (label, btns) => `<span class="lead-group lead-chartbar__grp"><span class="lead-chartbar__label">${label}</span>${btns}</span>`;
+  const chartBar = ui.wlMode !== "charts" ? "" : `<div class="lead-chartbar">
+      ${grp(t("leadBarSize"), Object.keys(_LCFG.CHARTS.SIZES).map(k =>
+        `<button class="xaxis-btn${ui.chartSize === k ? " active" : ""}" data-lsize="${k}" title="${esc(t("leadSizeTitle")[k])}">${k}</button>`).join(""))}
+      ${grp(t("leadBarTf"), ["d", "w"].map(k =>
+        `<button class="xaxis-btn${(ui.weekly ? "w" : "d") === k ? " active" : ""}" data-ltf="${k}" title="${esc(t("leadTfTitle")[k])}">${t("leadTfLabel")[k]}</button>`).join(""))}
+      ${grp(t("leadBarOverlay"),
+        `<button class="inst-toggle-btn${ui.ema ? " active" : ""}" data-lema="1" title="${esc(t("leadEmaTitle"))}">EMA 8/20</button>`
+        + `<button class="inst-toggle-btn${ui.ta ? " active" : ""}" data-lta="1" title="${esc(t("leadTaTitle"))}">📐 Technical Analysis</button>`)}
+    </div>`;
   return `<div class="lead-wl">
     <div class="lead-wl__head">
       <span class="lead-name">${t("leadWlTitle")}</span>
       <span class="lead-group">${seg}</span>
       <span class="lead-group lead-actions">
-        ${mode}${sizeBtns}${tfBtns}${emaBtn}${taBtn}
+        ${mode}
         <button class="top20-btn lead-copy-btn" title="${esc(t("leadCopyTitle"))}">${t("leadCopy")}</button>
         <button class="top20-btn lead-tv-btn" title="${esc(t("leadWatchlistTitle"))}">${t("leadWatchlist")}</button>
       </span>
     </div>
+    ${chartBar}
     <p class="lead-dim lead-wl__criteria">${t("leadWlCriteria", W)}</p>
     ${leadersDiffHtml(diff)}
     ${ui.wlMode === "charts" ? leadersChartsHtml(shown, setups)
