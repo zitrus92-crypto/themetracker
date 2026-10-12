@@ -1,7 +1,7 @@
 {
  "schema_version": 2,
- "date": "2026-10-09",
- "generated_at": "2026-10-09T21:45:51.502529+00:00",
+ "date": "2026-10-12",
+ "generated_at": "2026-10-12T21:44:57.208848+00:00",
  "selection": {
   "rule": "alle Finviz-Theme-Mitglieder 1:1 (inkl. Mehrfach-Zuordnungen)",
   "min": 5
@@ -357,7 +357,7 @@
   },
   "Cloud Computing": {
    "source": "finviz_theme",
-   "members_total": 56,
+   "members_total": 55,
    "thin": false,
    "tickers": [
     "NASDAQ:ADBE",
@@ -371,7 +371,6 @@
     "NYSE:CRM",
     "NASDAQ:CRWD",
     "NASDAQ:CSCO",
-    "NYSE:DBRG",
     "NASDAQ:DBX",
     "NASDAQ:DDOG",
     "NYSE:DELL",
@@ -2221,7 +2220,6 @@
   "NYSE:DAR": 4,
   "NASDAQ:DASH": 2,
   "NASDAQ:DAVE": 1,
-  "NYSE:DBRG": 1,
   "NASDAQ:DBX": 1,
   "NASDAQ:DCBO": 1,
   "NYSE:DCI": 1,
