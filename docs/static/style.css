@@ -811,6 +811,8 @@ details.wp-details { margin-bottom: 18px; }
 .lead-ev--overfit    { color: var(--red-2); }
 .lead-table { font-size: 12.5px; }
 .lead-table th { white-space: nowrap; }
+.lead-th-sort { cursor: pointer; user-select: none; }
+.lead-th-sort:hover { color: var(--text, inherit); }
 .lead-table td:nth-child(2) { max-width: none; }
 .lead-sym { color: var(--text); text-decoration: none; }
 .lead-multi { color: var(--text-dim); font-size: 10.5px; cursor: help; }

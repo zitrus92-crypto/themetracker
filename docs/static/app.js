@@ -185,6 +185,7 @@ const I18N = {
     leadChartsHintW: "Wochenchart mit SMA50 (orange) und SMA200 (braun), Quelle Finviz. Klick öffnet die Finviz-Aktienseite.",
     leadChartsHintEma: " Zusätzlich EMA8 (cyan) und EMA20 (grün).",
     leadCopy:      "📋 Ticker kopieren",
+    leadDvolSortTitle: "Nach Ø $-Vol 50T sortieren: absteigend → aufsteigend → Standard (RS). Gilt auch für Export und Charts.",
     leadThemesTvTitle: "Lädt die angezeigten Theme-Karten als .txt herunter (TradingView: Watchlist → Liste importieren): je Karte eine ###Theme-Sektion in der aktuellen Sortierung, darunter genau die Ticker der Karte (aufgeklappte Karten mit allen Zeilen). Ein Ticker kann in mehreren Sektionen stehen.",
     leadCopyTitle: "Kopiert genau die angezeigten Ticker als kommagetrennte EXCHANGE:SYMBOL-Liste — direkt in eine TradingView-Watchlist einfügbar.",
     leadCopied:    (n) => `${n} Ticker kopiert`,
@@ -535,6 +536,7 @@ const I18N = {
     leadChartsHintW: "Weekly chart with SMA50 (orange) and SMA200 (brown), source Finviz. Click opens the Finviz stock page.",
     leadChartsHintEma: " Plus EMA8 (cyan) and EMA20 (green).",
     leadCopy:      "📋 Copy tickers",
+    leadDvolSortTitle: "Sort by avg $ vol 50d: descending → ascending → default (RS). Also applies to export and charts.",
     leadThemesTvTitle: "Downloads the shown theme cards as .txt (TradingView: watchlist → import list): one ###Theme section per card in the current sort order, with exactly the card's tickers (expanded cards with all rows). A ticker can appear in several sections.",
     leadCopyTitle: "Copies exactly the shown tickers as a comma-separated EXCHANGE:SYMBOL list — paste straight into a TradingView watchlist.",
     leadCopied:    (n) => `${n} tickers copied`,
@@ -3970,6 +3972,7 @@ async function ensureLeadersData() {
           atrPeriod: _LCFG.ATR_PERIODS[per] ? per : _LCFG.ATR_PERIOD,
           wlView: ["all", "strong", "inplay", "ep", "new"].includes(prefGet("leadWlView")) ? prefGet("leadWlView") : "all",
           wlMode: prefGet("leadWlMode") === "charts" ? "charts" : "table",
+          dvolSort: ["asc", "desc"].includes(prefGet("leadDvolSort")) ? prefGet("leadDvolSort") : null,
           ta: prefGet("leadTa") === "1",
           weekly: prefGet("leadTf") === "w",
           ema: prefGet("leadEma") === "1",
@@ -4048,8 +4051,20 @@ function leadersWatchlist() {
 }
 function leadersWatchlistShown(list) {
   const v = _leadersUi.wlView;
-  return list.filter(e => v === "strong" ? e.strong : v === "inplay" ? e.trigger === true
+  const out = list.filter(e => v === "strong" ? e.strong : v === "inplay" ? e.trigger === true
     : v === "ep" ? e.ep === true : v === "new" ? e.is_new === true : true);
+  return leadersSortByDvol(out);
+}
+// Optional nach Ø $-Vol 50T sortiert; Ticker ohne Wert stehen immer am Ende.
+function leadersSortByDvol(arr) {
+  const dir = _leadersUi.dvolSort;
+  if (!dir) return arr;
+  const val = (e) => (Number.isFinite(e.dollar_vol_50d) ? e.dollar_vol_50d : null);
+  return arr.sort((a, b) => {
+    const x = val(a), y = val(b);
+    if (x === null || y === null) return x === y ? 0 : x === null ? 1 : -1;
+    return dir === "asc" ? x - y : y - x;
+  });
 }
 
 // Vergleich mit dem letzten Freitag (Wochen-Prep-Stand). Verglichen wird die
@@ -4095,8 +4110,13 @@ function leadersWatchlistHtml() {
     .map(([k, label]) => `<button class="xaxis-btn${ui.wlView === k ? " active" : ""}" data-lwl="${k}">${label} <span class="lead-count">${n[k]}</span></button>`).join("");
   const setups = leadSetupMap();
   const cols = ["rs_rating", "best_theme", "p6m", "wl_dist", "rmv", "rvol_50d", "trigger", "ep", "setup", "atr_pct", "dollar_vol_50d"];
-  const head = `<th>#</th><th>Ticker</th>` + cols.map(k =>
-    `<th>${t("leadCols")[k][0]}${k === "atr_pct" ? ` ${ui.atrPeriod}` : ""} ${leadInfo(k)}</th>`).join("");
+  const head = `<th>#</th><th>Ticker</th>` + cols.map(k => {
+    const label = `${t("leadCols")[k][0]}${k === "atr_pct" ? ` ${ui.atrPeriod}` : ""}`;
+    if (k !== "dollar_vol_50d") return `<th>${label} ${leadInfo(k)}</th>`;
+    const arrow = ui.dvolSort === "asc" ? " ▲" : ui.dvolSort === "desc" ? " ▼" : "";
+    return `<th class="lead-th-sort" data-lsortcol="dollar_vol_50d" title="${esc(t("leadDvolSortTitle"))}"`
+      + ` aria-sort="${ui.dvolSort === "asc" ? "ascending" : ui.dvolSort === "desc" ? "descending" : "none"}">${label}${arrow} ${leadInfo(k)}</th>`;
+  }).join("");
   const body = shown.length ? shown.map((e, i) => {
     const sym = leadSym(e.ticker);
     const trig = e.trigger === null ? leadNa() : e.trigger
@@ -4487,6 +4507,13 @@ function wireLeadersControls(box) {
   box.querySelector(".lead-export-btn").onclick = exportLeadersJson;
   box.querySelector(".lead-tv-btn").onclick = downloadLeadersWatchlist;
   box.querySelector(".lead-tv-themes-btn").onclick = downloadThemeCardsWatchlist;
+  box.querySelectorAll("[data-lsortcol]").forEach(th => th.onclick = (e) => {
+    if (e.target.closest(".lead-info")) return;
+    // desc -> asc -> aus (Standard-RS-Reihenfolge)
+    ui.dvolSort = ui.dvolSort === null ? "desc" : ui.dvolSort === "desc" ? "asc" : null;
+    prefSet("leadDvolSort", ui.dvolSort ?? "");
+    renderLeadersTab();
+  });
   const copyBtn = box.querySelector(".lead-copy-btn");
   copyBtn.onclick = () => copyLeadersWatchlist(copyBtn);
   box.querySelectorAll("[data-lwlmode]").forEach(b => b.onclick = () => {
