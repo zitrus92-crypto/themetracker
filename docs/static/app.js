@@ -41,7 +41,7 @@ const I18N = {
     infoAccel:    "Accel = 3M-Rang minus 1W-Rang. Hoch positiv = war vor 3M noch schwach, jetzt stark = erster Leg, nicht extended. Ideal fuer First-Flag-Setups.",
     hintHeatmap:  "Score sortieren: Marktüberblick — welche Industries aktuell führen.\nAccel sortieren: First Flag Suche — frisches Momentum (3M schwach + 1W stark = erster Leg, nicht extended).\nINST-Filter: zeigt nur institutionell bestätigte Industries (Top 40 in 1M und 3M).\nKlick auf Spaltenkopf = sortieren, nochmal klicken = umkehren.",
     hintIndBubble:"X-Achse: 3M-Performance, Y-Achse: 1M-Performance.\nGröße = Stärke (Score) — starke Industries bleiben groß, egal ob beschleunigend oder konsolidierend.\nFarbe = Accel (stabiler Rang3M−Rang1M): grün = beschleunigt, grau = konsolidiert, rot = fällt ab.\nINST-Filter (Heatmap-Toggle) wirkt auch hier. Klick auf Bubble öffnet Finviz-Screener.",
-    hintIndRrg:   "X-Achse: RS-Ratio (3M relativ zum Industry-Schnitt), Y-Achse: RS-Momentum.\nRechts oben Leading, links oben Improving, links unten Lagging, rechts unten Weakening.\nTail = die letzten 10 Handelstage aus den Snapshots, Kopfpunkt = Live-Daten.\nBenchmark ist der Gleichgewichts-Schnitt aller Industries — ein Index liegt nicht mit Historie vor.\nDie beiden Buttons filtern auf die Top-30-%-Schnittmengen; beide aktiv = Vereinigung.\nMaus über eine Industry hebt sie samt Pfad hervor, Klick öffnet den Finviz-Screener.",
+    hintIndRrg:   "X-Achse: RS-Ratio (3M oder 1W relativ zum Industry-Schnitt, per Toggle wählbar), Y-Achse: RS-Momentum (unverändert: 1M-Relativtempo gegen das 3M-Durchschnittstempo).\nRechts oben Leading, links oben Improving, links unten Lagging, rechts unten Weakening (Farben, siehe Legende).\nTail = die letzten 10 Handelstage aus den Snapshots, Kopfpunkt = Live-Daten.\nBenchmark ist der Gleichgewichts-Schnitt aller Industries — ein Index liegt nicht mit Historie vor.\nDie beiden Buttons filtern auf die Top-30-%-Schnittmengen; beide aktiv = Vereinigung.\nMaus über eine Industry hebt sie samt Pfad hervor, Klick öffnet den Finviz-Screener.",
     hintTop10:    "Top 10 Performer pro Zeitraum — zeigt aktuelle Marktführer.\nKarten: kompakte Übersicht pro Zeitraum.\nBalken: alle Industries sortiert nach 1M und 3M Performance.\nINST-Badge zeigt institutionelles Interesse.",
     hintMovers:   "Rang-Veränderung seit dem gewählten Zeitraum.\nRising: Industries die am stärksten gestiegen sind — frisches Kapital fließt ein. Hier suchen!\nCooling: Industries die Ränge verloren haben — Kapital verlässt diesen Bereich. Meiden.\nZeitraum wählen: 1W / 2W / 1M / 3M (ausgegraut = noch nicht genug Daten).",
     tabEtfs:      "📈 Themes",
@@ -272,7 +272,7 @@ const I18N = {
     expBaseline:   "Grundbedingung im ganzen Tab: Volatility 1M > 3 % in jedem Link — und ADR ≥ 3 % als Pendant in der Tabelle. Ruhige Titel tauchen hier gar nicht erst auf.",
 
     expBubbleXTitle: "Bubble-Chart X-Achse — Default",
-    expBubbleXDesc:  "Legt fest, welche Performance beim Laden als X-Achse in den Bubble-Charts (Themes + Industry) steht. Die 3M/1W-Buttons direkt am Chart wechseln nur für die aktuelle Ansicht, ohne diesen Default zu verändern.",
+    expBubbleXDesc:  "Legt fest, welche Performance beim Laden als X-Achse in den Bubble-Charts und RRGs (Themes + Industry) steht. Die 3M/1W-Buttons direkt am Chart wechseln nur für die aktuelle Ansicht, ohne diesen Default zu verändern.",
     expBubbleX3M:    "3M",
     expBubbleX1W:    "1W",
 
@@ -340,8 +340,8 @@ const I18N = {
     rrgQ2:          "⚡ Leading",
     rrgQ3:          "💤 Lagging",
     rrgQ4:          "🔻 Weakening",
-    rrgAxisX:       "RS-Ratio: 3M relativ zum Theme-Schnitt →",
-    rrgAxisXInd:    "RS-Ratio: 3M relativ zum Industry-Schnitt →",
+    rrgAxisX:       (tf) => `RS-Ratio: ${tf} relativ zum Theme-Schnitt →`,
+    rrgAxisXInd:    (tf) => `RS-Ratio: ${tf} relativ zum Industry-Schnitt →`,
     rrgAxisY:       "RS-Momentum ↑",
     rrgLegendBench: "Benchmark = Gleichgewichts-Schnitt aller Themes",
     rrgLegendBenchInd: "Benchmark = Gleichgewichts-Schnitt aller Industries",
@@ -350,9 +350,9 @@ const I18N = {
     rrgNoHistory:   "Noch keine Snapshot-Historie — nur Positionen, keine Tails.",
     rrgFilterNote:  (labels, n, total, noun) => `Filter: ${labels} — ${n} von ${total} ${noun}`,
     rrgFilterEmpty: "Kein Theme erfüllt den gewählten Filter.",
-    rrgTip2:        (rs, mom, p1, p3) =>
+    rrgTip2:        (rs, mom, perfs) =>
       `RS-Ratio: ${rs}  |  RS-Momentum: ${mom}
-1M: ${p1}%  3M: ${p3}%`,
+${perfs}`,
     expUnvalidated:"UNVALIDIERT — Schwellen sind Defaults, kein Backtest.",
   },
   en: {
@@ -392,7 +392,7 @@ const I18N = {
     infoAccel:    "Accel = 3M rank minus 1W rank. High positive = was weak 3M ago, now strong = first leg, not extended. Ideal for First Flag setups.",
     hintHeatmap:  "Sort by Score: market overview — which industries are currently leading.\nSort by Accel: First Flag search — fresh momentum (weak 3M + strong 1W = first leg, not extended).\nINST filter: shows only institutionally confirmed industries (Top 40 in 1M and 3M).\nClick any column header to sort, click again to reverse.",
     hintIndBubble:"X-axis: 3M performance, Y-axis: 1M performance.\nSize = strength (Score) — strong industries stay big regardless of accelerating or consolidating.\nColor = Accel (stable Rank3M−Rank1M): green = accelerating, gray = consolidating, red = cooling.\nThe INST filter (Heatmap toggle) applies here too. Click a bubble to open the Finviz screener.",
-    hintIndRrg:   "X axis: RS-Ratio (3M relative to the industry average), Y axis: RS-Momentum.\nTop right leading, top left improving, bottom left lagging, bottom right weakening.\nTail = the last 10 trading days from the snapshots, head = live data.\nBenchmark is the equal-weight average of all industries — no index is available with history.\nThe two buttons filter to the top-30% intersections; both active = union.\nHovering an industry highlights it and its path, clicking opens the Finviz screener.",
+    hintIndRrg:   "X axis: RS-Ratio (3M or 1W relative to the industry average, selectable via toggle), Y axis: RS-Momentum (unchanged: 1M relative pace vs. the 3M average pace).\nTop right leading, top left improving, bottom left lagging, bottom right weakening.\nTail = the last 10 trading days from the snapshots, head = live data.\nBenchmark is the equal-weight average of all industries — no index is available with history.\nThe two buttons filter to the top-30% intersections; both active = union.\nHovering an industry highlights it and its path, clicking opens the Finviz screener.",
     hintTop10:    "Top 10 performers per timeframe — shows current market leaders.\nCards: compact overview per timeframe.\nBar chart: all industries sorted by 1M and 3M performance.\nINST badge shows institutional interest.",
     hintMovers:   "Rank change since the selected period.\nRising: industries that climbed most in ranking — fresh capital flowing in. Look here!\nCooling: industries that lost ranks — capital leaving. Avoid.\nSelect period: 1W / 2W / 1M / 3M (greyed out = not enough data yet).",
     tabEtfs:      "📈 Themes",
@@ -623,7 +623,7 @@ const I18N = {
     expBaseline:   "Baseline across the whole tab: volatility 1M > 3% in every link — and ADR ≥ 3% as its counterpart in the table. Quiet names never show up here.",
 
     expBubbleXTitle: "Bubble chart X-axis — default",
-    expBubbleXDesc:  "Sets which performance timeframe the bubble charts (Themes + Industry) use as the X-axis on load. The 3M/1W buttons on the chart itself only switch the current view without changing this default.",
+    expBubbleXDesc:  "Sets which performance timeframe the bubble charts and RRGs (Themes + Industry) use as the X-axis on load. The 3M/1W buttons on the chart itself only switch the current view without changing this default.",
     expBubbleX3M:    "3M",
     expBubbleX1W:    "1W",
 
@@ -681,8 +681,8 @@ const I18N = {
     rrgQ2:          "⚡ Leading",
     rrgQ3:          "💤 Lagging",
     rrgQ4:          "🔻 Weakening",
-    rrgAxisX:       "RS-Ratio: 3M relative to the theme average →",
-    rrgAxisXInd:    "RS-Ratio: 3M relative to the industry average →",
+    rrgAxisX:       (tf) => `RS-Ratio: ${tf} relative to the theme average →`,
+    rrgAxisXInd:    (tf) => `RS-Ratio: ${tf} relative to the industry average →`,
     rrgAxisY:       "RS-Momentum ↑",
     rrgLegendBench: "Benchmark = equal-weight average of all themes",
     rrgLegendBenchInd: "Benchmark = equal-weight average of all industries",
@@ -691,9 +691,9 @@ const I18N = {
     rrgNoHistory:   "No snapshot history yet — positions only, no tails.",
     rrgFilterNote:  (labels, n, total, noun) => `Filter: ${labels} — ${n} of ${total} ${noun}`,
     rrgFilterEmpty: "No theme matches the selected filter.",
-    rrgTip2:        (rs, mom, p1, p3) =>
+    rrgTip2:        (rs, mom, perfs) =>
       `RS-Ratio: ${rs}  |  RS-Momentum: ${mom}
-1M: ${p1}%  3M: ${p3}%`,
+${perfs}`,
     expColAdr:     "ADR %",
     expCol1M:      "1M %",
     expColPrice:   "Price",
@@ -1850,6 +1850,7 @@ function renderEtfThemes(data) {
   if (tableScroll) tableScroll.classList.toggle("hidden", _themeVizView !== "table");
   document.getElementById("etf-bubble-view").classList.toggle("hidden", _themeVizView !== "bubble");
   document.getElementById("theme-bubble-xaxis-toggle").classList.toggle("hidden", _themeVizView !== "bubble");
+  document.getElementById("theme-rrg-xaxis-toggle").classList.toggle("hidden", _themeVizView !== "rrg");
   document.getElementById("etf-matrix-view").classList.toggle("hidden", _themeVizView !== "matrix");
   document.getElementById("etf-rrg-view").classList.toggle("hidden", _themeVizView !== "rrg");
   syncRrgFilterButtons();
@@ -2655,17 +2656,23 @@ function renderTickersTab() {
 
 // ── RRG (Relative Rotation Graph) ───────────────────────────────────────────
 // Vierter Viz-View der Themes. Statt absoluter Performance zwei relative Achsen:
-//   x  RS-Ratio    = 3M-Perf minus Benchmark
-//   y  RS-Momentum = (1M-Perf minus Benchmark) − RS-Ratio/3
+//   x  RS-Ratio    = Perf des X-Achsen-Fensters (3M oder 1W, wie in den
+//                    Bubble-Charts per Toggle wählbar) minus Benchmark
+//   y  RS-Momentum = (1M-Perf minus Benchmark) − RS-Ratio(3M)/3
 //        → monatliches Relativtempo gegen das Quartals-Durchschnittstempo.
 //        Bewusst aus den verschachtelten Fenstern EINES Tages gerechnet, nicht
 //        als Δ des RS-Ratio über N Tage: letzteres bewegt den Punkt auch dann,
 //        wenn hinten nur etwas aus dem 3M-Fenster herausfällt.
+//        Unabhängig von der X-Achsen-Wahl — wie die 1M-Y-Achse der Bubble-Charts
+//        bleibt sie fest, damit nur die X-Achse die Ansicht verschiebt.
 // Benchmark = Gleichgewichts-Querschnitt der Themes selbst. Ein Index steht
 // nicht zur Verfügung (etf_perf.json führt SPY ohne Historie), der Querschnitt
 // dagegen liegt in jedem Snapshot und gilt damit auch rückwirkend.
 // Tail = Snapshot-Tage (nur settled), Kopfpunkt = Live-Daten.
 const RRG_TAIL_DAYS = 10;   // ~2 Handelswochen
+// X-Achse je RRG-Ausprägung ("3M" | "1W"); Startwert = Default aus dem
+// Experimental-Tab, die Buttons am Chart ändern nur die aktuelle Ansicht.
+const _rrgXAxis = { theme: _bubbleXAxisDefault, industry: _bubbleXAxisDefault };
 const RRG_COLORS = { improving: "#4ade80", leading: "#38bdf8", weakening: "#fbbf24", lagging: "#f87171" };
 // Die beiden Schnittmengen-Buttons wirken im RRG als Filter. Mehrere aktive
 // Filter werden VEREINIGT (eine Gruppe reicht in einer der Mengen), sonst würde
@@ -2717,16 +2724,16 @@ function rrgQuadrant(rs, mom) {
 
 // Ein Tag → Koordinaten aller Themes. Null, wenn der Querschnitt zu dünn ist,
 // um als Benchmark zu taugen.
-function rrgDayCoords(perfMap) {
+function rrgDayCoords(perfMap, xTf = "3M") {
   const rows = Object.entries(perfMap)
-    .filter(([, p]) => typeof p?.["1M"] === "number" && typeof p?.["3M"] === "number");
+    .filter(([, p]) => ["1M", "3M", xTf].every(k => typeof p?.[k] === "number"));
   if (rows.length < 5) return null;
-  const m1 = rows.reduce((a, [, p]) => a + p["1M"], 0) / rows.length;
-  const m3 = rows.reduce((a, [, p]) => a + p["3M"], 0) / rows.length;
+  const mean = (k) => rows.reduce((a, [, p]) => a + p[k], 0) / rows.length;
+  const m1 = mean("1M"), m3 = mean("3M"), mx = mean(xTf);
   const out = {};
   for (const [name, p] of rows) {
-    const rs = p["3M"] - m3;
-    out[name] = { rs, mom: (p["1M"] - m1) - rs / 3 };
+    // Momentum hängt bewusst nur an 1M und 3M, nicht an xTf (siehe Kopfkommentar).
+    out[name] = { rs: p[xTf] - mx, mom: (p["1M"] - m1) - (p["3M"] - m3) / 3 };
   }
   return out;
 }
@@ -2734,17 +2741,19 @@ function rrgDayCoords(perfMap) {
 // Pfad je Theme: älteste Snapshot-Tage zuerst, Live-Punkt zuletzt.
 // Aufeinanderfolgende identische Punkte fallen raus — ein Snapshot ohne neue
 // Finviz-Daten soll keinen toten Tail-Knoten erzeugen.
-function computeRrgSeries(rows, kind) {
+function computeRrgSeries(rows, kind, xTf = "3M") {
   const livePerfs = {};
   for (const [name, row] of Object.entries(rows)) {
-    livePerfs[name] = { "1M": row.perfs?.["1M"] ?? null, "3M": row.perfs?.["3M"] ?? null };
+    livePerfs[name] = {
+      "1W": row.perfs?.["1W"] ?? null, "1M": row.perfs?.["1M"] ?? null, "3M": row.perfs?.["3M"] ?? null,
+    };
   }
-  const live = rrgDayCoords(livePerfs);
+  const live = rrgDayCoords(livePerfs, xTf);
   if (!live) return null;
 
   const hist = [];
   for (const day of (_snapDays || []).filter(d => d.settled === true && d.perfs?.[kind]).slice(-RRG_TAIL_DAYS)) {
-    const coords = rrgDayCoords(day.perfs[kind]);
+    const coords = rrgDayCoords(day.perfs[kind], xTf);
     if (coords) hist.push(coords);
   }
 
@@ -2816,14 +2825,20 @@ function renderRrgChart(kind) {
   const container = document.getElementById(view.containerId);
   if (!container) return;
   const rows = view.rows();
-  const series = rows ? computeRrgSeries(rows, kind) : null;
+  const xTf = _rrgXAxis[kind];
+  const series = rows ? computeRrgSeries(rows, kind, xTf) : null;
   if (!series) { container.innerHTML = `<p style="color:#6b7280;padding:16px">${t("etfNoData")}</p>`; return; }
+
+  // Tooltip zeigt die X-Achsen-Performance mit, sonst fehlt im 1W-Modus der
+  // Rohwert, aus dem der RS-Ratio-Punkt entsteht.
+  const perfTfs = [...new Set([xTf, "1M", "3M"])].sort((a, b) => ["1W", "1M", "3M"].indexOf(a) - ["1W", "1M", "3M"].indexOf(b));
 
   let pts = Object.entries(series).map(([name, path], i) => {
     const head = path[path.length - 1];
     const q = rrgQuadrant(head.rs, head.mom);
     const row = rows[name];
     const sgn = v => `${v > 0 ? "+" : ""}${v.toFixed(1)}`;
+    const perfLine = perfTfs.map(tf => `${tf}: ${row.perfs[tf]?.toFixed(1)}%`).join("  ");
     return {
       name, path, rs: head.rs, mom: head.mom, quadrant: q, color: RRG_COLORS[q],
       score: view.size(row),
@@ -2832,8 +2847,7 @@ function renderRrgChart(kind) {
       rrgId: i,
       label: name.length > 16 ? name.slice(0, 14) + "…" : name,
       tip: `${name}\n${t(RRG_Q_KEY[q])}\n`
-         + t("rrgTip2", sgn(head.rs), sgn(head.mom),
-             row.perfs["1M"]?.toFixed(1), row.perfs["3M"]?.toFixed(1)),
+         + t("rrgTip2", sgn(head.rs), sgn(head.mom), perfLine),
       url: view.url(name, row),
     };
   });
@@ -2891,14 +2905,6 @@ function renderRrgChart(kind) {
     { x: zeroX, y: zeroY, w: W - PAD.right - zeroX, h: H - PAD.bottom - zeroY, fill: RRG_COLORS.weakening },
   ].map(q => `<rect x="${q.x.toFixed(1)}" y="${q.y.toFixed(1)}" width="${Math.max(0, q.w).toFixed(1)}"
       height="${Math.max(0, q.h).toFixed(1)}" fill="${q.fill}" fill-opacity="0.05"/>`).join("");
-
-  const qLabels = [
-    { x: PAD.left + 4,      y: PAD.top + 14,       key: "rrgQ1", fill: RRG_COLORS.improving },
-    { x: W - PAD.right - 4, y: PAD.top + 14,       key: "rrgQ2", fill: RRG_COLORS.leading, anchor: "end" },
-    { x: PAD.left + 4,      y: H - PAD.bottom - 6, key: "rrgQ3", fill: RRG_COLORS.lagging },
-    { x: W - PAD.right - 4, y: H - PAD.bottom - 6, key: "rrgQ4", fill: RRG_COLORS.weakening, anchor: "end" },
-  ].map(q => `<text x="${q.x}" y="${q.y}" font-size="10" fill="${q.fill}"
-    text-anchor="${q.anchor || "start"}" style="pointer-events:none">${t(q.key)}</text>`).join("");
 
   function axisTicks(isX) {
     const lo = isX ? loX : loY, hi = isX ? hiX : hiY;
@@ -2961,10 +2967,9 @@ function renderRrgChart(kind) {
           stroke="#4b5563" stroke-width="1"/>
         ${axisTicks(true)}${axisTicks(false)}
         <text x="${PAD.left + plotW / 2}" y="${H - 4}" text-anchor="middle"
-          font-size="11" fill="#9ca3af">${t(view.axisXKey)}</text>
+          font-size="11" fill="#9ca3af">${t(view.axisXKey, xTf)}</text>
         <text x="12" y="${PAD.top + plotH / 2}" text-anchor="middle" font-size="11"
           fill="#9ca3af" transform="rotate(-90,12,${PAD.top + plotH / 2})">${t("rrgAxisY")}</text>
-        ${qLabels}
         ${tails}
         ${circles}
         ${labels}
@@ -3077,6 +3082,8 @@ function initBubbleXAxisToggles() {
   };
   wire("theme-bubble-xaxis-toggle", _themeBubbleXAxis, tf => { _themeBubbleXAxis = tf; renderEtfThemes(_etfData); });
   wire("ind-bubble-xaxis-toggle",   _indBubbleXAxis,   tf => { _indBubbleXAxis = tf; if (_lastIndustries) renderIndustryBubble(_lastIndustries); });
+  wire("theme-rrg-xaxis-toggle",    _rrgXAxis.theme,    tf => { _rrgXAxis.theme = tf; renderRrgChart("theme"); });
+  wire("ind-rrg-xaxis-toggle",      _rrgXAxis.industry, tf => { _rrgXAxis.industry = tf; if (_lastIndustries) renderRrgChart("industry"); });
   wire("tickers-bubble-xaxis-toggle", _tickersBubbleXAxis, tf => { _tickersBubbleXAxis = tf; renderTickersTab(); });
 }
 
@@ -3157,8 +3164,9 @@ async function loadSnapshots() {
     if (!shard) continue;
     for (const [date, entry] of Object.entries(shard)) {
       const stages = {};
-      // Roh-Perfs mitnehmen: der RRG-Tail braucht 1M/3M je Tag — für Themes
-      // UND Industries, beide Ansichten lesen aus demselben Shard.
+      // Roh-Perfs mitnehmen: der RRG-Tail braucht 1M/3M (und 1W, wenn der RRG
+      // die 1W-X-Achse zeigt) je Tag — für Themes UND Industries, beide
+      // Ansichten lesen aus demselben Shard.
       const perfs = { theme: {}, industry: {} };
       const ranks = {};  // Theme-Rang je Tag (Leading-Stocks: rank_change_4w)
       for (const row of entry.rows) {
@@ -3167,7 +3175,9 @@ async function loadSnapshots() {
         if (row.type === "theme" && _TM) {
           stages[row.name] = _TM.classifyStage(_TM.segments(row.perfs), row.accel);
         }
-        perfs[row.type][row.name] = { "1M": row.perfs?.["1M"] ?? null, "3M": row.perfs?.["3M"] ?? null };
+        perfs[row.type][row.name] = {
+          "1W": row.perfs?.["1W"] ?? null, "1M": row.perfs?.["1M"] ?? null, "3M": row.perfs?.["3M"] ?? null,
+        };
       }
       days.push({
         date, gap: entry.gap, settled: entry.settled,
@@ -3691,15 +3701,21 @@ function renderExperimental() {
   box.querySelectorAll("[data-bubblexaxis]").forEach(btn => {
     btn.onclick = () => {
       const tf = btn.dataset.bubblexaxis;
-      if (tf === _bubbleXAxisDefault) return;
+      // Kein frühes Return bei unverändertem Default: ein Klick setzt auch die
+      // am Chart temporär umgeschalteten Ansichten (Bubble + RRG) zurück.
       _bubbleXAxisDefault = tf;
       prefSet("bubbleXAxisDefault", tf);
       _themeBubbleXAxis = tf;
       _indBubbleXAxis = tf;
-      document.querySelectorAll("#theme-bubble-xaxis-toggle .xaxis-btn, #ind-bubble-xaxis-toggle .xaxis-btn")
+      _rrgXAxis.theme = tf;
+      _rrgXAxis.industry = tf;
+      document.querySelectorAll(
+        "#theme-bubble-xaxis-toggle .xaxis-btn, #ind-bubble-xaxis-toggle .xaxis-btn, " +
+        "#theme-rrg-xaxis-toggle .xaxis-btn, #ind-rrg-xaxis-toggle .xaxis-btn")
         .forEach(b => b.classList.toggle("active", b.dataset.xaxis === tf));
+      // renderEtfThemes zeichnet je nach gewählter Viz Bubble ODER RRG der Themes neu.
       if (_etfData) renderEtfThemes(_etfData);
-      if (_lastIndustries) renderIndustryBubble(_lastIndustries);
+      if (_lastIndustries) { renderIndustryBubble(_lastIndustries); renderRrgChart("industry"); }
       renderExperimental();
     };
   });
