@@ -41,7 +41,7 @@ const I18N = {
     infoAccel:    "Accel = 3M-Rang minus 1W-Rang. Hoch positiv = war vor 3M noch schwach, jetzt stark = erster Leg, nicht extended. Ideal fuer First-Flag-Setups.",
     hintHeatmap:  "Score sortieren: Marktüberblick — welche Industries aktuell führen.\nAccel sortieren: First Flag Suche — frisches Momentum (3M schwach + 1W stark = erster Leg, nicht extended).\nINST-Filter: zeigt nur institutionell bestätigte Industries (Top 40 in 1M und 3M).\nKlick auf Spaltenkopf = sortieren, nochmal klicken = umkehren.",
     hintIndBubble:"X-Achse: 3M-Performance, Y-Achse: 1M-Performance.\nGröße = Stärke (Score) — starke Industries bleiben groß, egal ob beschleunigend oder konsolidierend.\nFarbe = Accel (stabiler Rang3M−Rang1M): grün = beschleunigt, grau = konsolidiert, rot = fällt ab.\nINST-Filter (Heatmap-Toggle) wirkt auch hier. Klick auf Bubble öffnet Finviz-Screener.",
-    hintIndRrg:   "X-Achse: RS-Ratio (3M oder 1W relativ zum Industry-Schnitt, per Toggle wählbar), Y-Achse: RS-Momentum (unverändert: 1M-Relativtempo gegen das 3M-Durchschnittstempo).\nRechts oben Leading, links oben Improving, links unten Lagging, rechts unten Weakening (Farben, siehe Legende).\nTail = die letzten 10 Handelstage aus den Snapshots, Kopfpunkt = Live-Daten.\nBenchmark ist der Gleichgewichts-Schnitt aller Industries — ein Index liegt nicht mit Historie vor.\nDie beiden Buttons filtern auf die Top-30-%-Schnittmengen; beide aktiv = Vereinigung.\nMaus über eine Industry hebt sie samt Pfad hervor, Klick öffnet den Finviz-Screener.",
+    hintIndRrg:   "X-Achse: RS-Ratio (3M oder 1W relativ zum Industry-Schnitt, per Toggle wählbar), Y-Achse: RS-Momentum (unverändert: 1M-Relativtempo gegen das 3M-Durchschnittstempo).\nRechts oben Leading, links oben Improving, links unten Lagging, rechts unten Weakening (Farben, siehe Legende).\nTail = die letzten 10 Handelstage aus den Snapshots, Kopfpunkt = Live-Daten.\nBenchmark ist der Gleichgewichts-Schnitt aller Industries — ein Index liegt nicht mit Historie vor.\nDie beiden Buttons filtern auf die Top-30-%-Schnittmengen; beide aktiv = Vereinigung.\nDie „% Performance“-Regler blenden Industries unter dem Schwellwert aus (X = gewähltes Fenster, Y = 1M).\nMaus über eine Industry hebt sie samt Pfad hervor, Maus/Klick auf die Legende hebt einen Quadranten hervor; Klick auf die Bubble öffnet den Finviz-Screener.",
     hintTop10:    "Top 10 Performer pro Zeitraum — zeigt aktuelle Marktführer.\nKarten: kompakte Übersicht pro Zeitraum.\nBalken: alle Industries sortiert nach 1M und 3M Performance.\nINST-Badge zeigt institutionelles Interesse.",
     hintMovers:   "Rang-Veränderung seit dem gewählten Zeitraum.\nRising: Industries die am stärksten gestiegen sind — frisches Kapital fließt ein. Hier suchen!\nCooling: Industries die Ränge verloren haben — Kapital verlässt diesen Bereich. Meiden.\nZeitraum wählen: 1W / 2W / 1M / 3M (ausgegraut = noch nicht genug Daten).",
     tabEtfs:      "📈 Themes",
@@ -392,7 +392,7 @@ ${perfs}`,
     infoAccel:    "Accel = 3M rank minus 1W rank. High positive = was weak 3M ago, now strong = first leg, not extended. Ideal for First Flag setups.",
     hintHeatmap:  "Sort by Score: market overview — which industries are currently leading.\nSort by Accel: First Flag search — fresh momentum (weak 3M + strong 1W = first leg, not extended).\nINST filter: shows only institutionally confirmed industries (Top 40 in 1M and 3M).\nClick any column header to sort, click again to reverse.",
     hintIndBubble:"X-axis: 3M performance, Y-axis: 1M performance.\nSize = strength (Score) — strong industries stay big regardless of accelerating or consolidating.\nColor = Accel (stable Rank3M−Rank1M): green = accelerating, gray = consolidating, red = cooling.\nThe INST filter (Heatmap toggle) applies here too. Click a bubble to open the Finviz screener.",
-    hintIndRrg:   "X axis: RS-Ratio (3M or 1W relative to the industry average, selectable via toggle), Y axis: RS-Momentum (unchanged: 1M relative pace vs. the 3M average pace).\nTop right leading, top left improving, bottom left lagging, bottom right weakening.\nTail = the last 10 trading days from the snapshots, head = live data.\nBenchmark is the equal-weight average of all industries — no index is available with history.\nThe two buttons filter to the top-30% intersections; both active = union.\nHovering an industry highlights it and its path, clicking opens the Finviz screener.",
+    hintIndRrg:   "X axis: RS-Ratio (3M or 1W relative to the industry average, selectable via toggle), Y axis: RS-Momentum (unchanged: 1M relative pace vs. the 3M average pace).\nTop right leading, top left improving, bottom left lagging, bottom right weakening.\nTail = the last 10 trading days from the snapshots, head = live data.\nBenchmark is the equal-weight average of all industries — no index is available with history.\nThe two buttons filter to the top-30% intersections; both active = union.\nThe “% Performance” sliders hide industries below the threshold (X = selected window, Y = 1M).\nHovering an industry highlights it and its path, hovering/clicking the legend highlights a quadrant; clicking a bubble opens the Finviz screener.",
     hintTop10:    "Top 10 performers per timeframe — shows current market leaders.\nCards: compact overview per timeframe.\nBar chart: all industries sorted by 1M and 3M performance.\nINST badge shows institutional interest.",
     hintMovers:   "Rank change since the selected period.\nRising: industries that climbed most in ranking — fresh capital flowing in. Look here!\nCooling: industries that lost ranks — capital leaving. Avoid.\nSelect period: 1W / 2W / 1M / 3M (greyed out = not enough data yet).",
     tabEtfs:      "📈 Themes",
@@ -1619,6 +1619,8 @@ const _perfFilter = {
   themes:  { x: null, y: null, xTf: null },
   ind:     { x: null, y: null, xTf: null },
   tickers: { x: null, y: null, xTf: null },
+  rrgTheme:    { x: null, y: null, xTf: null },
+  rrgIndustry: { x: null, y: null, xTf: null },
 };
 
 // Theme badge colours for all 40 Finviz themes
@@ -2273,7 +2275,11 @@ function wireBubbleGroupHighlight(container) {
 function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M", legendHtml = null, opts = {}) {
   if (!pts.length) { container.innerHTML = '<p style="color:#6b7280;padding:16px">No data</p>'; return; }
 
-  const xs = pts.map(p => p.x3m), ys = pts.map(p => p.y1m);
+  // opts.domainExtra: zusätzliche Punkte {x, y}, die in den Achsenbereich
+  // eingehen, aber keine Bubble sind (RRG: die Tails, damit keiner aus dem Bild läuft).
+  const extra = opts.domainExtra ?? [];
+  const xs = pts.map(p => p.x3m).concat(extra.map(e => e.x));
+  const ys = pts.map(p => p.y1m).concat(extra.map(e => e.y));
   const med3M = [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
   const med1M = [...ys].sort((a, b) => a - b)[Math.floor(ys.length / 2)];
   const pad3M = (Math.max(...xs) - Math.min(...xs)) * 0.06 || 1;
@@ -2315,8 +2321,16 @@ function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M", legendHtml = 
     resolveBubbleCollisions(pts, { x0: PAD.left, x1: W - PAD.right, y0: PAD.top, y1: H - PAD.bottom });
   }
 
-  const medX = toX(med3M).toFixed(1);
-  const medY = toY(med1M).toFixed(1);
+  // Trennlinien: Standard = Median der Punkte; opts.divider legt feste Werte
+  // fest (RRG: Benchmark = 0). In den Plot geklemmt, damit eine Linie außerhalb
+  // des Datenbereichs nicht aus dem Chart läuft.
+  const clampX = v => Math.min(Math.max(toX(v), PAD.left), W - PAD.right);
+  const clampY = v => Math.min(Math.max(toY(v), PAD.top), H - PAD.bottom);
+  const zeroX = clampX(opts.divider?.x ?? med3M);
+  const zeroY = clampY(opts.divider?.y ?? med1M);
+  const medX = zeroX.toFixed(1);
+  const medY = zeroY.toFixed(1);
+  const geom = { toX, toY, PAD, W, H, plotW, plotH, zeroX, zeroY };
 
   // Axis tick lines + labels — tick count scales with plot size
   function axisTicks(axis) {
@@ -2338,8 +2352,9 @@ function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M", legendHtml = 
 
   const circles = pts.map(p => {
     const groupTag = p.groups === undefined ? "" : ` data-groups="${esc(p.groups.join("||"))}"`;
+    const rrgTag = p.rrgId === undefined ? "" : ` data-rrg="${p.rrgId}"`;
     const inner = `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${p.r.toFixed(1)}"
-        fill="${p.color}" fill-opacity="0.72" stroke="${p.color}" stroke-width="0.8"${groupTag}><title>${p.tip}</title></circle>`;
+        fill="${p.color}" fill-opacity="0.72" stroke="${p.color}" stroke-width="0.8"${groupTag}${rrgTag}><title>${p.tip}</title></circle>`;
     return p.url ? `<a href="${p.url}" target="_blank" rel="noopener">${inner}</a>` : inner;
   }).join("");
 
@@ -2354,6 +2369,7 @@ function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M", legendHtml = 
         <!-- Grid background -->
         <rect x="${PAD.left}" y="${PAD.top}" width="${plotW}" height="${plotH}"
           fill="#0d1117" rx="4"/>
+        ${opts.beforeDividers ? opts.beforeDividers(geom) : ""}
         <!-- Quadrant divider lines -->
         <line x1="${medX}" y1="${PAD.top}" x2="${medX}" y2="${H - PAD.bottom}"
           stroke="#374151" stroke-width="1" stroke-dasharray="5,4"/>
@@ -2361,9 +2377,10 @@ function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M", legendHtml = 
           stroke="#374151" stroke-width="1" stroke-dasharray="5,4"/>
         ${axisTicks("x")}${axisTicks("y")}
         <text x="${PAD.left + plotW / 2}" y="${H - 4}" text-anchor="middle"
-          font-size="11" fill="#9ca3af">${xTf} Performance →</text>
+          font-size="11" fill="#9ca3af">${opts.xTitle ?? `${xTf} Performance →`}</text>
         <text x="12" y="${PAD.top + plotH / 2}" text-anchor="middle" font-size="11"
-          fill="#9ca3af" transform="rotate(-90,12,${PAD.top + plotH / 2})">1M Performance ↑</text>
+          fill="#9ca3af" transform="rotate(-90,12,${PAD.top + plotH / 2})">${opts.yTitle ?? "1M Performance ↑"}</text>
+        ${opts.beforeCircles ? opts.beforeCircles(geom) : ""}
         ${circles}
         ${labels}
       </svg>
@@ -2377,6 +2394,7 @@ function renderBubbleSvg(container, pts, neutralLabel, xTf = "3M", legendHtml = 
     </div>`;
 
   wireBubbleGroupHighlight(container);
+  if (opts.onRendered) opts.onRendered(container);
 }
 
 // ── "% Performance"-Schieberegler (Themes-, Industry- und Tickers-Bubble) ────
@@ -2387,6 +2405,8 @@ const PERF_FILTER_RENDER = {
   themes:  () => { if (_etfData) renderEtfThemes(_etfData); },
   ind:     () => { if (_lastIndustries) renderIndustryBubble(_lastIndustries); },
   tickers: () => renderTickersTab(),
+  rrgTheme:    () => { if (_etfData) renderRrgChart("theme"); },
+  rrgIndustry: () => { if (_lastIndustries) renderRrgChart("industry"); },
 };
 
 function fmtPerfThreshold(v) {
@@ -2695,6 +2715,7 @@ const RRG_VIEWS = {
     url: (name) => themeScreenerUrl(name),
     filters: new Set(),
     axisXKey: "rrgAxisX",
+    perfKey: "rrgTheme",
     noun: "Themes",
     benchKey: "rrgLegendBench",
     btns: { "1W1M": "theme-top20i-btn", "1M3M": "theme-top20i2-btn" },
@@ -2709,6 +2730,7 @@ const RRG_VIEWS = {
     url: (name, row) => finvizUrl(row.ticker),
     filters: new Set(),
     axisXKey: "rrgAxisXInd",
+    perfKey: "rrgIndustry",
     noun: "Industries",
     benchKey: "rrgLegendBenchInd",
     btns: { "1W1M": "ind-rrg-f1-btn", "1M3M": "ind-rrg-f2-btn" },
@@ -2820,6 +2842,29 @@ function toggleRrgFilter(kind, key) {
   renderRrgChart(kind);
 }
 
+// Hover: das Theme unter der Maus samt Tail und Label hervorheben, alles
+// andere zurücknehmen. Delegiert statt 40× einzeln registriert — und über
+// mouseover statt mouseenter, damit der Wechsel Punkt ↔ eigener Tail nicht
+// erst löscht und dann neu setzt (das flackert).
+function wireRrgHover(container) {
+  const svg = container.querySelector("svg");
+  if (!svg) return;
+  const marked = svg.querySelectorAll("[data-rrg]");
+  const setActive = (id) => {
+    svg.classList.toggle("rrg-hover", id !== null);
+    marked.forEach(el => el.classList.toggle("rrg-on", el.dataset.rrg === id));
+  };
+  svg.addEventListener("mouseover", (e) => {
+    const el = e.target.closest?.("[data-rrg]");
+    setActive(el ? el.dataset.rrg : null);
+  });
+  svg.addEventListener("mouseleave", () => setActive(null));
+}
+
+// Der RRG läuft über denselben Kern wie die Themes-/Industry-/Tickers-Bubble-
+// Charts (renderBubbleSvg): gleiche Bubble-Größen, Achsen, Trennlinien, Labels,
+// Legende mit Hover/Klick-Hervorhebung und "% Performance"-Regler. Eigen sind
+// nur die Quadrantenfärbung, die Tails und die RS-Achsen.
 function renderRrgChart(kind) {
   const view = RRG_VIEWS[kind];
   const container = document.getElementById(view.containerId);
@@ -2841,7 +2886,14 @@ function renderRrgChart(kind) {
     const perfLine = perfTfs.map(tf => `${tf}: ${row.perfs[tf]?.toFixed(1)}%`).join("  ");
     return {
       name, path, rs: head.rs, mom: head.mom, quadrant: q, color: RRG_COLORS[q],
+      // Felder, die renderBubbleSvg als X/Y liest
+      x3m: head.rs, y1m: head.mom,
+      // Rohperformance für die "% Performance"-Regler (nicht der RS-Wert)
+      perfX: row.perfs[xTf], perf1M: row.perfs["1M"],
       score: view.size(row),
+      // Quadrant als Gruppe: Legende hebt per Hover/Klick alle Punkte, Labels
+      // und Tails des Quadranten hervor (wie die Gruppen-Legende im Tickers-Chart).
+      groups: [q],
       // Numerische ID statt Name: verbindet Punkt, Tail und Label beim Hover,
       // ohne dass Sonderzeichen in den Namen escaped werden müssten.
       rrgId: i,
@@ -2863,6 +2915,7 @@ function renderRrgChart(kind) {
     }
     pts = pts.filter(p => keep.has(p.name));
   }
+  pts = applyPerfFilter(view.perfKey, pts, xTf, p => p.perfX, p => p.perf1M);
   if (!pts.length) {
     container.innerHTML = `<p style="color:#6b7280;padding:16px">${t("rrgFilterEmpty")}</p>`;
     return;
@@ -2870,35 +2923,7 @@ function renderRrgChart(kind) {
 
   const maxPathLen = Math.max(...pts.map(p => p.path.length));
 
-  // Domain über ALLE gezeichneten Punkte, damit kein Tail aus dem Bild läuft.
-  const shown = pts.flatMap(p => p.path);
-  const xsAll = shown.map(p => p.rs), ysAll = shown.map(p => p.mom);
-  const padX = (Math.max(...xsAll) - Math.min(...xsAll)) * 0.06 || 1;
-  const padY = (Math.max(...ysAll) - Math.min(...ysAll)) * 0.08 || 1;
-  const loX = Math.min(...xsAll) - padX, hiX = Math.max(...xsAll) + padX;
-  const loY = Math.min(...ysAll) - padY, hiY = Math.max(...ysAll) + padY;
-
-  const { W, H } = bubbleChartDims(container);
-  const PAD = { top: 28, right: 36, bottom: 48, left: 58 };
-  const plotW = W - PAD.left - PAD.right;
-  const plotH = H - PAD.top - PAD.bottom;
-  const toX = v => PAD.left + ((v - loX) / (hiX - loX)) * plotW;
-  const toY = v => H - PAD.bottom - ((v - loY) / (hiY - loY)) * plotH;
-
-  const scores = pts.map(p => p.score);
-  const minScore = Math.min(...scores);
-  const scoreRange = (Math.max(...scores) - minScore) || 1;
-  // Kleiner als im Bubble-Chart: die Tails brauchen den Platz.
-  const rMax = Math.max(12, Math.min(20, Math.round(Math.sqrt(plotW * plotH) / 48)));
-  const rMin = Math.max(4, Math.round(rMax * 0.35));
-  pts.forEach(p => {
-    p.x = toX(p.rs); p.y = toY(p.mom);
-    p.r = rMax - ((p.score - minScore) / scoreRange) * (rMax - rMin);
-  });
-
-  const zeroX = Math.min(Math.max(toX(0), PAD.left), W - PAD.right);
-  const zeroY = Math.min(Math.max(toY(0), PAD.top), H - PAD.bottom);
-  const quadRects = [
+  const quadTints = ({ PAD, W, H, zeroX, zeroY }) => [
     { x: PAD.left, y: PAD.top, w: zeroX - PAD.left, h: zeroY - PAD.top, fill: RRG_COLORS.improving },
     { x: zeroX, y: PAD.top, w: W - PAD.right - zeroX, h: zeroY - PAD.top, fill: RRG_COLORS.leading },
     { x: PAD.left, y: zeroY, w: zeroX - PAD.left, h: H - PAD.bottom - zeroY, fill: RRG_COLORS.lagging },
@@ -2906,105 +2931,50 @@ function renderRrgChart(kind) {
   ].map(q => `<rect x="${q.x.toFixed(1)}" y="${q.y.toFixed(1)}" width="${Math.max(0, q.w).toFixed(1)}"
       height="${Math.max(0, q.h).toFixed(1)}" fill="${q.fill}" fill-opacity="0.05"/>`).join("");
 
-  function axisTicks(isX) {
-    const lo = isX ? loX : loY, hi = isX ? hiX : hiY;
-    const n = isX ? Math.max(5, Math.min(12, Math.round(plotW / 160)))
-                  : Math.max(5, Math.min(10, Math.round(plotH / 90)));
-    return Array.from({ length: n }, (_, i) => {
-      const v = lo + (i / (n - 1)) * (hi - lo);
-      const coord = isX ? toX(v).toFixed(1) : toY(v).toFixed(1);
-      const lbl = `${v > 0 ? "+" : ""}${v.toFixed(1)}`;
-      return isX
-        ? `<line x1="${coord}" y1="${H - PAD.bottom}" x2="${coord}" y2="${H - PAD.bottom + 4}" stroke="#4b5563" stroke-width="1"/>
-           ${i === 0 ? "" : `<text x="${coord}" y="${H - PAD.bottom + 15}" text-anchor="middle" font-size="9" fill="#6b7280">${lbl}</text>`}`
-        : `<line x1="${PAD.left - 4}" y1="${coord}" x2="${PAD.left}" y2="${coord}" stroke="#4b5563" stroke-width="1"/>
-           <text x="${PAD.left - 6}" y="${parseFloat(coord) + 3}" text-anchor="end" font-size="9" fill="#6b7280">${lbl}</text>`;
-    }).join("");
-  }
-
   // Tails vor den Köpfen zeichnen, damit kein Pfad über einem Punkt liegt.
   // Jedem Tail liegt ein unsichtbarer, breiter Pfad unter: 1,4 px Strichbreite
   // trifft man mit der Maus nicht.
-  const tails = pts.filter(p => p.path.length > 1).map(p => {
+  const tails = ({ toX, toY }) => pts.filter(p => p.path.length > 1).map(p => {
     const d = rrgSmoothPath(p.path.map(q => ({ x: toX(q.rs), y: toY(q.mom) })));
     const nodes = p.path.slice(0, -1).map(q =>
       `<circle class="rrg-node" cx="${toX(q.rs).toFixed(1)}" cy="${toY(q.mom).toFixed(1)}" r="1.8"
-        fill="${p.color}" fill-opacity="0.22" data-rrg="${p.rrgId}"/>`).join("");
+        fill="${p.color}" fill-opacity="0.22" data-rrg="${p.rrgId}" data-groups="${p.quadrant}"/>`).join("");
     return `<path class="rrg-hit" d="${d}" fill="none" stroke="transparent" stroke-width="12"
         data-rrg="${p.rrgId}" style="pointer-events:stroke"/>
       <path d="${d}" fill="none" stroke="${p.color}" stroke-width="1.4" stroke-opacity="0.28"
-      stroke-linejoin="round" stroke-linecap="round" data-rrg="${p.rrgId}"
+      stroke-linejoin="round" stroke-linecap="round" data-rrg="${p.rrgId}" data-groups="${p.quadrant}"
       style="pointer-events:none"/>${nodes}`;
   }).join("");
 
-  const circles = pts.map(p => {
-    const inner = `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${p.r.toFixed(1)}"
-        data-rrg="${p.rrgId}"
-        fill="${p.color}" fill-opacity="0.72"
-        stroke="${p.color}" stroke-width="0.8"><title>${p.tip}</title></circle>`;
-    return p.url ? `<a href="${p.url}" target="_blank" rel="noopener">${inner}</a>` : inner;
-  }).join("");
-
-  const labels = placeBubbleLabels(pts, {
-    x0: PAD.left + 2, x1: W - PAD.right - 2,
-    y0: PAD.top + 2,  y1: H - PAD.bottom - 2,
-  });
-
+  // Legende im Stil der Tickers-Gruppenlegende: Name (Anzahl), per Hover/Klick
+  // hebt sie den Quadranten hervor.
+  const counts = { improving: 0, leading: 0, weakening: 0, lagging: 0 };
+  pts.forEach(p => { counts[p.quadrant]++; });
   const legendDot = (c, txt) =>
     `<span class="bubble-legend-item"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="${c}" fill-opacity="0.8"/></svg> ${txt}</span>`;
+  const quadItem = (q) =>
+    `<span class="bubble-legend-item" data-group="${q}"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="${RRG_COLORS[q]}" fill-opacity="0.85"/></svg> ${t(RRG_Q_KEY[q])} (${counts[q]})</span>`;
   const tailNote = maxPathLen > 1
     ? legendDot("#9ca3af", t("rrgLegendTail", maxPathLen))
     : `<span class="bubble-legend-item">${t("rrgNoHistory")}</span>`;
+  const legendHtml = ["improving", "leading", "weakening", "lagging"].map(quadItem).join("")
+    + `<span class="bubble-legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#9ca3af" fill-opacity="0.5"/></svg> ${t("rrgLegendSize")}</span>`
+    + tailNote
+    + `<span class="bubble-legend-item">${t(view.benchKey)}</span>`
+    + (view.filters.size ? `<span class="bubble-legend-item" style="color:#fbbf24">${
+        t("rrgFilterNote", [...view.filters].map(k => RRG_FILTERS[k].label).join(" + "), pts.length, total, view.noun)
+      }</span>` : "");
 
-  container.innerHTML = `
-    <div class="bubble-chart-wrap">
-      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">
-        <rect x="${PAD.left}" y="${PAD.top}" width="${plotW}" height="${plotH}" fill="#0d1117" rx="4"/>
-        ${quadRects}
-        <line x1="${zeroX.toFixed(1)}" y1="${PAD.top}" x2="${zeroX.toFixed(1)}" y2="${H - PAD.bottom}"
-          stroke="#4b5563" stroke-width="1"/>
-        <line x1="${PAD.left}" y1="${zeroY.toFixed(1)}" x2="${W - PAD.right}" y2="${zeroY.toFixed(1)}"
-          stroke="#4b5563" stroke-width="1"/>
-        ${axisTicks(true)}${axisTicks(false)}
-        <text x="${PAD.left + plotW / 2}" y="${H - 4}" text-anchor="middle"
-          font-size="11" fill="#9ca3af">${t(view.axisXKey, xTf)}</text>
-        <text x="12" y="${PAD.top + plotH / 2}" text-anchor="middle" font-size="11"
-          fill="#9ca3af" transform="rotate(-90,12,${PAD.top + plotH / 2})">${t("rrgAxisY")}</text>
-        ${tails}
-        ${circles}
-        ${labels}
-      </svg>
-      <div class="bubble-legend">
-        ${legendDot(RRG_COLORS.improving, t("rrgQ1"))}
-        ${legendDot(RRG_COLORS.leading, t("rrgQ2"))}
-        ${legendDot(RRG_COLORS.weakening, t("rrgQ4"))}
-        ${legendDot(RRG_COLORS.lagging, t("rrgQ3"))}
-        ${legendDot("#9ca3af", t("rrgLegendSize"))}
-        ${tailNote}
-        <span class="bubble-legend-item">${t(view.benchKey)}</span>
-        ${view.filters.size ? `<span class="bubble-legend-item" style="color:#fbbf24">${
-          t("rrgFilterNote", [...view.filters].map(k => RRG_FILTERS[k].label).join(" + "), pts.length, total, view.noun)
-        }</span>` : ""}
-      </div>
-    </div>`;
-
-  // Hover: das Theme unter der Maus samt Tail und Label hervorheben, alles
-  // andere zurücknehmen. Delegiert statt 40× einzeln registriert — und über
-  // mouseover statt mouseenter, damit der Wechsel Punkt ↔ eigener Tail nicht
-  // erst löscht und dann neu setzt (das flackert).
-  const svg = container.querySelector("svg");
-  if (svg) {
-    const marked = svg.querySelectorAll("[data-rrg]");
-    const setActive = (id) => {
-      svg.classList.toggle("rrg-hover", id !== null);
-      marked.forEach(el => el.classList.toggle("rrg-on", el.dataset.rrg === id));
-    };
-    svg.addEventListener("mouseover", (e) => {
-      const el = e.target.closest?.("[data-rrg]");
-      setActive(el ? el.dataset.rrg : null);
-    });
-    svg.addEventListener("mouseleave", () => setActive(null));
-  }
+  renderBubbleSvg(container, pts, "", xTf, legendHtml, {
+    divider: { x: 0, y: 0 },
+    // Domain über ALLE gezeichneten Punkte, damit kein Tail aus dem Bild läuft.
+    domainExtra: pts.flatMap(p => p.path.map(q => ({ x: q.rs, y: q.mom }))),
+    xTitle: t(view.axisXKey, xTf),
+    yTitle: t("rrgAxisY"),
+    beforeDividers: quadTints,
+    beforeCircles: tails,
+    onRendered: wireRrgHover,
+  });
 }
 
 // Autoscale: re-render whichever bubble chart is currently visible when the
@@ -4634,6 +4604,8 @@ async function loadData() {
       await loadSnapshots();
       computeThemeMetrics();
       renderEtfTab();
+      // renderAll zeichnet den Industry-RRG vor den Snapshots — Tails nachziehen.
+      if (_lastIndustries) renderRrgChart("industry");
       renderSetupTabs();
       // Leading Stocks: Kursdatei beim nächsten Öffnen frisch holen.
       _leadersBars = null; _leadersLoad = null; _leadersFailed = false; _leadersCache = {};
