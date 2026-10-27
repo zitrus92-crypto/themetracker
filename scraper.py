@@ -453,7 +453,7 @@ def _fetch_tickers_for_slug(slug: str, filter_prefix: str = "theme") -> list[str
     """
     Fetch all stock tickers for a Finviz theme or sub-theme via the bubble-chart
     view (v=410). Server-rendered HTML, all tickers in one request via
-    data-boxover-ticker attributes — no JS rendering required, no pagination.
+    data-ticker attributes — no JS rendering required, no pagination.
     filter_prefix: "theme" for top-level themes, "subtheme" for sub-themes.
     Returns list of plain ticker symbols (e.g. ['NVDA', 'AMD', 'ASML', ...]).
     """
@@ -469,7 +469,9 @@ def _fetch_tickers_for_slug(slug: str, filter_prefix: str = "theme") -> list[str
                 time.sleep(wait)
                 continue
             resp.raise_for_status()
-            tickers = re.findall(r'data-boxover-ticker="([A-Z]{1,6})"', resp.text)
+            # Finviz hat das Attribut umbenannt (frueher data-boxover-ticker,
+            # seit ~17.10.2026 data-ticker) - beide akzeptieren.
+            tickers = re.findall(r'data-(?:boxover-)?ticker="([A-Z]{1,6})"', resp.text)
             return list(dict.fromkeys(tickers))  # deduplicate, preserve order
         except Exception as e:
             if attempt == MAX_RETRIES - 1:
