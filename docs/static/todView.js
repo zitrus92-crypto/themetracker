@@ -1,7 +1,6 @@
 /**
- * todView.js — Darstellung des versteckten Tabs "Themes of the day".
- * Kein Button in der Navigation: geöffnet wird er nur über #tod in der URL
- * oder Alt+Shift+T (siehe app.js, openTod). Rechenkern: todMetrics.js.
+ * todView.js — Darstellung des Themes-Untertabs "Themes of the day".
+ * Rechenkern: todMetrics.js.
  *
  * Datenbasis sind die Snapshot-Shards. Sub-Themes stehen erst seit 31.10.2026
  * in den Snapshots; fehlt der heutige Tag dort noch, wird er aus etf_data.json

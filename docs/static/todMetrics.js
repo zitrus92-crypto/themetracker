@@ -1,5 +1,5 @@
 /**
- * todMetrics.js — Rechenkern für den versteckten Tab "Themes of the day".
+ * todMetrics.js — Rechenkern für den Themes-Untertab "Themes of the day".
  *
  * Abhängigkeitsfrei, seiteneffektfrei. Eingabe sind Snapshot-Tage
  * (docs/snapshots/YYYY-MM.json), aufsteigend nach Datum.
