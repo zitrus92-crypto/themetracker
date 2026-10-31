@@ -372,6 +372,7 @@ def main():
         (etf_payload or {}).get("themes") or {},
         today,
         datetime.now(timezone.utc),
+        subnodes=(etf_payload or {}).get("subnodes") or {},
     )
 
 

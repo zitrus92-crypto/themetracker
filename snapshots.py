@@ -18,6 +18,11 @@ Shard-Format:
   { "YYYY-MM-DD": { "fetched_at": iso, "settled": bool, "gap": bool|null,
                     "rows": [ { type, name, score, accel, rank, members,
                                 ticker_hash, perfs {1W,1M,3M,6M,YTD} } ] } }
+
+Sub-Themes (type "subtheme", seit 31.10.2026): name = Finviz-Node-Key (eindeutig;
+Labels wie "Software" kommen mehrfach vor), dazu label + theme. Schlank
+gehalten — kein score/accel, die Matrix im Themes-of-the-day-Tab rankt die
+Perfs selbst.
 """
 
 import hashlib
@@ -57,7 +62,7 @@ def _theme_accel(themes: dict) -> dict:
     return {k: (r3m.get(k, n)) - (r1m.get(k, n)) for k in names}
 
 
-def build_rows(scored: dict, themes: dict) -> list[dict]:
+def build_rows(scored: dict, themes: dict, subnodes: dict | None = None) -> list[dict]:
     rows = []
 
     accel = _theme_accel(themes)
@@ -90,6 +95,17 @@ def build_rows(scored: dict, themes: dict) -> list[dict]:
             "perfs": {k: r.get("perfs", {}).get(k) for k in PERF_KEYS},
         })
 
+    for key, n in (subnodes or {}).items():
+        rows.append({
+            "type": "subtheme",
+            "name": key,
+            "label": n.get("label"),
+            "theme": n.get("theme"),
+            "members": len(n.get("tickers") or []),
+            "ticker_hash": _ticker_hash(n.get("tickers")),
+            "perfs": {k: (n.get("perfs") or {}).get(k) for k in PERF_KEYS},
+        })
+
     return rows
 
 
@@ -117,14 +133,28 @@ def _plausible(rows: list[dict], prev_entry: dict | None) -> tuple[bool, str]:
     if null_share > MAX_NULL_PERF_SHARE:
         return False, f"{null_share:.0%} der perfs sind null"
     if prev_entry:
-        n_prev = len(prev_entry["rows"])
-        if n_prev and abs(len(rows) - n_prev) / n_prev > MAX_ROWCOUNT_DEVIATION:
-            return False, f"Zeilenzahl {len(rows)} weicht > 20 % vom Vorhandelstag ({n_prev}) ab"
+        # Je Typ vergleichen, nur Typen, die heute UND am Vortag vorkommen: ein
+        # neu hinzugekommener Typ (Sub-Themes ab 31.10.2026) oder ein heute
+        # ausgefallener Sub-Theme-Abruf soll Themes/Industries nicht mitreißen.
+        # Fehlende Themes/Industries fängt schon write_snapshot ab.
+        def counts(rs):
+            c = {}
+            for r in rs:
+                c[r["type"]] = c.get(r["type"], 0) + 1
+            return c
+        now_c, prev_c = counts(rows), counts(prev_entry["rows"])
+        for typ, n_prev in prev_c.items():
+            n_now = now_c.get(typ)
+            if n_now is None or not n_prev:
+                continue
+            if abs(n_now - n_prev) / n_prev > MAX_ROWCOUNT_DEVIATION:
+                return False, (f"Zeilenzahl {typ} {n_now} weicht > 20 % "
+                               f"vom Vorhandelstag ({n_prev}) ab")
     return True, ""
 
 
 def write_snapshot(scored: dict, themes: dict, today: str, now_utc: datetime,
-                   snap_dir: Path | None = None) -> dict | None:
+                   snap_dir: Path | None = None, subnodes: dict | None = None) -> dict | None:
     """Schreibt den Tages-Snapshot. Returns den Eintrag oder None (übersprungen)."""
     snap_dir = snap_dir or SNAP_DIR
     d = date.fromisoformat(today)
@@ -136,7 +166,7 @@ def write_snapshot(scored: dict, themes: dict, today: str, now_utc: datetime,
         print("  Snapshot übersprungen: unvollständige Daten (Industries oder Themes fehlen)")
         return None
 
-    rows = build_rows(scored, themes)
+    rows = build_rows(scored, themes, subnodes)
 
     prev_day = previous_trading_day(d)
     prev_entry = _find_day_entry(prev_day, snap_dir)

@@ -32,7 +32,28 @@ def _scored(n=5):
     }
 
 
+def _subnodes(n=4):
+    return {
+        f"node{i}": {
+            "label": "Software",
+            "theme": f"Theme {i % 2}",
+            "tickers": [f"S{i}", f"X{i}"],
+            "perfs": {"1D": 0.1, "1W": 1.0, "1M": 2.0, "3M": 3.0, "6M": 4.0, "YTD": 5.0},
+        }
+        for i in range(n)
+    }
+
+
 class TestBuildRows(unittest.TestCase):
+    def test_subtheme_rows_keyed_by_node(self):
+        rows = build_rows({}, {}, _subnodes(2))
+        self.assertEqual([r["name"] for r in rows], ["node0", "node1"])
+        r = rows[0]
+        self.assertEqual(r["type"], "subtheme")
+        self.assertEqual((r["label"], r["theme"], r["members"]), ("Software", "Theme 0", 2))
+        self.assertEqual(set(r["perfs"].keys()), {"1W", "1M", "3M", "6M", "YTD"})
+        self.assertIsNotNone(r["ticker_hash"])
+
     def test_both_universes_with_type_and_hash(self):
         rows = build_rows(_scored(), _themes())
         self.assertEqual(len(rows), 8)
@@ -119,6 +140,26 @@ class TestWriteSnapshot(unittest.TestCase):
         self.assertIsNone(e)
         # Der gute Eintrag von vorher bleibt stehen.
         self.assertEqual(len(self._read()["2026-08-14"]["rows"]), 8)
+
+    def test_new_subtheme_type_does_not_trip_row_count_check(self):
+        write_snapshot(_scored(5), _themes(3), "2026-08-13", self.now, self.dir)
+        e = write_snapshot(_scored(5), _themes(3), "2026-08-14", self.now, self.dir,
+                           subnodes=_subnodes(20))
+        self.assertIsNotNone(e)
+        self.assertEqual(len(self._read()["2026-08-14"]["rows"]), 28)
+
+    def test_missing_subthemes_today_keep_snapshot(self):
+        write_snapshot(_scored(5), _themes(3), "2026-08-13", self.now, self.dir,
+                       subnodes=_subnodes(20))
+        e = write_snapshot(_scored(5), _themes(3), "2026-08-14", self.now, self.dir)
+        self.assertIsNotNone(e)
+
+    def test_subtheme_row_count_deviation_rejected(self):
+        write_snapshot(_scored(5), _themes(3), "2026-08-13", self.now, self.dir,
+                       subnodes=_subnodes(20))
+        e = write_snapshot(_scored(5), _themes(3), "2026-08-14", self.now, self.dir,
+                           subnodes=_subnodes(5))
+        self.assertIsNone(e)
 
     def test_skips_when_one_universe_missing(self):
         self.assertIsNone(write_snapshot({}, _themes(), "2026-08-14", self.now, self.dir))
