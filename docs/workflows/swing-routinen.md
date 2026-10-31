@@ -1,4 +1,4 @@
-# Swing-Routine — Kompakt (WE ~15 Min · Tag ~5 Min)
+# Swing-Routine — Kompakt (WE ~20 Min · Tag ~5 Min)
 
 **Ziel:** Die heißesten Themes finden → frische Base-Breakouts handeln → **nicht extended kaufen.**
 **Ausführung:** 90 % End-of-Day (Watchlist → GTC-Buy-Stops über dem Pivot), 10 % Intraday-Zugriff — beides **nur innerhalb der Wochenfokus-Liste**.
@@ -11,6 +11,7 @@
 - **Accel (Industry)** = Rang 3M − Rang **1W** (zwitschriger, frühere Erkennung). Nicht 1:1 mit Theme-Accel vergleichbar.
 - **INST-Badge** = Top 40 in 1M UND 3M = institutionell bestätigt.
 - **★-Buttons** = markieren automatisch die Schnittmenge der Top 30 % (1W∩1M = frisch angedreht · 1M∩3M = institutionell anhaltend).
+- **📅 Themes of the day** (Themes-Untertab) = vier Ränge je Gruppe (LT 6M · MOM 3M · FAST 1M · SF 1W) auf drei Ebenen (Sub-Themes · Themes · Industries). **Leading** = schlechtester der vier Ränge im obersten Fünftel (etablierter Trend). **Rising** = Rang auf allen vier besser als vor 5 Handelstagen, Median im obersten Viertel (frisch angedreht). Namen verlinken auf die volle Finviz-Mitgliederliste. **Unvalidiert — Beobachtungsphase bis Mitte Dezember 2026.**
 
 ---
 
@@ -35,13 +36,26 @@
 - [ ] Qualifizierte Themes nach Accel absteigend → **Top 3–5 nehmen.** Fertig, keine weitere Abwägung.
 - [ ] *(Optional, 30 Sek.:)* **⊞ Matrix** öffnen — Fokus-Themes sollten in 🚀 First-Flag/Trending liegen. Nur Info, **kein Veto.**
 
+### 2b — Fokus-Themes auf Sub-Themes schärfen (3 Min)
+- [ ] **Themes → 📅 Themes of the day** → Ebene **Sub-Themes**.
+- [ ] Pro qualifiziertem Fokus-Theme: Welche **seiner** Sub-Themes stehen in **Leading** oder **Rising**?
+  - **Treffer** → Sub-Theme-Namen anklicken (öffnet die Finviz-Mitgliederliste) → die Watchlist in Schritt 4 aus **diesen** Sub-Themes bauen statt aus dem ganzen Theme. *Beispiel: „Healthcare & Biotech" (81 Mitglieder) → „Oncology" (13).*
+  - **Kein Treffer** → Watchlist wie bisher aus dem ganzen Theme.
+- [ ] Sub-Themes ändern **nicht**, *welche* Themes in die Fokusliste kommen — das entscheidet allein die Aufnahme-Formel. Sie grenzen nur ein, *wo* innerhalb des Themes gesucht wird.
+- [ ] *Rising für Sub-Themes greift erst ab ~09.11.2026 (5 Handelstage Historie) — bis dahin nur Leading nutzen.*
+
+### 2c — Bestätigung notieren (30 Sek.)
+- [ ] Ebene **Themes**: steht das Fokus-Theme in **Leading** → `L`, in **Rising** → `R`, sonst `–`. In die Spalte **ToD** der Fokusliste (Schritt 5) eintragen, mit den Sub-Themes aus 2b in Klammern.
+- [ ] **Nur Info, kein Veto** (wie die Matrix). Ein Fokus-Theme ohne `L`/`R` bleibt drin.
+
 ### 3 — Fallback: Auffüllen bei < 3 Treffern (2 Min)
 - [ ] Qualifizieren weniger als 3 Themes → freie Slots mechanisch füllen mit **Industry → ★ Setup Picks** (vorgefilterte First-Flag-Liste): **INST-Badge zuerst, dann Listen-Reihenfolge.**
 - [ ] Heiße Standalone-Industries ohne Theme-Bezug sind **voll gültiges Revier** (Confluence ist Bonus, kein Filter).
+- [ ] *Gleichstand-Entscheider (optional):* Sind zwei Setup Picks gleichwertig, gewinnt die Industry, die in **Themes of the day → Industries** in Leading oder Rising steht.
 - [ ] **Bei RISK-OFF wird nicht aufgefüllt** — kurze Liste ist dann gewollt.
 
 ### 4 — Watchlists bauen (5 Min)
-- [ ] Pro Fokus-Eintrag die Zeile in der Tabelle anhaken → **📋 Kopieren** → als eigene Watchlist in TradingView/Deepvue anlegen (Vorwochen-Liste überschreiben).
+- [ ] Pro Fokus-Eintrag die Zeile in der Tabelle anhaken → **📋 Kopieren** → als eigene Watchlist in TradingView/Deepvue anlegen (Vorwochen-Liste überschreiben). Hat 2b Sub-Themes geliefert: deren Ticker aus der Finviz-Liste übernehmen statt der ganzen Theme-Liste.
 - [ ] **Gespeicherten Screener-Filter** auf den Watchlists prüfen/aktiv halten: *Kurs ≤ 5 % unter 20-Tage-Hoch + über SMA50 + Mindestvolumen.* Das ist der tägliche Vorfilter — ohne ihn ist die Tages-Routine nicht in 5 Min machbar.
 - [ ] *(Optional für Ad-hoc-Analysen: **📤 JSON kopieren** liefert den gruppierten Kontext inkl. Regime-Stempel — kein Pflichtschritt.)*
 
@@ -49,12 +63,13 @@
 
 ```
 WOCHENFOKUS  KW__  | Regime: ____________
-1. ______________  Accel:__  1M:__%  INST:__  Quelle: Theme/Pick
-2. ______________  Accel:__  1M:__%  INST:__  Quelle: Theme/Pick
-3. ______________  Accel:__  1M:__%  INST:__  Quelle: Theme/Pick
-4. ______________  Accel:__  1M:__%  INST:__  Quelle: Theme/Pick
-5. ______________  Accel:__  1M:__%  INST:__  Quelle: Theme/Pick
+1. ______________  Accel:__  1M:__%  INST:__  Quelle: Theme/Pick  ToD: _ (__________)
+2. ______________  Accel:__  1M:__%  INST:__  Quelle: Theme/Pick  ToD: _ (__________)
+3. ______________  Accel:__  1M:__%  INST:__  Quelle: Theme/Pick  ToD: _ (__________)
+4. ______________  Accel:__  1M:__%  INST:__  Quelle: Theme/Pick  ToD: _ (__________)
+5. ______________  Accel:__  1M:__%  INST:__  Quelle: Theme/Pick  ToD: _ (__________)
 ```
+*ToD: `L` / `R` / `–`, in Klammern die Sub-Themes aus 2b. Beispiel: `ToD: L (Oncology, Telemedicine)`.*
 
 - Diese Liste ist die Woche über das **einzige Jagdrevier — harte Sperre.**
 - **Hot-Swap max. 1× pro Woche:** Nur wenn ein Slot per Killswitch (unten) objektiv frei wird, darf genau ein neuer Name rein — und nur, wenn er die Aufnahme-Formel **am selben Tag** erfüllt.
@@ -71,7 +86,8 @@ WOCHENFOKUS  KW__  | Regime: ____________
 ### 2 — Killswitch-Check (1 Min)
 - [ ] Pro Fokus-Eintrag **nur eine Zahl** prüfen: die **1M-Perf** (Themes-Tabelle bzw. Industry-Heatmap/Setup Picks).
   - **1M < 0 %** → Eintrag ist **tot**: keine neuen Entries dort, offene GTC-Orders für neue Positionen in dem Revier löschen, Slot frei (Hot-Swap möglich, max. 1×/Woche).
-  - Sonst: Eintrag bleibt. **Nichts anderes wird täglich geprüft** — kein Quadranten-, kein Accel-Geflatter.
+  - Sonst: Eintrag bleibt. **Nichts anderes wird täglich geprüft** — kein Quadranten-, kein Accel-Geflatter, **keine Rangwechsel in Themes of the day.**
+- [ ] *(Optional, 30 Sek.:)* **📅 Themes of the day → Rising**, nur Einträge mit **„new today"** notieren — Kandidaten für einen Hot-Swap oder das nächste Wochenende. **Keine Aktion daraus:** rein kommt ein Kandidat nur über die Aufnahme-Formel.
 
 ### 3 — Setups finden (2–3 Min)
 - [ ] Gespeicherten **Screener-Filter** über die Fokus-Watchlists laufen lassen (≤ 5 % unter 20-Tage-Hoch + über SMA50 + Volumen) → es bleiben typischerweise 5–15 Namen.
@@ -106,3 +122,12 @@ Bist du zufällig intraday am Markt und ein **Fokuslisten-Name** bricht frisch m
 6. **Regime steuert Size mechanisch.** RISK-ON 1 % · NEUTRAL 0,5 %, keine Add-ons · RISK-OFF keine neuen Entries (GTC-Stops bleiben) · grau = NEUTRAL.
 7. **Leader pickst du am Chart.** Keine RS-Tabelle, kein Auto-Ranking — eine RS-Liste spült die am weitesten gelaufene Aktie nach oben, genau falsch für Fresh Breakouts.
 8. **Eng halten.** 3–5 Fokus, 3–5 Setups. Lieber 3 saubere als 12 mittelmäßige.
+9. **Themes of the day schärft, entscheidet nicht.** Er grenzt das Revier auf Sub-Themes ein und liefert Bestätigung (`L`/`R`) — er ist weder Aufnahme-Bedingung noch Killswitch.
+
+---
+
+### 🔬 Beobachtungsphase Themes of the day (bis Mitte Dezember 2026)
+Die Kriterien (Schwellen, Zeitraum-Zuordnung) sind aus einer fremden Vorlage übernommen und **nicht backgetestet**. Deshalb:
+- [ ] 4–6 Wochen lang die Spalte **ToD** in jeder Fokusliste mitführen.
+- [ ] Danach vergleichen: Haben Fokus-Einträge mit `L`/`R` in den Folgewochen besser geliefert (mehr saubere Setups, weniger Killswitch-Abgänge) als die mit `–`? Lieferten die Sub-Theme-Watchlists aus 2b mehr Setups pro Name als die ganzen Themes?
+- [ ] Erst dann entscheiden, ob der Tab in die Aufnahme-Formel aufrückt (z. B. als 4. Bedingung oder als Fallback-Quelle) — vorher nicht.
