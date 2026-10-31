@@ -97,10 +97,18 @@ function cellsHtml(r, board) {
   }).join('');
 }
 
-function nameHtml(r, level) {
+// Namen verlinken auf den Finviz-Screener der Gruppe (ctx.groupUrl aus app.js).
+function link(url, text, cls = '') {
+  return url
+    ? `<a class="tod-link ${cls}" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${text}</a>`
+    : text;
+}
+
+function nameHtml(r, level, ctx) {
+  const url = (lvl, name) => ctx.groupUrl?.(lvl, name) || '';
   return level === 'subtheme'
-    ? `<span class="tod-parent">${esc(r.theme)} ·</span> ${esc(r.label)}`
-    : esc(r.name);
+    ? `${link(url('theme', r.theme), `${esc(r.theme)}`, 'tod-parent')}<span class="tod-parent"> ·</span> ${link(url('subtheme', r.name), esc(r.label))}`
+    : link(url(level, r.name), esc(r.name));
 }
 
 function cardHtml(r, board, level, ctx, panel) {
@@ -109,7 +117,7 @@ function cardHtml(r, board, level, ctx, panel) {
   const preview = tickers.slice(0, 6).join(' · ');
   return `<div class="tod-card" title="${esc(tickers.join(', '))}">
     <div class="tod-card-info">
-      <div class="tod-name">${nameHtml(r, level)} ${streak}</div>
+      <div class="tod-name">${nameHtml(r, level, ctx)} ${streak}</div>
       <div class="tod-meta">${r.members ?? tickers.length} Mitglieder${preview ? ` · <span class="tod-tickers">${esc(preview)}</span>` : ''}</div>
     </div>
     <div class="tod-cells">${cellsHtml(r, board)}</div>
