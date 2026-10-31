@@ -1613,7 +1613,18 @@ async function renderTod(reload = false) {
     return;
   }
   await _todView.renderTod(document.getElementById("tod-container"),
-    { etfData: _etfData, industries: _lastIndustries, reload });
+    { etfData: _etfData, industries: _lastIndustries, reload, groupUrl: todGroupUrl });
+}
+
+// Finviz-Screener je Ebene mit der VOLLEN Mitgliederliste: bewusst ohne die
+// FV_MODES-Filter (auch ohne ta_volatility_mo3), damit Finviz dieselben Ticker
+// zeigt, die der Tab als Mitglieder zählt. Sortierung 3M wie im Standardmodus.
+function todGroupUrl(level, name) {
+  let f = null;
+  if (level === "subtheme") f = `subtheme_${name}`;
+  else if (level === "theme") f = `theme_${THEME_SLUG_OVERRIDES[name] ?? name.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+  else if (_lastIndustries?.[name]?.ticker) f = `ind_${_lastIndustries[name].ticker}`;
+  return f ? `https://finviz.com/screener.ashx?v=211&f=${encodeURIComponent(f)}&o=-perf13w` : "";
 }
 
 // ── ETF Themes Tab ────────────────────────────────────────────────────────────
