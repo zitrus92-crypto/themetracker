@@ -100,6 +100,7 @@ const I18N = {
     tabThemesOverview: "📊 Übersicht",
     tabFirstFlag:  "🚩 First Flag",
     tabBaseBreak:  "📦 Base Breakout",
+    tabTod:        "📅 Themes of the day",
     ffTitle:       "🚩 First Flag — Revier-Auswahl",
     bbTitle:       "📦 Base Breakout — Revier-Auswahl",
     ffSubtitle:    "Frische Re-Beschleunigung nach geordneter Korrektur im intakten Trend (Stage PULLBACK). Revier-Auswahl, kein Kaufsignal — die Kaufentscheidung fällt am Einzelchart.",
@@ -451,6 +452,7 @@ ${perfs}`,
     tabThemesOverview: "📊 Overview",
     tabFirstFlag:  "🚩 First Flag",
     tabBaseBreak:  "📦 Base Breakout",
+    tabTod:        "📅 Themes of the day",
     ffTitle:       "🚩 First Flag — hunting grounds",
     bbTitle:       "📦 Base Breakout — hunting grounds",
     ffSubtitle:    "Fresh re-acceleration after an orderly correction in an intact trend (stage PULLBACK). Group selection, not a buy signal — the entry decision is made on the individual chart.",
@@ -1543,7 +1545,6 @@ function initTabs() {
   // Top-level: Industry | Themes | ETFs
   document.querySelectorAll(".top-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      if (location.hash === "#tod") history.replaceState(null, "", location.pathname + location.search);
       document.querySelectorAll(".top-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       if (btn.dataset.top === "experimental") {
@@ -1572,6 +1573,7 @@ function initTabs() {
         showPanel(tab);
         if (tab === "etfs" && _etfData) renderEtfTab();
         else if (tab === "firstflag" || tab === "basebreak") renderSetupTabs();
+        else if (tab === "tod") renderTod();
       }
     });
   });
@@ -1589,13 +1591,14 @@ function initTabs() {
       if (btn.dataset.tab === "ind-rrg" && _lastIndustries) renderRrgChart("industry");
       if (btn.dataset.tab === "etfs" && _etfData) renderEtfTab();
       if (btn.dataset.tab === "firstflag" || btn.dataset.tab === "basebreak") renderSetupTabs();
+      if (btn.dataset.tab === "tod") renderTod();
     });
   });
 }
 
-// ── Versteckter Tab "Themes of the day" ───────────────────────────────────────
-// Bewusst ohne Button: nur über #tod in der URL oder Alt+Shift+T. Rechenkern
-// static/todMetrics.js, Darstellung static/todView.js (lädt die Snapshots selbst).
+// ── Themes-Untertab "Themes of the day" ───────────────────────────────────────
+// Rechenkern static/todMetrics.js, Darstellung static/todView.js (lädt die
+// Snapshots selbst).
 let _todView = null;
 
 function todVisible() {
@@ -1612,20 +1615,6 @@ async function renderTod(reload = false) {
   await _todView.renderTod(document.getElementById("tod-container"),
     { etfData: _etfData, industries: _lastIndustries, reload });
 }
-
-function openTod() {
-  document.querySelectorAll(".top-btn").forEach(b => b.classList.remove("active"));
-  document.getElementById("industry-subnav")?.classList.add("hidden");
-  document.getElementById("themes-subnav")?.classList.add("hidden");
-  showPanel("tod");
-  if (location.hash !== "#tod") history.replaceState(null, "", "#tod");
-  renderTod();
-}
-
-window.addEventListener("hashchange", () => { if (location.hash === "#tod") openTod(); });
-document.addEventListener("keydown", (e) => {
-  if (e.altKey && e.shiftKey && e.code === "KeyT") { e.preventDefault(); openTod(); }
-});
 
 // ── ETF Themes Tab ────────────────────────────────────────────────────────────
 
@@ -4642,8 +4631,7 @@ async function loadData() {
       // renderAll zeichnet den Industry-RRG vor den Snapshots — Tails nachziehen.
       if (_lastIndustries) renderRrgChart("industry");
       renderSetupTabs();
-      if (location.hash === "#tod" && !todVisible()) openTod();
-      else if (todVisible()) renderTod(true);
+      if (todVisible()) renderTod(true);
       // Leading Stocks: Kursdatei beim nächsten Öffnen frisch holen.
       _leadersBars = null; _leadersLoad = null; _leadersFailed = false; _leadersCache = {};
       if (!document.querySelector('[data-panel="leaders"]')?.classList.contains("hidden")) renderLeadersTab();
