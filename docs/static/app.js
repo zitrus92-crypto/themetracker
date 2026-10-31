@@ -1543,6 +1543,7 @@ function initTabs() {
   // Top-level: Industry | Themes | ETFs
   document.querySelectorAll(".top-btn").forEach(btn => {
     btn.addEventListener("click", () => {
+      if (location.hash === "#tod") history.replaceState(null, "", location.pathname + location.search);
       document.querySelectorAll(".top-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       if (btn.dataset.top === "experimental") {
@@ -1591,6 +1592,40 @@ function initTabs() {
     });
   });
 }
+
+// ── Versteckter Tab "Themes of the day" ───────────────────────────────────────
+// Bewusst ohne Button: nur über #tod in der URL oder Alt+Shift+T. Rechenkern
+// static/todMetrics.js, Darstellung static/todView.js (lädt die Snapshots selbst).
+let _todView = null;
+
+function todVisible() {
+  return !document.querySelector('[data-panel="tod"]')?.classList.contains("hidden");
+}
+
+async function renderTod(reload = false) {
+  try {
+    _todView = _todView || await import("./todView.js?v=" + Date.now());
+  } catch (e) {
+    console.error("todView.js konnte nicht geladen werden:", e);
+    return;
+  }
+  await _todView.renderTod(document.getElementById("tod-container"),
+    { etfData: _etfData, industries: _lastIndustries, reload });
+}
+
+function openTod() {
+  document.querySelectorAll(".top-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("industry-subnav")?.classList.add("hidden");
+  document.getElementById("themes-subnav")?.classList.add("hidden");
+  showPanel("tod");
+  if (location.hash !== "#tod") history.replaceState(null, "", "#tod");
+  renderTod();
+}
+
+window.addEventListener("hashchange", () => { if (location.hash === "#tod") openTod(); });
+document.addEventListener("keydown", (e) => {
+  if (e.altKey && e.shiftKey && e.code === "KeyT") { e.preventDefault(); openTod(); }
+});
 
 // ── ETF Themes Tab ────────────────────────────────────────────────────────────
 
@@ -4607,6 +4642,8 @@ async function loadData() {
       // renderAll zeichnet den Industry-RRG vor den Snapshots — Tails nachziehen.
       if (_lastIndustries) renderRrgChart("industry");
       renderSetupTabs();
+      if (location.hash === "#tod" && !todVisible()) openTod();
+      else if (todVisible()) renderTod(true);
       // Leading Stocks: Kursdatei beim nächsten Öffnen frisch holen.
       _leadersBars = null; _leadersLoad = null; _leadersFailed = false; _leadersCache = {};
       if (!document.querySelector('[data-panel="leaders"]')?.classList.contains("hidden")) renderLeadersTab();
