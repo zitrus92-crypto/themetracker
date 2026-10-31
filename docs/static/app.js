@@ -29,7 +29,6 @@ const I18N = {
     exportJson:   "📤 JSON kopieren",
     top10Title:   "Top 10 per Zeitraum",
     moversTitle:  "Where is the Puck going?",
-    moversSubtitle: "Rank-Veränderung seit dem gewählten Zeitraum. Je größer der Sprung, desto stärker das Momentum.",
     moversRising: "Rising — Puck kommt hier an",
     moversFading: "Cooling — Puck verlässt",
     moversNoData: (period) => `Noch nicht genug Daten für ${period}. Bitte warte bis genug tägliche Snapshots gesammelt wurden.`,
@@ -37,13 +36,6 @@ const I18N = {
     viewCards:    "📊 Karten",
     viewBars:     "📈 Balken",
     tagInst:      "INST",
-    infoScore:    "Gewichteter Rang-Score: 1M×70% + 1W×20% + 3M×10%. Niedriger = besser (Rang 1 = stärkstes).",
-    infoAccel:    "Accel = 3M-Rang minus 1W-Rang. Hoch positiv = war vor 3M noch schwach, jetzt stark = erster Leg, nicht extended. Ideal fuer First-Flag-Setups.",
-    hintHeatmap:  "Score sortieren: Marktüberblick — welche Industries aktuell führen.\nAccel sortieren: First Flag Suche — frisches Momentum (3M schwach + 1W stark = erster Leg, nicht extended).\nINST-Filter: zeigt nur institutionell bestätigte Industries (Top 40 in 1M und 3M).\nKlick auf Spaltenkopf = sortieren, nochmal klicken = umkehren.",
-    hintIndBubble:"X-Achse: 3M-Performance, Y-Achse: 1M-Performance.\nGröße = Stärke (Score) — starke Industries bleiben groß, egal ob beschleunigend oder konsolidierend.\nFarbe = Accel (stabiler Rang3M−Rang1M): grün = beschleunigt, grau = konsolidiert, rot = fällt ab.\nINST-Filter (Heatmap-Toggle) wirkt auch hier. Klick auf Bubble öffnet Finviz-Screener.",
-    hintIndRrg:   "X-Achse: RS-Ratio (3M oder 1W relativ zum Industry-Schnitt, per Toggle wählbar), Y-Achse: RS-Momentum (unverändert: 1M-Relativtempo gegen das 3M-Durchschnittstempo).\nRechts oben Leading, links oben Improving, links unten Lagging, rechts unten Weakening (Farben, siehe Legende).\nTail = die letzten 10 Handelstage aus den Snapshots, Kopfpunkt = Live-Daten.\nBenchmark ist der Gleichgewichts-Schnitt aller Industries — ein Index liegt nicht mit Historie vor.\nDie beiden Buttons filtern auf die Top-30-%-Schnittmengen; beide aktiv = Vereinigung.\nDie „% Performance“-Regler blenden Industries unter dem Schwellwert aus (X = gewähltes Fenster, Y = 1M).\nMaus über eine Industry hebt sie samt Pfad hervor, Maus/Klick auf die Legende hebt einen Quadranten hervor; Klick auf die Bubble öffnet den Finviz-Screener.",
-    hintTop10:    "Top 10 Performer pro Zeitraum — zeigt aktuelle Marktführer.\nKarten: kompakte Übersicht pro Zeitraum.\nBalken: alle Industries sortiert nach 1M und 3M Performance.\nINST-Badge zeigt institutionelles Interesse.",
-    hintMovers:   "Rang-Veränderung seit dem gewählten Zeitraum.\nRising: Industries die am stärksten gestiegen sind — frisches Kapital fließt ein. Hier suchen!\nCooling: Industries die Ränge verloren haben — Kapital verlässt diesen Bereich. Meiden.\nZeitraum wählen: 1W / 2W / 1M / 3M (ausgegraut = noch nicht genug Daten).",
     tabEtfs:      "📈 Themes",
     etfTitle:     "Finviz Thematic Heatmap",
     etfViewThemes:"Themes",
@@ -51,7 +43,6 @@ const I18N = {
     etfColEtfs:   "Top Sub-Themes",
     etfColAccel:  "Accel",
     etfNoData:    "Theme-Daten werden geladen oder sind noch nicht verfügbar.",
-    hintEtfs:     "Finviz Thematic Map — 40 Themes, 268 Sub-Themes (direkte Stock-Daten).\nThemes-Ansicht: Aggregierter Durchschnitt aller Sub-Nodes je Theme. Score = gewichteter Rank (1M×70%+1W×20%+3M×10%).\nSub-Themes: 268 granulare Segmente sortierbar nach beliebigem Zeitraum.\nNutzung: Themes mit starkem 1M UND 3M Score = institutionell bestätigtes Momentum (wie Ariel-Kriterium).",
     hintThemeAccel: "Accel = Differenz zwischen 3M-Rang und 1M-Rang aller Themes.\n\n🟢 Hoher positiver Wert (+10 bis +30): Theme war vor 3 Monaten noch schwach, hat aber im letzten Monat stark aufgeholt → frisches Momentum, ideale First-Flag-Zone. Noch Fleisch am Knochen!\n\n⚪ Nahe null (-5 bis +5): Theme läuft gleichmäßig — weder fresh noch extended.\n\n🔴 Negativer Wert: Theme lief schon vor 3 Monaten stark und ist seitdem abgeflacht → möglicherweise extended oder dreht bereits.",
     hintSubAccel:   "Accel = Differenz zwischen 3M-Rang und 1M-Rang aller 268 Sub-Themes.\n\n🟢 Stark positiv: Sub-Theme war vor 3M noch schwach, zieht jetzt an → frisches Momentum innerhalb des übergeordneten Themes. Ideal für First-Flag-Suche.\n\n⚪ Nahe null: gleichmäßige Bewegung.\n\n🔴 Negativ: Sub-Theme lief 3M schon stark, flacht ab → möglicherweise extended.\n\nTipp: Absteigend sortieren → die heißesten Sub-Theme-Pockets finden.",
     matrixFresh:    "🚀 First Flag Zone",
@@ -114,10 +105,8 @@ const I18N = {
     // ── Tickers (Bubble-Chart Einzelaktien) ────────────────────────────────
     topTickers:    "🎯 Tickers",
     tickersTitle:  "🎯 Tickers Bubble Chart",
-    hintTickers:   "Universum: Ticker aus den Industries UND Themes, die aktuell in der Top-30-%-Schnittmenge nach 1W UND 1M liegen (★ 1W∩1M).\nGefiltert: Market Cap > 1 Mrd. $ und ATR% (20 Tage) > 4 % — beides vollautomatisch, keine manuelle Liste.\nX-Achse: 3M- oder 1W-Performance, Y-Achse: 1M-Performance.\nGröße = Market Cap (log-skaliert). Farbe = Theme/Industry-Gruppe (siehe Legende unten) — gehört ein Ticker zu mehreren Gruppen, zählt die erste (Industries vor Themes), alle stehen im Tooltip.\n„Not Extended“-Toggle: blendet Ticker aus, die weit über ihrem SMA50 laufen (Jeff-Sun-Konvention, siehe eigener Tooltip).\n„Copy Tickers“: kopiert die aktuell sichtbaren Ticker als kommagetrennte Liste zum Einfügen in eine TradingView-Watchlist.\nRechnet einmal pro Handelstag nach US-Close (braucht settled Tageskerzen, wie der Experimental-Tab). Klick auf Bubble öffnet die Finviz-Aktienseite.",
     topLeaders:    "🏆 Leading Stocks",
     leadTitle:     "🏆 Leading Stocks",
-    hintLeaders:   "Welche Einzelaktien führen die stärksten Themes an?\nKonstituenten: alle Finviz-Mitglieder des Themes, 1:1 wie Finviz sie zuordnet. „×N“ hinter dem Ticker = Finviz führt ihn in N Themes (z. B. AMZN in 21) — solche Ticker stecken in mehreren Baskets und bewegen deren Breadth gemeinsam. Datei: data/theme_constituents.json.\nOben: Leader-Watchlist nach der Performer Study — jede Aktie einmal, die alle Kriterien erfüllt (RS ≥ 90, 6M > +50 %, ≤ 20 % unter dem 52W-Hoch, über SMA50/SMA200, Preis ≥ 10 $, $-Vol ≥ 5 Mio). „In Play heute“ = zusätzlich der validierte Breakout-Trigger.\nDarunter je Theme: Breadth über alle Konstituenten und die qualifizierten Aktien nach RS vs. Theme. 👑 = Leader = bester qualifizierter Ticker; erfüllt keiner die Kriterien, hat das Theme keinen Leader.\nFilter (Dollarvolumen, ATR%) wirken nur auf die Tabelle, nicht auf die Breadth.\nFehlende Kursdaten = n/a, nie interpoliert. Alle Schwellen: static/config.js.\nRechnet einmal pro Handelstag nach US-Close.",
     leadSortLabel: "Sortierung",
     leadSortScore: "Theme-Score",
     leadSortGroupRs: "Gruppen-RS 3M",
@@ -131,8 +120,7 @@ const I18N = {
     leadAll:       "alle",
     leadNoData:    "Noch keine Leading-Stocks-Daten — sie entstehen beim nächsten Post-Close-Lauf.",
     leadLoading:   "Lade Kursdaten…",
-    leadMeta:      (date, n, uniq, themes) => `Stand ${date} · ${n} Finviz-Zuordnungen (${uniq} eindeutige Ticker) in ${themes} Themes · RS-Gewichtung IBD-Nachbildung (0,4·3M + 0,2·6M + 0,2·9M + 0,2·12M)`,
-    leadTipDefault:"Tippe oder fahre über ein ⓘ für Definition und Evidenzbasis.",
+    leadMeta:      (date, n, uniq, themes) => `Stand ${date} · ${uniq} Ticker · ${themes} Themes`,
     leadMembers:   (n, m) => `${n} Konstituenten${m < n ? ` · ${n - m} ohne Kursdaten` : ""}`,
     leadManual:    "manuell",
     leadThin:      "wenige Mitglieder",
@@ -140,8 +128,6 @@ const I18N = {
     leadNoLow:     "kein Basket-Tief ≥ 10 % im Fenster",
     leadLowOld:    (d) => `Basket-Tief ${d} zu alt für 52W-Hoch-Vergleich`,
     leadEmptyRows: "Kein Ticker erfüllt die Filter.",
-    leadEvidence:  { validated: "validiert", convention: "Konvention", overfit: "potenziell überangepasst" },
-    leadEvidenceLabel: "Evidenz",
     leadMultiTitle: (n) => `Finviz führt diesen Ticker in ${n} Themes`,
     leadWlTitle:   "🎯 Leader-Watchlist",
     leadWlTable:   "📋 Tabelle",
@@ -169,7 +155,6 @@ const I18N = {
     leadTaTitle:   "Finviz Technical Analysis: blendet SMA20 und die automatische Erkennung von Trendlinien und Chartmustern (Kanäle, Keile, Dreiecke …) in die Charts ein.",
     leadChartsHint:"Tageschart mit SMA50 (orange) und SMA200 (braun), Quelle Finviz. Klick öffnet die Finviz-Aktienseite.",
     leadChartsHintTa: "Technical Analysis aktiv: zusätzlich SMA20 (rosa) und Finviz-Mustererkennung (Trendlinien, Kanäle, Formationen). Die Muster zeichnet Finviz automatisch — sie sind ein Hinweis, kein geprüftes Signal.",
-    leadWlCriteria:(W) => `RS ≥ ${W.RS_MIN} · 6M > +${W.P6M_MIN} % · ≤ ${W.DIST_MAX_PCT} % unter 52W-Hoch · über SMA50 und SMA200 · Preis ≥ ${W.MIN_PRICE} $ · Ø $-Vol 50T ≥ ${W.MIN_DVOL50 / 1e6} Mio — Kriterien aus der Performer Study. Themes sind Kontext, kein Filter.`,
     leadWlAll:     "Alle",
     leadWlInPlay:  "In Play heute",
     leadWlEp:      "EP 6T",
@@ -182,7 +167,7 @@ const I18N = {
     leadQualified: (q, n) => `${q} von ${n} erfüllen die Leader-Kriterien`,
     leadShowAll:   (n) => `alle ${n} zeigen`,
     leadShowQualified: "nur qualifizierte",
-    leadNoLeader:  "Kein qualifizierter Leader — keine Aktie dieses Themes erfüllt die Watchlist-Kriterien.",
+    leadNoLeader:  "Kein Leader.",
     leadFailsTitle:(s) => `Verfehlt: ${s}`,
     leadFails:     { rs_rating: "RS", p6m: "6M-Performance", wl_dist: "Abstand 52W-Hoch", sma50: "SMA50", sma200: "SMA200", min_price: "Preis", dollar_vol_50d: "$-Vol 50T", no_data: "keine Kursdaten" },
     leadWatchlist: "📥 TradingView Watchlist",
@@ -224,11 +209,8 @@ const I18N = {
 
     // ── Experimental (Stufe 0 + Stufe 1) ──────────────────────────────────
     expTitle:      "🧪 Experimental",
-    expSubtitle:   "Zwei unvalidierte Bausteine für Schritt 3 der Tages-Routine: gefilterte Finviz-Links und ein gerechneter Setup-Screener. Nichts hier ersetzt den Chartblick — es sortiert nur vor.",
-    hintExp:       "Stufe 0 verändert die Finviz-Links der ganzen App: statt aller Aktien einer Gruppe nach 4-Wochen-Performance (= extended zuerst) nur die nahe am 20-Tage-Hoch, sortiert nach Nähe zum 50-Tage-Hoch.\nStufe 1 rechnet Base-Verengung, Pivot-Abstand und Volumen aus Tages-OHLCV der stärksten Gruppen — dieselben drei Fragen, die du sonst am Mini-Chart beantwortest.\nAlle Schwellen sind Defaults und NICHT backgetestet.",
 
     expS0Title:    "Stufe 0 — Finviz-Link-Filter",
-    expS0Desc:     "Gilt für jeden Finviz-Link der App (Heatmap, Picks, Themes, Sub-Themes). Zwei Fragen, zwei Einstellungen: „Ganzes Revier“ + 3M-Perf beantwortet „wer führt dieses Revier an?“ — „Setup“ + Pivot-Nähe beantwortet „was ist heute kaufbar, ohne extended zu sein?“",
     expS0Off:      "Ganzes Revier",
     expS0Setup:    "Setup (0–5 %)",
     expS0Wide:     "Weit (0–10 %)",
@@ -244,28 +226,21 @@ const I18N = {
     expS0SetupDesc:"0–5 % unter 20-T-Hoch · über SMA50 · Vol > 500K · Kurs > $5 · Volatility 1M > 3 % · sortiert nach Nähe zum 50-T-Hoch",
     expS0WideDesc: "wie Setup, aber 0–10 % unter dem 20-T-Hoch — mehr Treffer, mehr Arbeit am Chart",
     expS0StrengthDesc: "wie Setup, zusätzlich 3M-Perf > +20 % — Stärke als Eintrittskarte, Pivot-Nähe bleibt die Reihenfolge (Finviz erlaubt nur einen Sortierschlüssel)",
-    expS0Preview:  "Beispiel-Link (stärkste Industry):",
-    expBaseline:   "Grundbedingung im ganzen Tab: Volatility 1M > 3 % in jedem Link — und ADR ≥ 3 % als Pendant in der Tabelle. Ruhige Titel tauchen hier gar nicht erst auf.",
 
     expBubbleXTitle: "Bubble-Chart X-Achse — Default",
-    expBubbleXDesc:  "Legt fest, welche Performance beim Laden als X-Achse in den Bubble-Charts und RRGs (Themes + Industry) steht. Die 3M/1W-Buttons direkt am Chart wechseln nur für die aktuelle Ansicht, ohne diesen Default zu verändern.",
     expBubbleX3M:    "3M",
     expBubbleX1W:    "1W",
 
     expS1Title:    "Stufe 1 — Gerechneter Setup-Screener",
-    expS1Desc:     "Aus Tages-OHLCV der Ticker der stärksten Gruppen. Pivot = höchstes Hoch der letzten 25 Tage ohne die letzten 3. Abstand = Kurs zum Pivot in %.",
     expS1NoData:   "Noch keine setups.json — die Datei entsteht beim nächsten Post-Close-Lauf.",
     expEod:        "EOD",
     expEodNote:    "Wird einmal pro Handelstag nach US-Close gerechnet (Post-Close-Lauf ab 21:30 UTC) — der Rest der App aktualisiert stündlich. Untertags bleibt dieser Stand bewusst stehen: Base, Pivot-Abstand und Volumen brauchen fertige Tageskerzen.",
     expS1Universe: (tk, th) => `${tk} Ticker aus ${th} Themes`,
-    expUnivTitle:  "Universum — wie die „stärksten Themes“ bestimmt werden",
+    expUnivTitle:  "Universum",
     expUnivCount:  (n, pool) => `${n} von ${pool} Themes`,
     expUnivColVia: "qualifiziert über",
     expColTheme:   "Theme",
-    expUnivThemeRule: (n, tfs) => `Je Zeitraum (${tfs}) die ${n} Themes mit der höchsten Performance, danach vereinigt — Überschneidungen zählen einmal. Gerankt wird nach tatsächlicher Performance (Mittelwert der Sub-Nodes), NICHT nach dem Score der Themes-Tabelle: der ist ein gewichteter Rang über alle drei Zeiträume und würde die Zeitraum-Frage gerade verwischen. Industries spielen keine Rolle mehr.`,
-    expUnivNotUsed: "Bewusst NICHT geprüft: Accel, INST-Badge, Regime-Gate, Weekend-Prep-Stage. Die Auswahl ist reine Momentan-Stärke über 1W/1M/3M — sie ist NICHT die Aufnahme-Formel der Wochenend-Routine (die zusätzlich Accel ≥ +10 und 1M > 0 % verlangt).",
     expUnivColTickers: "Ticker",
-    expUnivFootnote: (tk, bars) => `Aus diesen Gruppen: ${tk} eindeutige Ticker, für ${bars} davon kamen Kursdaten zurück. Danach erst greifen ADR-, Liquiditäts- und Setup-Filter.`,
     expS1Empty:    "Keine Kandidaten in dieser Ansicht.",
     expViewTable:  "📋 Tabelle",
     expViewCharts: "🖼 Mini-Charts",
@@ -280,7 +255,6 @@ const I18N = {
     expCopiedSel:  (n) => `${n} markierte Ticker kopiert!`,
     expCopyTitle:  "Markierte Ticker in die Zwischenablage (kommagetrennt, TradingView-Import) — ohne Markierung die komplette Ansicht",
     expCopied:     (n) => `${n} Ticker kopiert!`,
-    expChartsHint: "Mini-Charts direkt von Finviz, vorsortiert nach Setup-Score — dieselben Bilder wie im Screener, nur in deiner Reihenfolge.",
 
     expColTicker:  "Ticker",
     expColGroup:   "Revier",
@@ -329,7 +303,6 @@ const I18N = {
     rrgTip2:        (rs, mom, perfs) =>
       `RS-Ratio: ${rs}  |  RS-Momentum: ${mom}
 ${perfs}`,
-    expUnvalidated:"UNVALIDIERT — Schwellen sind Defaults, kein Backtest.",
   },
   en: {
     notLoaded:    "— not yet loaded —",
@@ -356,7 +329,6 @@ ${perfs}`,
     exportJson:   "📤 Copy JSON",
     top10Title:   "Top 10 per Timeframe",
     moversTitle:  "Where is the Puck going?",
-    moversSubtitle: "Rank change since the selected period. The bigger the jump, the stronger the momentum.",
     moversRising: "Rising — Puck heading here",
     moversFading: "Cooling — Puck leaving",
     moversNoData: (period) => `Not enough data for ${period} yet. Wait until enough daily snapshots are collected.`,
@@ -364,13 +336,6 @@ ${perfs}`,
     viewCards:    "📊 Cards",
     viewBars:     "📈 Bar Chart",
     tagInst:      "INST",
-    infoScore:    "Weighted rank score: 1M×70% + 1W×20% + 3M×10%. Lower = better (rank 1 = strongest).",
-    infoAccel:    "Accel = 3M rank minus 1W rank. High positive = was weak 3M ago, now strong = first leg, not extended. Ideal for First Flag setups.",
-    hintHeatmap:  "Sort by Score: market overview — which industries are currently leading.\nSort by Accel: First Flag search — fresh momentum (weak 3M + strong 1W = first leg, not extended).\nINST filter: shows only institutionally confirmed industries (Top 40 in 1M and 3M).\nClick any column header to sort, click again to reverse.",
-    hintIndBubble:"X-axis: 3M performance, Y-axis: 1M performance.\nSize = strength (Score) — strong industries stay big regardless of accelerating or consolidating.\nColor = Accel (stable Rank3M−Rank1M): green = accelerating, gray = consolidating, red = cooling.\nThe INST filter (Heatmap toggle) applies here too. Click a bubble to open the Finviz screener.",
-    hintIndRrg:   "X axis: RS-Ratio (3M or 1W relative to the industry average, selectable via toggle), Y axis: RS-Momentum (unchanged: 1M relative pace vs. the 3M average pace).\nTop right leading, top left improving, bottom left lagging, bottom right weakening.\nTail = the last 10 trading days from the snapshots, head = live data.\nBenchmark is the equal-weight average of all industries — no index is available with history.\nThe two buttons filter to the top-30% intersections; both active = union.\nThe “% Performance” sliders hide industries below the threshold (X = selected window, Y = 1M).\nHovering an industry highlights it and its path, hovering/clicking the legend highlights a quadrant; clicking a bubble opens the Finviz screener.",
-    hintTop10:    "Top 10 performers per timeframe — shows current market leaders.\nCards: compact overview per timeframe.\nBar chart: all industries sorted by 1M and 3M performance.\nINST badge shows institutional interest.",
-    hintMovers:   "Rank change since the selected period.\nRising: industries that climbed most in ranking — fresh capital flowing in. Look here!\nCooling: industries that lost ranks — capital leaving. Avoid.\nSelect period: 1W / 2W / 1M / 3M (greyed out = not enough data yet).",
     tabEtfs:      "📈 Themes",
     etfTitle:     "Finviz Thematic Heatmap",
     etfViewThemes:"Themes",
@@ -378,7 +343,6 @@ ${perfs}`,
     etfColEtfs:   "Top Sub-Themes",
     etfColAccel:  "Accel",
     etfNoData:    "Theme data loading or not yet available.",
-    hintEtfs:     "Finviz Thematic Map — 40 themes, 268 sub-themes (direct stock data).\nThemes view: averaged across all sub-nodes per theme. Score = weighted rank (1M×70%+1W×20%+3M×10%).\nSub-Themes: 268 granular segments sortable by any timeframe.\nUsage: themes with strong 1M AND 3M score = institutionally confirmed momentum (Ariel criterion).",
     hintThemeAccel: "Accel = difference between 3M rank and 1M rank across all themes.\n\n🟢 High positive (+10 to +30): theme was weak 3 months ago but surged in the last month → fresh momentum, ideal First Flag zone. Plenty of room to run!\n\n⚪ Near zero (-5 to +5): theme is moving steadily — neither fresh nor extended.\n\n🔴 Negative: theme was already strong 3 months ago and has since slowed → possibly extended or beginning to rotate out.",
     hintSubAccel:   "Accel = difference between 3M rank and 1M rank across all 268 sub-themes.\n\n🟢 High positive: sub-theme was weak 3M ago, now accelerating → fresh momentum within the parent theme. Ideal for First Flag search.\n\n⚪ Near zero: steady movement.\n\n🔴 Negative: sub-theme was already strong 3M ago, now slowing → possibly extended.\n\nTip: Sort descending → find the hottest sub-theme pockets.",
     matrixFresh:    "🚀 First Flag Zone",
@@ -441,10 +405,8 @@ ${perfs}`,
     // ── Tickers (single-stock bubble chart) ────────────────────────────────
     topTickers:    "🎯 Tickers",
     tickersTitle:  "🎯 Tickers Bubble Chart",
-    hintTickers:   "Universe: tickers from the industries AND themes currently in the top-30% intersection by 1W AND 1M (★ 1W∩1M).\nFiltered: Market Cap > $1B and ATR% (20 days) > 4% — both fully automatic, no manual list.\nX-axis: 3M or 1W performance, Y-axis: 1M performance.\nSize = Market Cap (log-scaled). Color = Theme/Industry group (see legend below) — a ticker in several groups counts under the first (industries before themes), all of them show in the tooltip.\n\"Not Extended\" toggle: hides tickers running far above their SMA50 (Jeff Sun convention, see its own tooltip).\n\"Copy Tickers\": copies the currently visible tickers as a comma-separated list to paste into a TradingView watchlist.\nRuns once per trading day after US close (needs settled daily candles, like the Experimental tab). Click a bubble to open the Finviz stock page.",
     topLeaders:    "🏆 Leading Stocks",
     leadTitle:     "🏆 Leading Stocks",
-    hintLeaders:   "Which single stocks lead the strongest themes?\nConstituents: all Finviz members of the theme, 1:1 as Finviz assigns them. “×N” after the ticker = Finviz lists it in N themes (e.g. AMZN in 21) — such tickers sit in several baskets and move their breadth together. File: data/theme_constituents.json.\nTop: leader watchlist per the Performer Study — each stock once that passes all criteria (RS ≥ 90, 6M > +50%, ≤ 20% below the 52W high, above SMA50/SMA200, price ≥ $10, $ vol ≥ $5M). “In play today” = plus the validated breakout trigger.\nBelow, per theme: breadth across all constituents and the qualified stocks by RS vs theme. 👑 = leader = best qualified ticker; if none qualifies, the theme has no leader.\nFilters (dollar volume, ATR%) only affect the table, not breadth.\nMissing price data = n/a, never interpolated. All thresholds: static/config.js.\nRuns once per trading day after US close.",
     leadSortLabel: "Sort",
     leadSortScore: "Theme score",
     leadSortGroupRs: "Group RS 3M",
@@ -458,8 +420,7 @@ ${perfs}`,
     leadAll:       "all",
     leadNoData:    "No Leading Stocks data yet — it is created by the next post-close run.",
     leadLoading:   "Loading price data…",
-    leadMeta:      (date, n, uniq, themes) => `As of ${date} · ${n} Finviz assignments (${uniq} unique tickers) in ${themes} themes · RS weighting IBD replica (0.4·3M + 0.2·6M + 0.2·9M + 0.2·12M)`,
-    leadTipDefault:"Tap or hover an ⓘ for definition and evidence base.",
+    leadMeta:      (date, n, uniq, themes) => `As of ${date} · ${uniq} tickers · ${themes} themes`,
     leadMembers:   (n, m) => `${n} constituents${m < n ? ` · ${n - m} without price data` : ""}`,
     leadManual:    "manual",
     leadThin:      "few members",
@@ -467,8 +428,6 @@ ${perfs}`,
     leadNoLow:     "no basket low ≥ 10% in window",
     leadLowOld:    (d) => `Basket low ${d} too old for 52W-high check`,
     leadEmptyRows: "No ticker passes the filters.",
-    leadEvidence:  { validated: "validated", convention: "convention", overfit: "potentially overfit" },
-    leadEvidenceLabel: "Evidence",
     leadMultiTitle: (n) => `Finviz lists this ticker in ${n} themes`,
     leadWlTitle:   "🎯 Leader watchlist",
     leadWlTable:   "📋 Table",
@@ -496,7 +455,6 @@ ${perfs}`,
     leadTaTitle:   "Finviz Technical Analysis: adds SMA20 and the automatic detection of trendlines and chart patterns (channels, wedges, triangles …) to the charts.",
     leadChartsHint:"Daily chart with SMA50 (orange) and SMA200 (brown), source Finviz. Click opens the Finviz stock page.",
     leadChartsHintTa: "Technical Analysis on: plus SMA20 (pink) and Finviz pattern recognition (trendlines, channels, formations). Finviz draws the patterns automatically — a hint, not a tested signal.",
-    leadWlCriteria:(W) => `RS ≥ ${W.RS_MIN} · 6M > +${W.P6M_MIN}% · ≤ ${W.DIST_MAX_PCT}% below 52W high · above SMA50 and SMA200 · price ≥ $${W.MIN_PRICE} · avg $ vol 50d ≥ ${W.MIN_DVOL50 / 1e6}M — criteria from the Performer Study. Themes are context, not a filter.`,
     leadWlAll:     "All",
     leadWlInPlay:  "In play today",
     leadWlEp:      "EP 6d",
@@ -509,7 +467,7 @@ ${perfs}`,
     leadQualified: (q, n) => `${q} of ${n} pass the leader criteria`,
     leadShowAll:   (n) => `show all ${n}`,
     leadShowQualified: "qualified only",
-    leadNoLeader:  "No qualified leader — no stock in this theme passes the watchlist criteria.",
+    leadNoLeader:  "No leader.",
     leadFailsTitle:(s) => `Fails: ${s}`,
     leadFails:     { rs_rating: "RS", p6m: "6M performance", wl_dist: "distance to 52W high", sma50: "SMA50", sma200: "SMA200", min_price: "price", dollar_vol_50d: "$ vol 50d", no_data: "no price data" },
     leadWatchlist: "📥 TradingView Watchlist",
@@ -551,11 +509,8 @@ ${perfs}`,
 
     // ── Experimental (stage 0 + stage 1) ──────────────────────────────────
     expTitle:      "🧪 Experimental",
-    expSubtitle:   "Two unvalidated building blocks for step 3 of the daily routine: filtered Finviz links and a computed setup screener. Neither replaces the chart check — they only pre-sort it.",
-    hintExp:       "Stage 0 changes every Finviz link in the app: instead of all stocks of a group sorted by 4-week performance (= most extended first), only those near their 20-day high, sorted by proximity to the 50-day high.\nStage 1 computes base contraction, pivot distance and volume from daily OHLCV of the strongest groups — the same three questions you normally answer on the mini chart.\nAll thresholds are defaults and NOT backtested.",
 
     expS0Title:    "Stage 0 — Finviz link filter",
-    expS0Desc:     "Applies to every Finviz link in the app (heatmap, picks, themes, sub-themes). Two questions, two settings: “Whole group” + 3M perf answers “who leads this group?” — “Setup” + pivot proximity answers “what is buyable today without being extended?”",
     expS0Off:      "Whole group",
     expS0Setup:    "Setup (0–5%)",
     expS0Wide:     "Wide (0–10%)",
@@ -571,28 +526,21 @@ ${perfs}`,
     expS0SetupDesc:"0–5% below 20-day high · above SMA50 · vol > 500K · price > $5 · volatility 1M > 3% · sorted by proximity to the 50-day high",
     expS0WideDesc: "like Setup but 0–10% below the 20-day high — more hits, more chart work",
     expS0StrengthDesc: "like Setup plus 3M perf > +20% — strength as the entry ticket, pivot proximity stays the ordering (Finviz allows only one sort key)",
-    expS0Preview:  "Sample link (strongest industry):",
-    expBaseline:   "Baseline across the whole tab: volatility 1M > 3% in every link — and ADR ≥ 3% as its counterpart in the table. Quiet names never show up here.",
 
     expBubbleXTitle: "Bubble chart X-axis — default",
-    expBubbleXDesc:  "Sets which performance timeframe the bubble charts and RRGs (Themes + Industry) use as the X-axis on load. The 3M/1W buttons on the chart itself only switch the current view without changing this default.",
     expBubbleX3M:    "3M",
     expBubbleX1W:    "1W",
 
     expS1Title:    "Stage 1 — Computed setup screener",
-    expS1Desc:     "From daily OHLCV of the tickers in the strongest groups. Pivot = highest high of the last 25 days excluding the last 3. Distance = price to pivot in %.",
     expS1NoData:   "No setups.json yet — the file appears after the next post-close run.",
     expEod:        "EOD",
     expEodNote:    "Computed once per trading day after the US close (post-close run from 21:30 UTC) — the rest of the app refreshes hourly. It deliberately stays put during the session: base, pivot distance and volume need settled daily candles.",
     expS1Universe: (tk, th) => `${tk} tickers from ${th} themes`,
-    expUnivTitle:  "Universe — how the “strongest themes” are picked",
+    expUnivTitle:  "Universe",
     expUnivCount:  (n, pool) => `${n} of ${pool} themes`,
     expUnivColVia: "qualified via",
     expColTheme:   "Theme",
-    expUnivThemeRule: (n, tfs) => `Per timeframe (${tfs}) the ${n} themes with the highest performance, then unioned — overlaps count once. Ranked by actual performance (average of the sub-nodes), NOT by the themes table’s score: that is a weighted rank across all three timeframes and would blur the per-timeframe question. Industries no longer play a role.`,
-    expUnivNotUsed: "Deliberately NOT checked: accel, INST badge, regime gate, weekend-prep stage. The pick is pure current strength over 1W/1M/3M — it is NOT the weekend routine’s inclusion formula (which also requires accel ≥ +10 and 1M > 0%).",
     expUnivColTickers: "Tickers",
-    expUnivFootnote: (tk, bars) => `From these groups: ${tk} unique tickers, price data returned for ${bars} of them. Only then do the ADR, liquidity and setup filters apply.`,
     expS1Empty:    "No candidates in this view.",
     expViewTable:  "📋 Table",
     expViewCharts: "🖼 Mini charts",
@@ -607,7 +555,6 @@ ${perfs}`,
     expCopiedSel:  (n) => `${n} marked tickers copied!`,
     expCopyTitle:  "Copy marked tickers to the clipboard (comma-separated, TradingView import) — without a selection, the whole view",
     expCopied:     (n) => `${n} tickers copied!`,
-    expChartsHint: "Mini charts straight from Finviz, pre-sorted by setup score — the same images as in the screener, just in your order.",
 
     expColTicker:  "Ticker",
     expColGroup:   "Group",
@@ -656,7 +603,6 @@ ${perfs}`,
     expTipDry:     "Volume of the last 5 days ÷ 50-day average. Below 1 = volume drying up in the base.",
     expTipRvol:    "Today's volume ÷ 50-day average. Above 1 at the pivot = breakout with participation.",
     expTipScore:   "0–100: pivot proximity 40 · contraction 25 · dry-up 15 · base length 10 · trend 10. A sorting aid only, UNVALIDATED.",
-    expUnvalidated:"UNVALIDATED — thresholds are defaults, no backtest.",
   },
 };
 
@@ -666,19 +612,13 @@ const t = (key, ...args) => {
   return typeof val === "function" ? val(...args) : (val ?? key);
 };
 
-function initSectionHints() {
-  document.querySelectorAll(".section-hint[data-hint-key]").forEach(el => {
-    el.setAttribute("data-tip", t(el.dataset.hintKey));
-  });
-}
-
 function applyTranslations() {
   document.querySelectorAll("[data-i18n]").forEach(el => {
     const key = el.dataset.i18n;
     if (key === "colScore") {
       const isActive = el.classList.contains("sort-active");
       const arrow = isActive ? (_sortState.dir === 1 ? " ▲" : " ▼") : (_sortState.col === "score" ? " ▲" : "");
-      el.innerHTML = t(key) + arrow + ` <span class="col-info" title="${t('infoScore')}">i</span>`;
+      el.innerHTML = t(key) + arrow;
     } else {
       el.textContent = t(key);
     }
@@ -707,7 +647,6 @@ function applyTranslations() {
   { const b = document.getElementById("tickers-copy-btn"); if (b) b.title = t("tickersCopyTitle"); }
   document.documentElement.lang = _lang;
   document.getElementById("lang-btn").textContent = _lang === "de" ? "EN" : "DE";
-  initSectionHints();
   if (_lastPayload) renderAll(_lastPayload);
   if (_lastHistory) renderMovers(_lastHistory, _activePeriodDays);
   if (_etfData) renderEtfTab();
@@ -1037,9 +976,7 @@ function renderHeatmap(industries) {
     const i18nKey = "col" + col.charAt(0).toUpperCase() + col.slice(1);
     const label = I18N[_lang][i18nKey] !== undefined ? t(i18nKey) : (th.dataset.label || col);
     const arrow = isActive ? (_sortState.dir === 1 ? " ▲" : " ▼") : "";
-    const tipKey = col === "score" ? "infoScore" : col === "accel" ? "infoAccel" : null;
-    const icon = tipKey ? ` <span class="col-info" title="${t(tipKey)}">i</span>` : "";
-    th.innerHTML = label + arrow + icon;
+    th.innerHTML = label + arrow;
   });
 
   const maxRank = sorted.length;
@@ -1850,7 +1787,7 @@ function renderEtfThemes(data) {
     const isActive = col === _etfThemeSort.col;
     th.classList.toggle("sort-active", isActive);
     const arrow = isActive ? (_etfThemeSort.dir === 1 ? " ▲" : " ▼") : "";
-    if (col === "score") th.innerHTML = t("colScore") + arrow + ` <span class="col-info" title="${t('infoScore')}">i</span>`;
+    if (col === "score") th.innerHTML = t("colScore") + arrow;
     else if (col === "accel") th.innerHTML = t("etfColAccel") + arrow;
     else if (col === "stage") th.textContent = t("colStage") + arrow;
     else th.textContent = (col === "theme" ? "Theme" : col) + arrow;
@@ -1987,7 +1924,7 @@ function renderEtfList(data) {
     const isActive = col === _etfListSort.col;
     th.classList.toggle("sort-active", isActive);
     const arrow = isActive ? (_etfListSort.dir === 1 ? " ▲" : " ▼") : "";
-    if (col === "score") th.innerHTML = t("colScore") + arrow + ` <span class="col-info" title="${t('infoScore')}">i</span>`;
+    if (col === "score") th.innerHTML = t("colScore") + arrow;
     else if (col === "accel") th.innerHTML = t("colAccel") + arrow;
     else th.textContent = th.textContent.replace(/ [▲▼]$/, "") + arrow;
   });
@@ -3258,7 +3195,6 @@ function expBubbleXAxisHtml() {
   return `
     <div class="exp-block">
       <div class="setup-section-hdr">${t("expBubbleXTitle")}</div>
-      <p class="exp-desc">${t("expBubbleXDesc")}</p>
       <div class="exp-modes">
         ${btn("3M")}
         ${btn("1W")}
@@ -3267,37 +3203,25 @@ function expBubbleXAxisHtml() {
 }
 
 function expStage0Html() {
-  const strongest = Object.entries(_lastIndustries ?? {})
-    .sort((a, b) => a[1].composite - b[1].composite)[0];
-  const sample = strongest ? finvizUrl(strongest[1].ticker) : "";
   const btn = (mode, label, desc) => `
     <button class="exp-mode-btn${_fvMode === mode ? " exp-mode-btn--active" : ""}"
             data-fvmode="${mode}" title="${esc(desc)}">${label}</button>`;
-  const modeKey = { off: "Off", setup: "Setup", wide: "Wide", strength: "Strength" }[_fvMode] ?? "Off";
 
   return `
     <div class="exp-block">
-      <div class="setup-section-hdr">${t("expS0Title")}
-        <span class="setup-count">${t("expUnvalidated")}</span></div>
-      <p class="exp-desc">${t("expS0Desc")}</p>
+      <div class="setup-section-hdr">${t("expS0Title")}</div>
       <div class="exp-modes">
         ${btn("off",      t("expS0Off"),      t("expS0OffDesc"))}
         ${btn("setup",    t("expS0Setup"),    t("expS0SetupDesc"))}
         ${btn("wide",     t("expS0Wide"),     t("expS0WideDesc"))}
         ${btn("strength", t("expS0Strength"), t("expS0StrengthDesc"))}
       </div>
-      <p class="exp-mode-desc">${t("expS0" + modeKey + "Desc")}</p>
       <div class="exp-modes exp-sorts">
         <span class="exp-sort-label">${t("expSortLabel")}</span>
         ${Object.entries(FV_SORTS).map(([key, s]) => `
           <button class="exp-mode-btn${fvActiveSort() === key ? " exp-mode-btn--active" : ""}"
                   data-fvsort="${key}" title="${esc(t(s.descKey))}">${t(s.labelKey)}</button>`).join("")}
       </div>
-      <p class="exp-mode-desc">${t(FV_SORTS[fvActiveSort()].descKey)}</p>
-      ${sample ? `<p class="exp-sample">${t("expS0Preview")}
-        <a href="${sample}" target="_blank" rel="noopener">${esc(strongest[0])} →</a>
-        <code>${esc(sample.replace("https://finviz.com/screener.ashx?", ""))}</code></p>` : ""}
-      <p class="exp-note">${t("expBaseline")}</p>
     </div>`;
 }
 
@@ -3326,8 +3250,6 @@ function expUniverseHtml() {
     <details class="setup-nearmiss wp-details exp-universe">
       <summary class="setup-section-hdr">▸ ${t("expUnivTitle")}
         <span class="setup-count">${t("expUnivCount", thm.length, pool.themes ?? 0)}</span></summary>
-      <p class="exp-desc">${t("expUnivThemeRule", cfg.N_THEMES_PER_TF ?? 5, tfs.join(" · "))}</p>
-      <p class="exp-note exp-univ-warn">${t("expUnivNotUsed")}</p>
       <div class="table-scroll"><table class="setup-table exp-table">
         <thead><tr>
           <th class="exp-th-left">${t("expColTheme")}</th>
@@ -3337,15 +3259,11 @@ function expUniverseHtml() {
         </tr></thead>
         <tbody>${thm.map(row).join("")}</tbody>
       </table></div>
-      <p class="exp-note">${t("expUnivFootnote", u.tickers ?? 0, u.with_bars ?? 0)}</p>
     </details>`;
 }
 
 function expStage1Html() {
-  const hdr = `<div class="setup-section-hdr">${t("expS1Title")}
-      <span class="setup-count">${t("expUnvalidated")}</span></div>
-    <p class="exp-desc">${t("expS1Desc")}</p>
-    <p class="exp-note">${t("expBaseline")}</p>`;
+  const hdr = `<div class="setup-section-hdr">${t("expS1Title")}</div>`;
 
   if (!_setupsData) return `<div class="exp-block">${hdr}<div class="setup-empty">${t("expS1NoData")}</div></div>`;
 
@@ -3396,10 +3314,9 @@ function expTableHtml(rows) {
 
   const head = EXP_COLS.map(c => {
     const active = _expSort.col === c.col ? (_expSort.dir === 1 ? " ▲" : " ▼") : "";
-    const info = c.tip ? ` <span class="col-info" title="${esc(t(c.tip))}">i</span>` : "";
     const cls = `${c.left ? "exp-th-left" : ""}${c.nosort ? "" : " exp-th-sort"}`.trim();
     const attr = c.nosort ? "" : ` data-expcol="${c.col}"`;
-    return `<th class="${cls}"${attr}>${t(c.key)}${active}${info}</th>`;
+    return `<th class="${cls}"${attr}>${t(c.key)}${active}</th>`;
   }).join("");
 
   const body = rows.map(r => `
@@ -3449,7 +3366,7 @@ function expChartsHtml(rows) {
   const more = rows.length > shown.length
     ? `<p class="exp-note">+${rows.length - shown.length} ${_lang === "de" ? "weitere in der Tabellenansicht" : "more in the table view"}</p>`
     : "";
-  return `<p class="exp-note">${t("expChartsHint")}</p><div class="exp-charts">${cards}</div>${more}`;
+  return `<div class="exp-charts">${cards}</div>${more}`;
 }
 
 function renderExperimental() {
@@ -3676,7 +3593,6 @@ initSortHeaders();
 initInstToggle();
 initTickersNotExtendedToggle();
 initTickersCopyButton();
-initSectionHints();
 initPeriodSelector();
 initViewToggle();
 initEtfViewToggle();
@@ -3804,13 +3720,6 @@ function leadMulti(tv) {
   return n > 1 ? ` <span class="lead-multi" title="${esc(t("leadMultiTitle", n))}">×${n}</span>` : "";
 }
 
-function leadInfo(key) {
-  const col = t("leadCols")[key];
-  const ev = _LCFG.EVIDENCE[key] || "convention";
-  const tip = `${col[0]}: ${col[1]} · ${t("leadEvidenceLabel")}: ${t("leadEvidence")[ev]}`;
-  return `<span class="lead-info lead-ev--${ev}" data-key="${key}" title="${esc(tip)}" tabindex="0">i</span>`;
-}
-
 // Setup-Urteil je Ticker aus setups.json (Experimental-Tab). Fehlt ein Ticker,
 // ist er nicht im Screener-Universum oder OUT/EXTENDED — beides heißt "—".
 function leadSetupMap() {
@@ -3888,10 +3797,10 @@ function leadersWatchlistHtml() {
   const cols = ["rs_rating", "best_theme", "p6m", "wl_dist", "rmv", "rvol_50d", "trigger", "ep", "setup", "atr_pct", "dollar_vol_50d"];
   const head = `<th>#</th><th>Ticker</th>` + cols.map(k => {
     const label = `${t("leadCols")[k][0]}${k === "atr_pct" ? ` ${ui.atrPeriod}` : ""}`;
-    if (k !== "dollar_vol_50d") return `<th>${label} ${leadInfo(k)}</th>`;
+    if (k !== "dollar_vol_50d") return `<th>${label}</th>`;
     const arrow = ui.dvolSort === "asc" ? " ▲" : ui.dvolSort === "desc" ? " ▼" : "";
     return `<th class="lead-th-sort" data-lsortcol="dollar_vol_50d" title="${esc(t("leadDvolSortTitle"))}"`
-      + ` aria-sort="${ui.dvolSort === "asc" ? "ascending" : ui.dvolSort === "desc" ? "descending" : "none"}">${label}${arrow} ${leadInfo(k)}</th>`;
+      + ` aria-sort="${ui.dvolSort === "asc" ? "ascending" : ui.dvolSort === "desc" ? "descending" : "none"}">${label}${arrow}</th>`;
   }).join("");
   const body = shown.length ? shown.map((e, i) => {
     const sym = leadSym(e.ticker);
@@ -3947,7 +3856,6 @@ function leadersWatchlistHtml() {
       </span>
     </div>
     ${chartBar}
-    <p class="lead-dim lead-wl__criteria">${t("leadWlCriteria", W)}</p>
     ${leadersDiffHtml(diff)}
     ${ui.wlMode === "charts" ? leadersChartsHtml(shown, setups)
       : `<div class="table-scroll"><table class="lead-table lead-wl-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`}
@@ -4054,13 +3962,13 @@ function leadersCardHtml(theme) {
   const rc = b.rank_change_4w;
   const rcTxt = rc === null ? leadNa()
     : `<span class="${rc > 0 ? "lead-pos" : rc < 0 ? "lead-neg" : ""}">${rc > 0 ? "▲ +" : rc < 0 ? "▼ " : ""}${rc}</span>`;
-  const chip = (key, val) => `<span class="lead-chip">${t("leadCols")[key][0]} <b>${val}</b>${leadInfo(key)}</span>`;
+  const chip = (key, val) => `<span class="lead-chip">${t("leadCols")[key][0]} <b>${val}</b></span>`;
   const lowTxt = theme.basket_low
     ? (theme.fth_reason === "low_too_old" ? t("leadLowOld", leadDate(theme.basket_low.date))
       : t("leadBasketLow", leadDate(theme.basket_low.date), theme.basket_low.drawdown.toFixed(1)))
     : t("leadNoLow");
   const stateTag = theme.state && theme.state !== "neutral"
-    ? `<span class="lead-tag lead-state--${theme.state}" title="${esc(t("leadStateTitle", theme.rank_3m, theme.rank_12m, theme.rank_gap, theme.n_ranked))}">${t("leadState")[theme.state]}${leadInfo("state")}</span>` : "";
+    ? `<span class="lead-tag lead-state--${theme.state}" title="${esc(t("leadStateTitle", theme.rank_3m, theme.rank_12m, theme.rank_gap, theme.n_ranked))}">${t("leadState")[theme.state]}</span>` : "";
   const tags = [
     stateTag,
     theme.source === "manual" ? `<span class="lead-tag">${t("leadManual")}</span>` : "",
@@ -4075,7 +3983,7 @@ function leadersCardHtml(theme) {
   const cols = ["rs_vs_theme", "rs_rating", "p6m", "dist_52wh", "first_to_high", "down_day_strength",
     "rvol_50d", "adr_pct", "atr_pct", "dollar_vol_20d"];
   const head = `<th>#</th><th>Ticker</th>` + cols.map(k =>
-    `<th>${t("leadCols")[k][0]}${k === "atr_pct" ? ` ${_leadersUi.atrPeriod}` : ""} ${leadInfo(k)}</th>`).join("");
+    `<th>${t("leadCols")[k][0]}${k === "atr_pct" ? ` ${_leadersUi.atrPeriod}` : ""}</th>`).join("");
   const body = rows.map((r, i) => {
     const sym = leadSym(r.ticker);
     const cls = r.leader ? "lead-row--leader" : !r.qualified ? "lead-row--laggard" : "";
@@ -4137,7 +4045,7 @@ function leadersBarHtml() {
   return `<div class="lead-bar">
     <span class="lead-group"><span class="xaxis-toggle-label">${t("leadSortLabel")}</span>
       ${seg("lsort", [["group_rs", t("leadSortGroupRs")], ["score", t("leadSortScore")], ["breadth", t("leadSortBreadth")]], ui.sort)}
-      ${leadInfo("group_rs")}</span>
+     </span>
     <span class="lead-group"><span class="xaxis-toggle-label">${t("leadTopN")}</span>
       <select class="lead-select" data-lfilter="topN">${opt(_LCFG.TOP_N_OPTIONS, ui.topN, v => v)}</select></span>
     <span class="lead-group"><span class="xaxis-toggle-label">${t("leadMinDvol")}</span>
@@ -4271,7 +4179,6 @@ async function renderLeadersTab() {
   const nUniq = new Set(Object.values(_leadersCons.themes).flatMap(c => c.tickers)).size;
   box.innerHTML = `${leadersBarHtml()}
     <p class="picks-subtitle lead-meta">${t("leadMeta", leadersDataDate(), nCons, nUniq, Object.keys(_leadersCons.themes).length)}</p>
-    <p class="lead-tip" id="lead-tip">${t("leadTipDefault")}</p>
     ${leadersWatchlistHtml()}
     <h3 class="lead-section-title">${t("leadThemesTitle")}</h3>
     ${themes.map(leadersCardHtml).join("")}`;
@@ -4284,7 +4191,6 @@ function wireLeadersControls(box) {
   box.querySelector(".lead-tv-btn").onclick = downloadLeadersWatchlist;
   box.querySelector(".lead-tv-themes-btn").onclick = downloadThemeCardsWatchlist;
   box.querySelectorAll("[data-lsortcol]").forEach(th => th.onclick = (e) => {
-    if (e.target.closest(".lead-info")) return;
     // desc -> asc -> aus (Standard-RS-Reihenfolge)
     ui.dvolSort = ui.dvolSort === null ? "desc" : ui.dvolSort === "desc" ? "asc" : null;
     prefSet("leadDvolSort", ui.dvolSort ?? "");
@@ -4326,16 +4232,6 @@ function wireLeadersControls(box) {
     ui[k] = Number(sel.value);
     prefSet("lead" + k[0].toUpperCase() + k.slice(1), ui[k]);
     renderLeadersTab();
-  });
-  // Info-Icons: Hover (Desktop) und Tap (Mobil) schreiben in die Tipp-Zeile —
-  // ein schwebender Tooltip würde im horizontal scrollenden Tabellen-Container
-  // abgeschnitten.
-  const tip = box.querySelector("#lead-tip");
-  const show = (el) => { tip.textContent = el.getAttribute("title"); tip.classList.add("lead-tip--active"); };
-  box.querySelectorAll(".lead-info").forEach(el => {
-    el.addEventListener("mouseenter", () => show(el));
-    el.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); show(el); });
-    el.addEventListener("focus", () => show(el));
   });
 }
 
