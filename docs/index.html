@@ -23,7 +23,8 @@
     <button class="top-btn active" data-top="themes" data-i18n="tabEtfs">&#128200; Themes</button>
     <button class="top-btn" data-top="tickers" data-i18n="topTickers">&#127919; Tickers</button>
     <button class="top-btn" data-top="leaders" data-i18n="topLeaders">&#127942; Leading Stocks</button>
-    <button class="top-btn" data-top="experimental" data-i18n="topExperimental">&#129514; Experimental</button>
+    <!-- Selten gebraucht: nur als kleines, gedimmtes Icon ganz rechts -->
+    <button class="top-btn top-btn--minor" data-top="experimental" title="Experimental" aria-label="Experimental">&#129514;</button>
   </nav>
   <nav class="sub-nav hidden" id="industry-subnav">
     <button class="sub-btn active" data-tab="heatmap" data-i18n="tabHeatmap">Heatmap</button>
@@ -33,8 +34,6 @@
   </nav>
   <nav class="sub-nav" id="themes-subnav">
     <button class="sub-btn active" data-tab="etfs" data-i18n="tabThemesOverview">&#128202; Übersicht</button>
-    <button class="sub-btn" data-tab="firstflag" data-i18n="tabFirstFlag">&#128681; First Flag</button>
-    <button class="sub-btn" data-tab="basebreak" data-i18n="tabBaseBreak">&#128230; Base Breakout</button>
     <button class="sub-btn" data-tab="tod" data-i18n="tabTod">&#128197; Themes of the day</button>
   </nav>
 
@@ -298,25 +297,7 @@
       <div id="leaders-container"></div>
     </section>
 
-    <!-- First Flag tab (SPEC-first-flag-base-breakout §4) -->
-    <section class="section-setup tab-panel hidden" data-panel="firstflag">
-      <div class="heading-group">
-        <h2 data-i18n="ffTitle">&#128681; First Flag — Revier-Auswahl</h2>
-        <span class="section-hint" data-hint-key="hintFirstFlag">i</span>
-      </div>
-      <p class="picks-subtitle" data-i18n="ffSubtitle"></p>
-      <div id="firstflag-container"></div>
-    </section>
 
-    <!-- Base Breakout tab (SPEC-first-flag-base-breakout §4) -->
-    <section class="section-setup tab-panel hidden" data-panel="basebreak">
-      <div class="heading-group">
-        <h2 data-i18n="bbTitle">&#128230; Base Breakout — Revier-Auswahl</h2>
-        <span class="section-hint" data-hint-key="hintBaseBreak">i</span>
-      </div>
-      <p class="picks-subtitle" data-i18n="bbSubtitle"></p>
-      <div id="basebreak-container"></div>
-    </section>
 
     <!-- Experimental: Finviz-Link-Filter (Stufe 0) + Setup-Screener (Stufe 1) -->
     <section class="section-exp tab-panel hidden" data-panel="experimental">
