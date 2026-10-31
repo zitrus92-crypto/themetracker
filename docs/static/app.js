@@ -98,41 +98,17 @@ const I18N = {
     saRule:        "Regel: NEON-GRÜN = T2108 ≤ 10 (Vorrang) · GRÜN = beide Ratios > 1,0 und T2108 steigend · ROT = beide < 1,0 und T2108 fallend · sonst GELB.",
     // First Flag / Base Breakout (SPEC-first-flag-base-breakout)
     tabThemesOverview: "📊 Übersicht",
-    tabFirstFlag:  "🚩 First Flag",
-    tabBaseBreak:  "📦 Base Breakout",
     tabTod:        "📅 Themes of the day",
-    ffTitle:       "🚩 First Flag — Revier-Auswahl",
-    bbTitle:       "📦 Base Breakout — Revier-Auswahl",
-    ffSubtitle:    "Frische Re-Beschleunigung nach geordneter Korrektur im intakten Trend (Stage PULLBACK). Revier-Auswahl, kein Kaufsignal — die Kaufentscheidung fällt am Einzelchart.",
-    bbSubtitle:    "Ausbruch aus flacher Basis (Stage BASE_BREAK). Revier-Auswahl, kein Kaufsignal — die Kaufentscheidung fällt am Einzelchart.",
-    hintFirstFlag: "Kriterien: Stage = PULLBACK · Accel ≥ +10 · Frische 1W/1M im Band 0,15–0,65.\nDichte/Breite/Konzentration folgen in Phase 2 — bis dahin „n/v“, blockieren nicht.\nSegmente entschachtelt: m4_6 = Monate 4–6, m2_3 = Monate 2–3, m1 = letzter Monat.\nSchwellen kalibriert am 14.08.2026 (ein Datensatz) — Nachkalibrierung nach ~8 Wochen Snapshots.",
-    hintBaseBreak: "Kriterien: Stage = BASE_BREAK · Frische 1W/1M im Band 0,15–0,65 — bewusst OHNE Accel-Kriterium (der Rang-Sprung ist beim Basis-Ausbruch Folge, nicht Vorbedingung).\nDichte/Breite/Konzentration folgen in Phase 2 — bis dahin „n/v“, blockieren nicht.\nSegmente entschachtelt: m4_6 = Monate 4–6, m2_3 = Monate 2–3, m1 = letzter Monat.",
     colStage:      "Stage",
     colDensity:    "Dichte",
     colFreshness:  "Frische",
     colDays:       "Tage",
     colSegments:   "m4_6 · m2_3 · m1",
     colFailsAt:    "Scheitert an",
-    setupQualified: "QUALIFIZIERT",
-    setupNearMiss:  "KNAPP DANEBEN",
-    setupUnknown:   "OHNE KLASSIFIKATION",
-    setupGroups:   (n) => `${n} Gruppe${n === 1 ? "" : "n"}`,
-    setupEmptyFF:  "Diese Woche kein qualifizierter First Flag. Das ist ein Ergebnis, kein Fehler.",
-    setupEmptyBB:  "Diese Woche kein qualifizierter Base Breakout. Das ist ein Ergebnis, kein Fehler.",
-    setupEmptyNear: "→ Beinahe-Treffer stehen unter „Knapp daneben“.",
-    setupFailsFmt: (label, actual, req) => `${label}: ${actual} (Soll: ${req})`,
-    setupUnknownHint: "6M fehlt im Datensatz — Klassifikation nicht möglich.",
-    setupMetricsFail: "Kennzahlen-Modul konnte nicht geladen werden — Tab ohne Funktion.",
     copyGroupTitle: "Ticker dieser Gruppe kopieren (kommagetrennt)",
     copyAllBtn:     "📋 Alle kopieren",
     copyAllTitle:   "Alle Gruppen dieser Liste als benannte TradingView-Sektionen kopieren (###Gruppe,TICK,…)",
     copiedSections: (g, tk) => `${g} Gruppe${g === 1 ? "" : "n"} · ${tk} Ticker als Sektionen kopiert!`,
-    setupTipDamage: "Schaden (m2_3+m4_6)",
-    setupTipConc:  "Konzentration",
-    setupTipBreadth: "Breite",
-    snapNone:      "Noch keine Snapshot-Historie — „Tage in Stage“ füllt sich ab dem ersten nächtlichen Lauf.",
-    snapLast:      (d, n, g) => `Letzter Snapshot: ${d} · ${n} Zeilen · ${g} Lücke${g === 1 ? "" : "n"} (30 T)`,
-    snapNotSettled: "vorläufig (Intraday-Lauf)",
     nv:            "n/v",
 
     // ── Tickers (Bubble-Chart Einzelaktien) ────────────────────────────────
@@ -247,7 +223,6 @@ const I18N = {
     tickersCopied:  (n) => `${n} Ticker kopiert!`,
 
     // ── Experimental (Stufe 0 + Stufe 1) ──────────────────────────────────
-    topExperimental: "🧪 Experimental",
     expTitle:      "🧪 Experimental",
     expSubtitle:   "Zwei unvalidierte Bausteine für Schritt 3 der Tages-Routine: gefilterte Finviz-Links und ein gerechneter Setup-Screener. Nichts hier ersetzt den Chartblick — es sortiert nur vor.",
     hintExp:       "Stufe 0 verändert die Finviz-Links der ganzen App: statt aller Aktien einer Gruppe nach 4-Wochen-Performance (= extended zuerst) nur die nahe am 20-Tage-Hoch, sortiert nach Nähe zum 50-Tage-Hoch.\nStufe 1 rechnet Base-Verengung, Pivot-Abstand und Volumen aus Tages-OHLCV der stärksten Gruppen — dieselben drei Fragen, die du sonst am Mini-Chart beantwortest.\nAlle Schwellen sind Defaults und NICHT backgetestet.",
@@ -450,41 +425,17 @@ ${perfs}`,
     saRule:        "Rule: NEON GREEN = T2108 ≤ 10 (takes precedence) · GREEN = both ratios > 1.0 and T2108 rising · RED = both < 1.0 and T2108 falling · else YELLOW.",
     // First Flag / Base Breakout (SPEC-first-flag-base-breakout)
     tabThemesOverview: "📊 Overview",
-    tabFirstFlag:  "🚩 First Flag",
-    tabBaseBreak:  "📦 Base Breakout",
     tabTod:        "📅 Themes of the day",
-    ffTitle:       "🚩 First Flag — hunting grounds",
-    bbTitle:       "📦 Base Breakout — hunting grounds",
-    ffSubtitle:    "Fresh re-acceleration after an orderly correction in an intact trend (stage PULLBACK). Group selection, not a buy signal — the entry decision is made on the individual chart.",
-    bbSubtitle:    "Breakout from a flat base (stage BASE_BREAK). Group selection, not a buy signal — the entry decision is made on the individual chart.",
-    hintFirstFlag: "Criteria: stage = PULLBACK · Accel ≥ +10 · freshness 1W/1M within 0.15–0.65.\nDensity/breadth/concentration arrive in phase 2 — “n/a” until then, never blocking.\nDe-nested segments: m4_6 = months 4–6, m2_3 = months 2–3, m1 = last month.\nThresholds calibrated on 2026-08-14 (a single dataset) — recalibrate after ~8 weeks of snapshots.",
-    hintBaseBreak: "Criteria: stage = BASE_BREAK · freshness 1W/1M within 0.15–0.65 — deliberately WITHOUT the accel criterion (the rank jump follows a base breakout, it does not precede it).\nDensity/breadth/concentration arrive in phase 2 — “n/a” until then, never blocking.\nDe-nested segments: m4_6 = months 4–6, m2_3 = months 2–3, m1 = last month.",
     colStage:      "Stage",
     colDensity:    "Density",
     colFreshness:  "Freshness",
     colDays:       "Days",
     colSegments:   "m4_6 · m2_3 · m1",
     colFailsAt:    "Fails at",
-    setupQualified: "QUALIFIED",
-    setupNearMiss:  "NEAR MISS",
-    setupUnknown:   "UNCLASSIFIED",
-    setupGroups:   (n) => `${n} group${n === 1 ? "" : "s"}`,
-    setupEmptyFF:  "No qualified First Flag this week. That is a result, not an error.",
-    setupEmptyBB:  "No qualified Base Breakout this week. That is a result, not an error.",
-    setupEmptyNear: "→ Near misses are listed under “Near miss”.",
-    setupFailsFmt: (label, actual, req) => `${label}: ${actual} (required: ${req})`,
-    setupUnknownHint: "6M missing from the dataset — classification not possible.",
-    setupMetricsFail: "Metrics module could not be loaded — tab inactive.",
     copyGroupTitle: "Copy this group's tickers (comma-separated)",
     copyAllBtn:     "📋 Copy all",
     copyAllTitle:   "Copy every group in this list as named TradingView sections (###Group,TICK,…)",
     copiedSections: (g, tk) => `${g} group${g === 1 ? "" : "s"} · ${tk} tickers copied as sections!`,
-    setupTipDamage: "Damage (m2_3+m4_6)",
-    setupTipConc:  "Concentration",
-    setupTipBreadth: "Breadth",
-    snapNone:      "No snapshot history yet — “days in stage” fills up from the first nightly run.",
-    snapLast:      (d, n, g) => `Last snapshot: ${d} · ${n} rows · ${g} gap${g === 1 ? "" : "s"} (30 d)`,
-    snapNotSettled: "provisional (intraday run)",
     nv:            "n/a",
 
     // ── Tickers (single-stock bubble chart) ────────────────────────────────
@@ -599,7 +550,6 @@ ${perfs}`,
     tickersCopied:  (n) => `${n} tickers copied!`,
 
     // ── Experimental (stage 0 + stage 1) ──────────────────────────────────
-    topExperimental: "🧪 Experimental",
     expTitle:      "🧪 Experimental",
     expSubtitle:   "Two unvalidated building blocks for step 3 of the daily routine: filtered Finviz links and a computed setup screener. Neither replaces the chart check — they only pre-sort it.",
     hintExp:       "Stage 0 changes every Finviz link in the app: instead of all stocks of a group sorted by 4-week performance (= most extended first), only those near their 20-day high, sorted by proximity to the 50-day high.\nStage 1 computes base contraction, pivot distance and volume from daily OHLCV of the strongest groups — the same three questions you normally answer on the mini chart.\nAll thresholds are defaults and NOT backtested.",
@@ -761,7 +711,6 @@ function applyTranslations() {
   if (_lastPayload) renderAll(_lastPayload);
   if (_lastHistory) renderMovers(_lastHistory, _activePeriodDays);
   if (_etfData) renderEtfTab();
-  renderSetupTabs();
   renderExperimental();
   if (_leadersBars) renderLeadersTab();
   renderRegime();
@@ -1572,7 +1521,6 @@ function initTabs() {
         const tab = activeTab(themesSubNav, "etfs");
         showPanel(tab);
         if (tab === "etfs" && _etfData) renderEtfTab();
-        else if (tab === "firstflag" || tab === "basebreak") renderSetupTabs();
         else if (tab === "tod") renderTod();
       }
     });
@@ -1590,7 +1538,6 @@ function initTabs() {
       if (btn.dataset.tab === "ind-bubble" && _lastIndustries) renderIndustryBubble(_lastIndustries);
       if (btn.dataset.tab === "ind-rrg" && _lastIndustries) renderRrgChart("industry");
       if (btn.dataset.tab === "etfs" && _etfData) renderEtfTab();
-      if (btn.dataset.tab === "firstflag" || btn.dataset.tab === "basebreak") renderSetupTabs();
       if (btn.dataset.tab === "tod") renderTod();
     });
   });
@@ -3229,21 +3176,6 @@ function computeThemeMetrics() {
   }
 }
 
-// Pflicht-Indikator (DECISIONS §4): ein still gestorbener Snapshot-Job ist der
-// wahrscheinlichste Fehlermodus dieses Vorhabens.
-function snapHealthHtml() {
-  if (!_snapDays || !_snapDays.length) {
-    return `<div class="snap-health snap-health--none">${t("snapNone")}</div>`;
-  }
-  const last = _snapDays[_snapDays.length - 1];
-  const gaps = _snapDays.slice(-30).filter(d => d.gap === true).length;
-  const locale = _lang === "de" ? "de-DE" : "en-US";
-  const when = last.fetchedAt ? new Date(last.fetchedAt).toLocaleString(locale) : last.date;
-  const note = last.settled ? "" : ` · ${t("snapNotSettled")}`;
-  const cls = gaps > 0 ? " snap-health--warn" : "";
-  return `<div class="snap-health${cls}">${t("snapLast", when, last.rowCount, gaps)}${note}</div>`;
-}
-
 function stageLabelHtml(stage) {
   if (!stage) return "—";
   return `<span class="stage-label stage-${stage.toLowerCase()}">${stage.replace("_", " ")}</span>`;
@@ -3251,176 +3183,6 @@ function stageLabelHtml(stage) {
 
 const fmtOrDash = (v, digits = 2) =>
   (v === null || v === undefined) ? "—" : v.toFixed(digits);
-
-function segCell(v) {
-  if (v === null || v === undefined) return `<span class="seg-cell">—</span>`;
-  const cls = v > 0 ? "seg-pos" : v < 0 ? "seg-neg" : "";
-  return `<span class="seg-cell ${cls}">${v > 0 ? "+" : ""}${v.toFixed(1)}</span>`;
-}
-
-function buildSetupGroups() {
-  const entries = Object.entries(_etfData.themes);
-  const accel = computeAccel(entries);
-  return entries.map(([name, row]) => ({
-    name, type: "theme", score: row.score, accel: accel[name],
-    perfs: row.perfs, tickers: row.tickers ?? [], rank: row.rank,
-  }));
-}
-
-// Export nach SPEC §4.4: aktive Tab-Auswahl mit vollen Kennzahlen-Feldern.
-function exportSetupJson(result) {
-  const pickPerfs = (name) => {
-    const p = _etfData?.themes?.[name]?.perfs ?? {};
-    return { "1W": p["1W"], "1M": p["1M"], "3M": p["3M"], "6M": p["6M"], "YTD": p["YTD"] };
-  };
-  const rows = [...result.qualified, ...result.nearMiss].map(r => ({
-    type: "theme",
-    name: r.name,
-    score: r.score,
-    accel: r.accel,
-    ranks: { overall: r.rank },
-    perfs: pickPerfs(r.name),
-    segments: r.segments,
-    damage: r.damage,
-    freshness: r.freshness,
-    stage: r.stage,
-    daysInStage: r.daysInStage,
-    density: r.density,
-    breadth: r.breadth,
-    breadthDelta: r.breadthDelta,
-    concentration: r.concentration,
-    qualified: r.qualified,
-    failed: r.failed.map(c => c.key),
-    tickers: _etfData?.themes?.[r.name]?.tickers ?? [],
-  }));
-  exportSelectionJson(rows);
-}
-
-function setupCriterionText(c) {
-  const fmt = (v) => v === null || v === undefined ? t("nv")
-    : typeof v === "number" ? v.toFixed(2) : String(v);
-  return t("setupFailsFmt", c.label, fmt(c.actual), c.required);
-}
-
-function renderSetupTab(tab, containerId) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  if (!_TM || !_themeMetrics || !_etfData?.themes) {
-    container.innerHTML = `<div class="error">${t("setupMetricsFail")}</div>`;
-    return;
-  }
-  const isFF = tab === _TM.TAB.FIRST_FLAG;
-  const result = _TM.buildTab(buildSetupGroups(), tab);
-  [result.qualified, result.nearMiss, result.rejected].forEach(list =>
-    list.forEach(r => { r.daysInStage = _themeMetrics[r.name]?.daysInStage ?? null; }));
-
-  const fBand = _TM.THRESHOLDS.freshness;
-  const unknown = result.rejected.filter(r => r.stage === _TM.STAGE.UNKNOWN);
-
-  const headRow = (extraCol = "") => `<tr>
-    <th>#</th><th style="text-align:left">Theme</th><th data-i18n="colStage">${t("colStage")}</th>
-    <th>${t("colDensity")}</th><th>${t("colAccel")}</th><th>1M</th>
-    <th>${t("colFreshness")}</th><th>${t("colDays")}</th><th>${t("colSegments")}</th>${extraCol}
-  </tr>`;
-
-  // Kopier-Button nur, wenn die Gruppe überhaupt Ticker mitbringt.
-  const rowCopyBtn = (name) => tickersOf("theme", name).length
-    ? `<button class="ind-copy-btn" data-scope="theme" data-key="${esc(name)}" title="${esc(t("copyGroupTitle"))}">📋</button>`
-    : "";
-
-  const bodyRow = (r, idx, extraCell = "", rowCls = "") => {
-    const accelStr = r.accel === null ? "—" : (r.accel > 0 ? `+${r.accel}` : `${r.accel}`);
-    const accelCls = r.accel > 0 ? "accel-pos" : r.accel < 0 ? "accel-neg" : "accel-neu";
-    const freshOut = r.freshness !== null && (r.freshness < fBand.min || r.freshness > fBand.max);
-    const daysCls = r.daysInStage !== null && r.daysInStage <= 4 ? "days-green" : "";
-    const tip = [
-      `${t("setupTipDamage")}: ${fmtOrDash(r.damage, 1)}`,
-      `${t("setupTipBreadth")}: ${r.breadth === null ? t("nv") : fmtOrDash(r.breadth, 0) + " %"}`,
-      `${t("setupTipConc")}: ${r.concentration === null ? t("nv") : fmtOrDash(r.concentration)}`,
-      `Score: ${fmtOrDash(r.score, 1)}`,
-    ].join(" · ");
-    const density = r.density === null
-      ? `<span class="nv">${t("nv")}</span>`
-      : `${r.density.toFixed(0)} %`;
-    return `<tr class="${rowCls}" title="${esc(tip)}">
-      <td>${idx + 1}</td>
-      <td style="text-align:left" class="setup-name-cell">${themeBadge(r.name)}${rowCopyBtn(r.name)}</td>
-      <td>${stageLabelHtml(r.stage)}</td>
-      <td>${density}</td>
-      <td class="${accelCls}">${accelStr}</td>
-      <td class="${perfClass(r.segments.m1)}">${fmtPct(r.segments.m1)}</td>
-      <td class="${freshOut ? "fresh-out" : ""}">${fmtOrDash(r.freshness)}</td>
-      <td class="${daysCls}">${r.daysInStage === null ? "—" : r.daysInStage}</td>
-      <td>${segCell(r.segments.m4_6)} ${segCell(r.segments.m2_3)} ${segCell(r.segments.m1)}</td>
-      ${extraCell}
-    </tr>`;
-  };
-
-  const qualifiedHtml = result.qualified.length
-    ? `<div class="table-scroll"><table class="setup-table">
-        <thead>${headRow()}</thead>
-        <tbody>${result.qualified.map((r, i) => bodyRow(r, i)).join("")}</tbody>
-      </table></div>`
-    : `<div class="setup-empty">${isFF ? t("setupEmptyFF") : t("setupEmptyBB")}
-        ${result.nearMiss.length ? `<br>${t("setupEmptyNear")}` : ""}</div>`;
-
-  const nearMissHtml = result.nearMiss.length
-    ? `<div class="table-scroll"><table class="setup-table">
-        <thead>${headRow(`<th style="text-align:left">${t("colFailsAt")}</th>`)}</thead>
-        <tbody>${result.nearMiss.map((r, i) =>
-          bodyRow(r, i, `<td style="text-align:left" class="fails-at">${esc(setupCriterionText(r.failed[0]))}</td>`)
-        ).join("")}</tbody>
-      </table></div>`
-    : `<div class="setup-empty setup-empty--sub">—</div>`;
-
-  const unknownHtml = unknown.length
-    ? `<div class="setup-section">
-        <div class="setup-section-hdr">${t("setupUnknown")}
-          <span class="setup-count">${t("setupGroups", unknown.length)} · ${t("setupUnknownHint")}</span></div>
-        <div class="setup-unknown-list">${unknown.map(r =>
-          `<span class="setup-unknown-item">${themeBadge(r.name)} ${stageLabelHtml(r.stage)}</span>`).join(" ")}</div>
-      </div>`
-    : "";
-
-  // Sammel-Button nur, wenn in der Liste überhaupt etwas zu kopieren ist.
-  const copyAllBtn = (list, cls) => list.some(r => tickersOf("theme", r.name).length)
-    ? `<button class="setup-copyall-btn ${cls}" title="${esc(t("copyAllTitle"))}">${t("copyAllBtn")}</button>`
-    : "";
-
-  container.innerHTML = `
-    ${snapHealthHtml()}
-    <div class="setup-section">
-      <div class="setup-section-hdr">${t("setupQualified")}
-        <span class="setup-count">${t("setupGroups", result.qualified.length)}</span>
-        ${copyAllBtn(result.qualified, "setup-copyall-btn--qualified")}
-        <button class="selection-bar__export-btn setup-export-btn">${t("exportJson")}</button>
-      </div>
-      ${qualifiedHtml}
-    </div>
-    <details class="setup-nearmiss"${result.qualified.length ? "" : " open"}>
-      <summary class="setup-section-hdr">▸ ${t("setupNearMiss")}
-        <span class="setup-count">${t("setupGroups", result.nearMiss.length)}</span>
-        ${copyAllBtn(result.nearMiss, "setup-copyall-btn--nearmiss")}</summary>
-      ${nearMissHtml}
-    </details>
-    ${unknownHtml}`;
-
-  const exportBtn = container.querySelector(".setup-export-btn");
-  if (exportBtn) exportBtn.onclick = () => exportSetupJson(result);
-
-  wireIndCopyButtons(container);
-
-  // Der Near-Miss-Button sitzt im <summary>; ohne stopPropagation klappt das <details> zu.
-  [[".setup-copyall-btn--qualified", result.qualified],
-   [".setup-copyall-btn--nearmiss", result.nearMiss]].forEach(([sel, list]) => {
-    const btn = container.querySelector(sel);
-    if (btn) btn.onclick = (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      copyGroupsAsSections(btn, list.map(r => ({ name: r.name, scope: "theme" })));
-    };
-  });
-}
 
 // ── Experimental Tab ──────────────────────────────────────────────────────
 // Stufe 0 = Finviz-Link-Filter (fvScreenerUrl oben, wirkt app-weit).
@@ -3699,7 +3461,6 @@ function renderExperimental() {
   const rerenderLinkViews = () => {
     if (_lastPayload) renderAll(_lastPayload);
     if (_etfData) renderEtfTab();
-    renderSetupTabs();
       renderExperimental();
   };
 
@@ -3794,12 +3555,6 @@ function renderExperimental() {
       showToast(t(sel.length ? "expCopiedSel" : "expCopied", tickers.length));
     });
   };
-}
-
-function renderSetupTabs() {
-  if (!_TM) return;
-  renderSetupTab(_TM.TAB.FIRST_FLAG, "firstflag-container");
-  renderSetupTab(_TM.TAB.BASE_BREAKOUT, "basebreak-container");
 }
 
 // ── Regime-Gate Badge (Modul A) ───────────────────────────────────────────
@@ -4634,14 +4389,13 @@ async function loadData() {
     if (etfRes.ok) {
       _etfData = await etfRes.json();
       // Kennzahlen-Kern + Snapshot-Historie: einmal pro Datenladung, dann
-      // stehen stage/daysInStage für Tabelle, Setup-Tabs und Export bereit.
+      // stehen stage/daysInStage für Tabelle und Export bereit.
       await ensureMetricsModule();
       await loadSnapshots();
       computeThemeMetrics();
       renderEtfTab();
       // renderAll zeichnet den Industry-RRG vor den Snapshots — Tails nachziehen.
       if (_lastIndustries) renderRrgChart("industry");
-      renderSetupTabs();
       if (todVisible()) renderTod(true);
       // Leading Stocks: Kursdatei beim nächsten Öffnen frisch holen.
       _leadersBars = null; _leadersLoad = null; _leadersFailed = false; _leadersCache = {};

@@ -922,3 +922,7 @@ details.wp-details { margin-bottom: 18px; }
 }
 .tod-link { color: inherit; text-decoration: none; }
 .tod-link:hover { text-decoration: underline; }
+
+/* Experimental: selten gebraucht -> kleines, gedimmtes Icon ganz rechts */
+.top-btn.top-btn--minor { margin-left: auto; padding-left: 12px; padding-right: 12px; font-size: 12px; opacity: .35; }
+.top-btn.top-btn--minor:hover, .top-btn.top-btn--minor.active { opacity: 1; }
