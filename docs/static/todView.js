@@ -118,7 +118,7 @@ function cardHtml(r, board, level, ctx, panel) {
   return `<div class="tod-card" title="${esc(tickers.join(', '))}">
     <div class="tod-card-info">
       <div class="tod-name">${nameHtml(r, level, ctx)} ${streak}</div>
-      <div class="tod-meta">${r.members ?? tickers.length} Mitglieder${preview ? ` · <span class="tod-tickers">${esc(preview)}</span>` : ''}</div>
+      <div class="tod-meta">${r.members ?? tickers.length}${preview ? ` · <span class="tod-tickers">${esc(preview)}</span>` : ''}</div>
     </div>
     <div class="tod-cells">${cellsHtml(r, board)}</div>
   </div>`;
@@ -135,29 +135,27 @@ function render(container, ctx, level) {
     return board;
   }
 
-  const ref = board.refDate ? `Veränderung vs. ${board.refDate}` : `Veränderung ab ${TOD.LOOKBACK} Handelstagen Historie`;
-  const panel = (title, sub, rows, kind) => `
+  const ref = board.refDate ? ` · vs. ${board.refDate}` : '';
+  const panel = (title, rows, kind) => `
     <div class="tod-panel">
-      <h3>${title}</h3>
-      <p class="tod-sub">${sub} · <b>${rows.length}</b> qualifizieren heute</p>
+      <h3>${title} <span class="tod-count">${rows.length}</span></h3>
       ${rows.length ? rows.map((r) => cardHtml(r, board, level, ctx, kind)).join('')
-        : `<p class="tod-empty">${kind === 'rise' && !board.refDate ? 'Braucht noch Historie.' : 'Heute keine.'}</p>`}
+        : `<p class="tod-empty">—</p>`}
     </div>`;
 
   container.innerHTML = `
     <div class="tod-head">
-      <div><b>Themes of the day</b> <span class="tod-sub">Stand ${board.date} · ${board.n} gerankt · ${ref}</span></div>
+      <div><b>Themes of the day</b> <span class="tod-sub">${board.date} · ${board.n}${ref}</span></div>
       <div class="tod-levels">${switcher}</div>
     </div>
     <div class="tod-grid">
-      ${panel('Leading on all four', `Schlechtester der vier Ränge in den Top ${board.cut.lead}`, board.leading, 'lead')}
-      ${panel('Rising on all four', `Rang verbessert auf allen vier · Median-Rang in den Top ${board.cut.riseMedian}`, board.rising, 'rise')}
+      ${panel('Leading on all four', board.leading, 'lead')}
+      ${panel('Rising on all four', board.rising, 'rise')}
     </div>
     <details class="tod-all">
-      <summary>Alle ${board.n} gerankten Gruppen (nach schlechtestem Rang)</summary>
+      <summary>Alle ${board.n}</summary>
       ${board.rows.map((r) => cardHtml(r, board, level, ctx, r.rising && !r.leading ? 'rise' : 'lead')).join('')}
-    </details>
-    <p class="tod-foot">Große Zahl = Rang heute (LT = 6M · MOM = 3M · FAST = 1M · SF = 1W). Pfeil = Plätze gewonnen (▲) oder verloren (▼) über ${TOD.LOOKBACK} Handelstage. Umrandete Zelle = schlechtester Rang, bestimmt die Position. Gruppen mit weniger als ${TOD.MIN_MEMBERS} Mitgliedern werden nicht gerankt.</p>`;
+    </details>`;
   return board;
 }
 

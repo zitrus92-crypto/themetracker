@@ -926,3 +926,4 @@ details.wp-details { margin-bottom: 18px; }
 /* Experimental: selten gebraucht -> kleines, gedimmtes Icon ganz rechts */
 .top-btn.top-btn--minor { margin-left: auto; padding-left: 12px; padding-right: 12px; font-size: 12px; opacity: .35; }
 .top-btn.top-btn--minor:hover, .top-btn.top-btn--minor.active { opacity: 1; }
+.tod-count { color: var(--text-dim); font-weight: 400; margin-left: 4px; }
