@@ -1,0 +1,63 @@
+{
+ "2026-11-02": {
+  "generated_at": "2026-11-02T22:44:20.773Z",
+  "n": 21,
+  "criteria": {
+   "RS_MIN": 90,
+   "RS_STRONG": 95,
+   "P6M_BARS": 126,
+   "P6M_MIN": 50,
+   "DIST_MAX_PCT": 20,
+   "ABOVE_SMA50": true,
+   "ABOVE_SMA200": true,
+   "MIN_PRICE": 10,
+   "MIN_DVOL50": 5000000
+  },
+  "tickers": [
+   "NASDAQ:MRNA",
+   "NASDAQ:CDNA",
+   "NASDAQ:BRZE",
+   "NYSE:MPC",
+   "NASDAQ:LFST",
+   "NYSE:ANF",
+   "NASDAQ:TENB",
+   "NYSE:SN",
+   "NASDAQ:CRWD",
+   "NYSE:PSX",
+   "NASDAQ:NTRA",
+   "NASDAQ:QLYS",
+   "NYSE:PD",
+   "NYSE:PEB",
+   "NASDAQ:MANH",
+   "NASDAQ:GTLB",
+   "NASDAQ:EXEL",
+   "NASDAQ:GH",
+   "NYSE:VEEV",
+   "NASDAQ:DOCU",
+   "NYSE:PK"
+  ],
+  "rs": {
+   "NASDAQ:MRNA": 99,
+   "NASDAQ:CDNA": 99,
+   "NASDAQ:BRZE": 98,
+   "NYSE:MPC": 98,
+   "NASDAQ:LFST": 98,
+   "NYSE:ANF": 98,
+   "NASDAQ:TENB": 97,
+   "NYSE:SN": 97,
+   "NASDAQ:CRWD": 97,
+   "NYSE:PSX": 96,
+   "NASDAQ:NTRA": 96,
+   "NASDAQ:QLYS": 96,
+   "NYSE:PD": 96,
+   "NYSE:PEB": 96,
+   "NASDAQ:MANH": 95,
+   "NASDAQ:GTLB": 95,
+   "NASDAQ:EXEL": 95,
+   "NASDAQ:GH": 94,
+   "NYSE:VEEV": 94,
+   "NASDAQ:DOCU": 93,
+   "NYSE:PK": 91
+  }
+ }
+}
