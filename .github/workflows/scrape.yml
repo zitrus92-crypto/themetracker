@@ -32,6 +32,11 @@ name: Finviz Scrape (RTH-Loop, NY time)
 # 22:30 UTC:
 #
 #   13:47-22:30 UTC  ->  09:47-18:30 EDT (Sommer) / 08:47-17:30 EST (Winter)
+#
+# Seit Oktober 2026 kommt aber auch der erste Cron-Slot 4-9 h zu spaet. Den
+# Tagesstart uebernimmt deshalb die Dispatch-Kette in scrape-wait.yml: der
+# `rearm`-Job unten stellt nach jedem Tag den Wecker fuer den naechsten. Die
+# Crons bleiben nur noch Fallback, falls die Kette reisst.
 
 on:
   schedule:
@@ -44,7 +49,7 @@ on:
 
 permissions:
   contents: write
-  actions: read  # fuer den Guard: laeuft schon ein Run?
+  actions: write  # Guard (laeuft schon ein Run?) + Wecker in scrape-wait.yml stellen
 
 jobs:
   # 13:47-19:00 UTC (09:47-15:00 EDT)
@@ -136,3 +141,16 @@ jobs:
           LOOP_UNTIL: '22:30'
           MAX_MINUTES: '320'
         run: bash .github/scripts/scrape_loop.sh
+
+  # Wecker fuer den naechsten Handelstag stellen (siehe scrape-wait.yml). Nur
+  # der aktive Run tut das; No-op-Runs aus verspaeteten Crons halten sich raus.
+  rearm:
+    needs: [session, close]
+    if: always() && needs.session.outputs.active == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: scrape-wait.yml anstossen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run scrape-wait.yml --ref "${GITHUB_REF_NAME}"

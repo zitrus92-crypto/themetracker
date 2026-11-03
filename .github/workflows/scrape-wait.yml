@@ -1,0 +1,67 @@
+name: Scrape-Wecker (Dispatch-Kette)
+
+# Startet scrape.yml puenktlich zum naechsten Handelstag — ohne GitHubs Cron.
+#
+# WARUM: Auch der eine verbliebene Cron-Slot pro Tag kommt inzwischen 4-9 h zu
+# spaet (Oktober 2026: erster Run meist 18-20 UTC statt 13:47, am 02.11. erst
+# 22:28, am 03.11. um 17:00 UTC noch gar keiner). Die RTH-Schleife lief damit
+# praktisch nie — die App stand den ganzen Handelstag auf dem Vortags-Close.
+#
+# WIE: workflow_dispatch-Events sind die Ausnahme, die GITHUB_TOKEN ausloesen
+# darf, und sie laufen sofort statt ueber den Cron-Dispatcher. scrape.yml
+# stoesst am Ende seines Tages diesen Wecker an; der schlaeft in Etappen
+# (< 6 h Job-Limit, Repo ist public -> Minuten kostenlos) und dispatcht sich
+# selbst weiter, bis die Zielzeit erreicht ist — dann startet er scrape.yml.
+#
+# Die Crons in scrape.yml bleiben als Fallback: reisst die Kette, startet der
+# naechste (verspaetete) Cron-Run sie am Abend neu.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+# Nie zwei Ketten parallel: ein neuer Wecker ersetzt einen alten.
+concurrency:
+  group: scrape-wait
+  cancel-in-progress: true
+
+jobs:
+  wait:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Schlafen bis zum naechsten Handelsstart, dann weiterreichen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          START_UTC: '13:45'   # vor 09:30 EDT / 08:45 EST; scrape_loop.sh taktet ab dann selbst
+          LATEST_UTC: '19:00'  # bis hierhin lohnt ein sofortiger Start noch heute
+          MAX_SLEEP: '19800'   # 5h30 pro Etappe, unter dem 6-h-Job-Limit
+        run: |
+          now=$(date -u +%s)
+          today=$(date -u +%F)
+          dow=$(date -u +%u)  # 1=Mo ... 7=So
+
+          if [ "${dow}" -le 5 ] && [ "${now}" -lt "$(date -u -d "${today} ${LATEST_UTC}" +%s)" ]; then
+            target=$(date -u -d "${today} ${START_UTC}" +%s)
+          else
+            d=1
+            while [ "$(date -u -d "${today} +${d} day" +%u)" -gt 5 ]; do d=$(( d + 1 )); done
+            target=$(date -u -d "$(date -u -d "${today} +${d} day" +%F) ${START_UTC}" +%s)
+          fi
+
+          remaining=$(( target - now ))
+          echo "Ziel: $(date -u -d "@${target}" '+%a %F %H:%M UTC') — noch $(( remaining / 60 )) min."
+
+          if [ "${remaining}" -gt "${MAX_SLEEP}" ]; then
+            sleep "${MAX_SLEEP}"
+            echo "Etappe vorbei — naechster Wecker."
+            gh workflow run scrape-wait.yml --ref "${GITHUB_REF_NAME}"
+            exit 0
+          fi
+
+          [ "${remaining}" -gt 0 ] && sleep "${remaining}"
+          echo "Zielzeit erreicht — starte scrape.yml."
+          gh workflow run scrape.yml --ref "${GITHUB_REF_NAME}"
