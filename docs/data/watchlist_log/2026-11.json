@@ -256,5 +256,56 @@
    "NYSE:BBY": 92,
    "NYSE:FDS": 92
   }
+ },
+ "2026-11-06": {
+  "generated_at": "2026-11-06T21:42:33.754Z",
+  "n": 16,
+  "criteria": {
+   "RS_MIN": 90,
+   "RS_STRONG": 95,
+   "P6M_BARS": 126,
+   "P6M_MIN": 50,
+   "DIST_MAX_PCT": 20,
+   "ABOVE_SMA50": true,
+   "ABOVE_SMA200": true,
+   "MIN_PRICE": 10,
+   "MIN_DVOL50": 5000000
+  },
+  "tickers": [
+   "NASDAQ:MRNA",
+   "NASDAQ:CDNA",
+   "NASDAQ:BRZE",
+   "NASDAQ:LFST",
+   "NYSE:SN",
+   "NYSE:CHPT",
+   "NASDAQ:PUBM",
+   "NASDAQ:MGNI",
+   "NYSE:ANF",
+   "NYSE:PD",
+   "NASDAQ:MANH",
+   "NYSE:U",
+   "NYSE:VEEV",
+   "NASDAQ:DOCU",
+   "NYSE:BBY",
+   "NASDAQ:TEM"
+  ],
+  "rs": {
+   "NASDAQ:MRNA": 99,
+   "NASDAQ:CDNA": 99,
+   "NASDAQ:BRZE": 99,
+   "NASDAQ:LFST": 98,
+   "NYSE:SN": 98,
+   "NYSE:CHPT": 98,
+   "NASDAQ:PUBM": 98,
+   "NASDAQ:MGNI": 97,
+   "NYSE:ANF": 97,
+   "NYSE:PD": 96,
+   "NASDAQ:MANH": 95,
+   "NYSE:U": 95,
+   "NYSE:VEEV": 93,
+   "NASDAQ:DOCU": 93,
+   "NYSE:BBY": 91,
+   "NASDAQ:TEM": 90
+  }
  }
 }
