@@ -1,7 +1,7 @@
 {
  "schema_version": 2,
- "date": "2026-11-06",
- "generated_at": "2026-11-06T21:42:32.822223+00:00",
+ "date": "2026-11-09",
+ "generated_at": "2026-11-09T21:44:04.224193+00:00",
  "selection": {
   "rule": "alle Finviz-Theme-Mitglieder 1:1 (inkl. Mehrfach-Zuordnungen)",
   "min": 5
@@ -830,10 +830,9 @@
   },
   "Clean Energy": {
    "source": "finviz_theme",
-   "members_total": 71,
+   "members_total": 70,
    "thin": false,
    "tickers": [
-    "NYSE:ACA",
     "NASDAQ:AEP",
     "NYSE:AES",
     "NYSE:ALB",
@@ -1986,7 +1985,6 @@
   "NYSE:ABBV": 1,
   "NASDAQ:ABNB": 1,
   "NYSE:ABT": 4,
-  "NYSE:ACA": 1,
   "NYSE:ACHR": 1,
   "NYSE:ACI": 2,
   "NASDAQ:ACIW": 1,
