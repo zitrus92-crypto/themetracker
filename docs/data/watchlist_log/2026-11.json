@@ -372,5 +372,60 @@
    "NASDAQ:RPD": 91,
    "NYSE:BDX": 90
   }
+ },
+ "2026-11-10": {
+  "generated_at": "2026-11-10T21:42:46.734Z",
+  "n": 18,
+  "criteria": {
+   "RS_MIN": 90,
+   "RS_STRONG": 95,
+   "P6M_BARS": 126,
+   "P6M_MIN": 50,
+   "DIST_MAX_PCT": 20,
+   "ABOVE_SMA50": true,
+   "ABOVE_SMA200": true,
+   "MIN_PRICE": 10,
+   "MIN_DVOL50": 5000000
+  },
+  "tickers": [
+   "NASDAQ:MRNA",
+   "NASDAQ:CDNA",
+   "NASDAQ:BRZE",
+   "NYSE:CHPT",
+   "NYSE:SN",
+   "NASDAQ:MGNI",
+   "NYSE:ANF",
+   "NASDAQ:LFST",
+   "NASDAQ:MANH",
+   "NYSE:PEB",
+   "NASDAQ:FROG",
+   "NASDAQ:TEM",
+   "NYSE:BBY",
+   "NASDAQ:DOCU",
+   "NYSE:U",
+   "NYSE:VEEV",
+   "NASDAQ:REAL",
+   "NYSE:ETSY"
+  ],
+  "rs": {
+   "NASDAQ:MRNA": 99,
+   "NASDAQ:CDNA": 99,
+   "NASDAQ:BRZE": 99,
+   "NYSE:CHPT": 98,
+   "NYSE:SN": 98,
+   "NASDAQ:MGNI": 98,
+   "NYSE:ANF": 97,
+   "NASDAQ:LFST": 97,
+   "NASDAQ:MANH": 95,
+   "NYSE:PEB": 95,
+   "NASDAQ:FROG": 94,
+   "NASDAQ:TEM": 93,
+   "NYSE:BBY": 93,
+   "NASDAQ:DOCU": 93,
+   "NYSE:U": 92,
+   "NYSE:VEEV": 92,
+   "NASDAQ:REAL": 91,
+   "NYSE:ETSY": 90
+  }
  }
 }
