@@ -563,5 +563,64 @@
    "NASDAQ:ALRM": 90,
    "NYSE:IQV": 90
   }
+ },
+ "2026-11-13": {
+  "generated_at": "2026-11-13T21:41:31.743Z",
+  "n": 20,
+  "criteria": {
+   "RS_MIN": 90,
+   "RS_STRONG": 95,
+   "P6M_BARS": 126,
+   "P6M_MIN": 50,
+   "DIST_MAX_PCT": 20,
+   "ABOVE_SMA50": true,
+   "ABOVE_SMA200": true,
+   "MIN_PRICE": 10,
+   "MIN_DVOL50": 5000000
+  },
+  "tickers": [
+   "NASDAQ:CDNA",
+   "NASDAQ:PUBM",
+   "NASDAQ:BRZE",
+   "NASDAQ:MGNI",
+   "NYSE:CHPT",
+   "NYSE:SN",
+   "NYSE:ANF",
+   "NYSE:U",
+   "NYSE:PD",
+   "NASDAQ:LFST",
+   "NASDAQ:FROG",
+   "NASDAQ:MANH",
+   "NYSE:PEB",
+   "NASDAQ:DOCU",
+   "NYSE:BBY",
+   "NYSE:VEEV",
+   "NYSE:ETSY",
+   "NASDAQ:EVER",
+   "NYSE:PCOR",
+   "NYSE:FDS"
+  ],
+  "rs": {
+   "NASDAQ:CDNA": 99,
+   "NASDAQ:PUBM": 99,
+   "NASDAQ:BRZE": 99,
+   "NASDAQ:MGNI": 98,
+   "NYSE:CHPT": 98,
+   "NYSE:SN": 98,
+   "NYSE:ANF": 97,
+   "NYSE:U": 97,
+   "NYSE:PD": 97,
+   "NASDAQ:LFST": 97,
+   "NASDAQ:FROG": 96,
+   "NASDAQ:MANH": 96,
+   "NYSE:PEB": 95,
+   "NASDAQ:DOCU": 94,
+   "NYSE:BBY": 93,
+   "NYSE:VEEV": 93,
+   "NYSE:ETSY": 93,
+   "NASDAQ:EVER": 92,
+   "NYSE:PCOR": 91,
+   "NYSE:FDS": 91
+  }
  }
 }
