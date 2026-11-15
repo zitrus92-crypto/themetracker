@@ -3713,7 +3713,7 @@ function leadersVisibleThemes() {
   const ui = _leadersUi;
   // Lab: alle Rising/Confirmed-Themes, ohne Top-N-Kappung.
   const ordered = _LM.orderThemes(leadersResult(), ui.sort);
-  return (_labMode ? ordered.filter(th => LAB_STATES.has(th.state)) : ordered.slice(0, ui.topN)).map(t => ({
+  return (_labMode ? ordered.filter(th => _LM.LAB_STATES.has(th.state)) : ordered.slice(0, ui.topN)).map(t => ({
     ...t, rows: _LM.filterRows(t.rows, { minDollarVol: ui.minDvol, minAtrPct: ui.minAtr }),
   }));
 }
@@ -3754,7 +3754,7 @@ const leadSym = (tv) => (tv.includes(":") ? tv.split(":")[1] : tv);
 function leadersWatchlist() {
   const ui = _leadersUi;
   const list = _LM.buildWatchlist(leadersResult(), { minDollarVol: ui.minDvol, minAtrPct: ui.minAtr });
-  return _labMode ? list.filter(e => e.themes.some(th => LAB_STATES.has(th.state))).map(labEnrich) : list;
+  return _labMode ? _LM.labFilter(list).map(labEnrich) : list;
 }
 function leadersWatchlistShown(list) {
   const v = _leadersUi.wlView;
@@ -3810,6 +3810,7 @@ function leadersWatchlistHtml() {
   const added = new Set(diff?.added ?? []);
   for (const e of list) e.is_new = diff ? added.has(e.ticker) : null;
   const shown = leadersWatchlistShown(list);
+  if (_labMode) _LM.markThemeClusters(shown);   // Reihenfolge der Anzeige
   const n = {
     all: list.length, strong: list.filter(e => e.strong).length,
     inplay: list.filter(e => e.trigger === true).length, ep: list.filter(e => e.ep === true).length,
@@ -3839,7 +3840,7 @@ function leadersWatchlistHtml() {
       : `<span class="lead-dim" title="${esc(t("leadSetupNone"))}">—</span>`;
     const rmv = e.rmv === null ? leadNa()
       : `<span class="${e.rmv < _LCFG.RMV.CONTRACTION_MAX ? "lead-pos" : ""}">${e.rmv.toFixed(2)}</span>`;
-    const thList = _labMode ? e.themes.filter(th => LAB_STATES.has(th.state)) : e.themes;
+    const thList = _labMode ? e.themes.filter(th => _LM.LAB_STATES.has(th.state)) : e.themes;
     const chips = thList.slice(0, 2).map(th =>
       `<span class="lead-theme-chip${th.leader ? " lead-theme-chip--leader" : ""}">${th.leader ? "★ " : ""}${esc(th.name)} #${th.rank ?? "–"}</span>`
       + (_labMode ? ` <span class="lead-tag lead-state--${th.state}" title="${esc(`3M #${th.rank_3m} · 12M #${th.rank_12m}`)}">${t("leadState")[th.state]}</span>` : "")).join("");
@@ -3847,7 +3848,7 @@ function leadersWatchlistHtml() {
       ? ` <span class="lead-dim" title="${esc(thList.slice(2).map(th => `${th.name} #${th.rank}`).join(" · "))}">+${thList.length - 2}</span>` : "";
     return `<tr class="${e.trigger === true ? "lead-wl-row--inplay" : ""}">
       <td>${i + 1}</td>
-      <td><a href="${finvizQuoteUrl(sym.replace(".", "-"))}" target="_blank" rel="noopener" class="lead-sym">${esc(e.ticker)}</a>${leadMulti(e.ticker)}${e.is_new ? ` <span class="lead-new-badge">${t("leadNewBadge")}</span>` : ""}${_labMode ? labEarnHtml(e) : ""}</td>
+      <td><a href="${finvizQuoteUrl(sym.replace(".", "-"))}" target="_blank" rel="noopener" class="lead-sym">${esc(e.ticker)}</a>${leadMulti(e.ticker)}${e.is_new ? ` <span class="lead-new-badge">${t("leadNewBadge")}</span>` : ""}${_labMode ? labEarnHtml(e) + labClusterHtml(e) : ""}</td>
       ${!_labMode ? "" : e.plan ? `<td>${labPx(e.plan.pivot)}</td><td>${labPx(e.plan.stop)}</td><td>${e.plan.stop_pct.toFixed(1)} %</td><td><b>${e.plan.pos_pct.toFixed(0)} %</b></td>` : `<td>${leadNa()}</td><td>${leadNa()}</td><td>${leadNa()}</td><td>${leadNa()}</td>`}
       <td>${e.strong ? `<b class="lead-rs-strong">${e.rs_rating}</b>` : e.rs_rating}</td>
       <td class="lead-theme-cell">${chips}${more}</td>
@@ -3945,7 +3946,7 @@ function leadersChartsHtml(list, setups) {
     return `<figure class="exp-chart lead-chart${e.trigger ? " lead-chart--inplay" : ""}">
       <figcaption>
         <span class="lead-dim">${i + 1}</span>
-        <a class="exp-ticker" href="${finvizQuoteUrl(sym)}" target="_blank" rel="noopener">${esc(e.ticker)}</a>${leadMulti(e.ticker)}${e.is_new ? ` <span class="lead-new-badge">${t("leadNewBadge")}</span>` : ""}${_labMode ? labEarnHtml(e) : ""}
+        <a class="exp-ticker" href="${finvizQuoteUrl(sym)}" target="_blank" rel="noopener">${esc(e.ticker)}</a>${leadMulti(e.ticker)}${e.is_new ? ` <span class="lead-new-badge">${t("leadNewBadge")}</span>` : ""}${_labMode ? labEarnHtml(e) + labClusterHtml(e) : ""}
         ${tags}
         <span class="exp-chart-nums">${leadNum(e.p6m, 0, " %")} 6M · ${e.dist_52wh_pct.toFixed(1)} %</span>
       </figcaption>
@@ -4203,7 +4204,6 @@ function downloadLeadersWatchlist() {
 // Watchlist-Namen mit einem Theme im Zustand rising/confirmed
 // (Moskowitz & Grinblatt: Stärke mit Gruppen-Rückenwind hält eher).
 let _labMode = false;
-const LAB_STATES = new Set(["rising", "confirmed"]);
 function labEnabled() { try { return localStorage.getItem("tt_lab") === "1"; } catch { return false; } }
 function setLabEnabled(on) {
   try { localStorage.setItem("tt_lab", on ? "1" : "0"); } catch { /* Storage blockiert */ }
@@ -4248,6 +4248,8 @@ function labEnrich(e) {
 }
 const labEarnHtml = (e) => e.earn_warn
   ? ` <span class="lead-neg" title="Earnings ${esc(leadDate(e.earn_date))} (in ${e.earn_days} Handelstagen)">❗</span>` : "";
+const labClusterHtml = (e) => e.cluster
+  ? ` <span class="lead-warn" title="${esc(`Gleiches Theme (${e.cluster.theme}) wie ${e.cluster.ticker}, das weiter oben steht - Risiko pro Theme im Blick behalten`)}">⚠ wie ${esc(leadSym(e.cluster.ticker))}</span>` : "";
 const labPx = (v) => (v >= 100 ? v.toFixed(1) : v.toFixed(2));
 
 async function renderLeadersTab() {

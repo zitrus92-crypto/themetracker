@@ -4,7 +4,7 @@ import {
   retOver, smaLast, high52, isNewHigh, basketIndex, lastBasketLow, atrPct, adrPct,
   rvol, dollarVol, weightedRs, downDayStrength, rankChange, firstToHigh,
   computeLeaders, filterRows, orderThemes, tradingViewWatchlist,
-  rsUniverse, rsRating, tradePlan, businessDaysUntil, triggerMetrics, watchlistFails, buildWatchlist, tradingViewFromWatchlist,
+  rsUniverse, rsRating, tradePlan, businessDaysUntil, labFilter, markThemeClusters, triggerMetrics, watchlistFails, buildWatchlist, tradingViewFromWatchlist,
   applyGroupRs, applyGroupState, rs3mUniverse,
   weekMonday, weekReference, diffWatchlist,
 } from "./leadersMetrics.js";
@@ -340,4 +340,21 @@ test("businessDaysUntil: Wochenende zaehlt nicht", () => {
   assert.equal(businessDaysUntil("2026-11-17", "2026-11-13"), 2);   // Fr -> Di
   assert.equal(businessDaysUntil("2026-11-10", "2026-11-13"), null);
   assert.equal(businessDaysUntil(null, "2026-11-13"), null);
+});
+
+test("labFilter + markThemeClusters: Hinweis auf den ersten Namen im selben Theme", () => {
+  const e = (ticker, themes) => ({ ticker, themes: themes.map(([name, state]) => ({ name, state })) });
+  const list = labFilter([
+    e("A", [["Soft", "confirmed"]]),
+    e("X", [["Old", "neutral"]]),
+    e("B", [["Ecom", "rising"], ["Soft", "confirmed"]]),
+    e("C", [["Ecom", "rising"]]),
+    e("D", [["Soft", "neutral"], ["Bio", "rising"]]),
+  ]);
+  assert.deepEqual(list.map((x) => x.ticker), ["A", "B", "C", "D"]);
+  markThemeClusters(list);
+  assert.equal(list[0].cluster, null);
+  assert.deepEqual(list[1].cluster, { ticker: "A", theme: "Soft" });
+  assert.deepEqual(list[2].cluster, { ticker: "B", theme: "Ecom" });
+  assert.equal(list[3].cluster, null);   // Soft dort nur "neutral"
 });

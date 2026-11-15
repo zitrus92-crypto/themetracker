@@ -621,3 +621,29 @@ export function businessDaysUntil(date, ref) {
   while (d < end) { d.setUTCDate(d.getUTCDate() + 1); const w = d.getUTCDay(); if (w !== 0 && w !== 6) n++; }
   return n;
 }
+
+/** Theme-Zustaende, die der In-Play-Tab (Lab) zeigt. */
+export const LAB_STATES = new Set(["rising", "confirmed"]);
+
+/** Watchlist-Eintraege mit mindestens einem Theme in LAB_STATES. Eine
+ *  Implementierung fuer Seite und Protokoll (scripts/watchlist_log.mjs). */
+export function labFilter(list) {
+  return list.filter((e) => e.themes.some((th) => LAB_STATES.has(th.state)));
+}
+
+/** Klumpen-Hinweis: fuer jeden Eintrag (in Anzeigereihenfolge) der erste
+ *  WEITER OBEN stehende Ticker, der ein Rising/Confirmed-Theme teilt.
+ *  Schreibt e.cluster = { ticker, theme } oder null. */
+export function markThemeClusters(list) {
+  const firstByTheme = new Map();
+  for (const e of list) {
+    e.cluster = null;
+    for (const th of e.themes) {
+      if (!LAB_STATES.has(th.state)) continue;
+      const prev = firstByTheme.get(th.name);
+      if (prev && !e.cluster) e.cluster = { ticker: prev, theme: th.name };
+      if (!prev) firstByTheme.set(th.name, e.ticker);
+    }
+  }
+  return list;
+}

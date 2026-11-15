@@ -11,7 +11,10 @@
  * Filter sind eine Ansichtssache, die Qualifikation nicht.
  *
  * Ausgabe: docs/data/watchlist_log/YYYY-MM.json
- *   { "YYYY-MM-DD": { generated_at, n, criteria, tickers: [...], rs: {ticker: rating} } }
+ *   { "YYYY-MM-DD": { generated_at, n, criteria, tickers: [...], rs: {ticker: rating},
+ *                     in_play_tab: [...], theme_state: {ticker: [state,...]} } }
+ * in_play_tab = Namen im Tab "In Play Stocks & Themes" (Theme rising/confirmed)
+ * - Grundlage fuer den Vergleich In-Play-Tab vs. restliche Watchlist.
  * Schluessel = letzter Handelstag der Kursreihe. Idempotent: ein erneuter Lauf
  * fuer denselben Tag ueberschreibt nur diesen Eintrag.
  */
@@ -19,7 +22,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { computeLeaders, buildWatchlist } from "../docs/static/leadersMetrics.js";
+import { computeLeaders, buildWatchlist, labFilter } from "../docs/static/leadersMetrics.js";
 import { LEADERS } from "../docs/static/config.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -44,6 +47,8 @@ shard[date] = {
   criteria: LEADERS.WL,
   tickers: list.map((e) => e.ticker),
   rs: Object.fromEntries(list.map((e) => [e.ticker, e.rs_rating])),
+  in_play_tab: labFilter(list).map((e) => e.ticker),
+  theme_state: Object.fromEntries(list.map((e) => [e.ticker, e.themes.map((th) => th.state ?? null)])),
 };
 
 const sorted = Object.fromEntries(Object.entries(shard).sort(([a], [b]) => a.localeCompare(b)));
