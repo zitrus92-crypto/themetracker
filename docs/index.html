@@ -25,6 +25,7 @@
     <button class="top-btn" data-top="leaders" data-i18n="topLeaders">&#127942; Leading Stocks</button>
     <!-- Selten gebraucht: nur als kleines, gedimmtes Icon ganz rechts -->
     <button class="top-btn top-btn--minor" data-top="experimental" title="Experimental" aria-label="Experimental">&#129514;</button>
+    <button class="top-btn top-btn--minor hidden" id="lab-btn" data-top="lab" title="Lab" aria-label="Lab">&#183;</button>
   </nav>
   <nav class="sub-nav hidden" id="industry-subnav">
     <button class="sub-btn active" data-tab="heatmap" data-i18n="tabHeatmap">Heatmap</button>
@@ -296,6 +297,11 @@
         <h2 data-i18n="expTitle">&#129514; Experimental</h2>
       </div>
       <div id="exp-container"></div>
+    </section>
+
+    <!-- Lab (versteckt, nur via ?lab freigeschaltet): Leader in Rising/Confirmed-Themes -->
+    <section class="section-lab tab-panel hidden" data-panel="lab">
+      <div id="lab-container"></div>
     </section>
 
     <!-- Themes of the day (static/todMetrics.js + static/todView.js) -->

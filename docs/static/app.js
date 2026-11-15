@@ -1433,7 +1433,12 @@ function initTabs() {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".top-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-      if (btn.dataset.top === "experimental") {
+      if (btn.dataset.top === "lab") {
+        subNav.classList.add("hidden");
+        themesSubNav.classList.add("hidden");
+        showPanel("lab");
+        renderLabTab();
+      } else if (btn.dataset.top === "experimental") {
         subNav.classList.add("hidden");
         themesSubNav.classList.add("hidden");
         showPanel("experimental");
@@ -4164,6 +4169,60 @@ function downloadLeadersWatchlist() {
   a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
   showToast(t("leadWatchlistDone", shown.length));
+}
+
+// -- Lab (versteckt) --------------------------------------------------------
+// Freischalten: Seite einmal mit ?lab aufrufen (?lab=0 sperrt wieder). Kein
+// Schutz, nur nicht verlinkt. Test: Leader der Watchlist, deren Theme laut
+// Gruppen-RS "rising" oder "confirmed" ist (Moskowitz & Grinblatt: Stärke mit
+// Gruppen-Rückenwind hält eher als Einzelgänger-Spikes).
+(function initLabFlag() {
+  try {
+    const p = new URLSearchParams(location.search);
+    if (p.has("lab")) localStorage.setItem("tt_lab", p.get("lab") === "0" ? "0" : "1");
+    if (localStorage.getItem("tt_lab") === "1") document.getElementById("lab-btn")?.classList.remove("hidden");
+  } catch { /* Storage blockiert: Tab bleibt versteckt */ }
+})();
+
+async function renderLabTab() {
+  const box = document.getElementById("lab-container");
+  if (!box) return;
+  if (!_leadersBars) box.innerHTML = `<p class="loading">${t("leadLoading")}</p>`;
+  const ok = await ensureLeadersData();
+  if (!ok) { box.innerHTML = `<p class="pick-empty">${t("leadNoData")}</p>`; return; }
+  if (!_etfData?.themes) { box.innerHTML = `<p class="loading">${t("loading")}</p>`; return; }
+  if (!_leadersBars.rs_universe) { box.innerHTML = `<p class="pick-empty">${t("leadWlNoUniverse")}</p>`; return; }
+
+  const GOOD = new Set(["rising", "confirmed"]);
+  const list = leadersWatchlist()
+    .map(e => ({ ...e, good: e.themes.filter(th => GOOD.has(th.state)) }))
+    .filter(e => e.good.length);
+  const badge = (th) => `<span class="lead-tag lead-state--${th.state}" title="${esc(`3M #${th.rank_3m} · 12M #${th.rank_12m}`)}">${t("leadState")[th.state]}</span>`;
+  const rows = list.map((e, i) => {
+    const sym = leadSym(e.ticker);
+    const th = e.good.map(x => `<span class="lead-theme-chip${x.leader ? " lead-theme-chip--leader" : ""}">${x.leader ? "★ " : ""}${esc(x.name)}</span> ${badge(x)}`).join("<br>");
+    return `<tr class="${e.trigger === true ? "lead-wl-row--inplay" : ""}">
+      <td>${i + 1}</td>
+      <td><a href="${finvizQuoteUrl(sym.replace(".", "-"))}" target="_blank" rel="noopener" class="lead-sym">${esc(e.ticker)}</a></td>
+      <td>${e.strong ? `<b class="lead-rs-strong">${e.rs_rating}</b>` : e.rs_rating}</td>
+      <td class="lead-theme-cell">${th}</td>
+      <td>${leadNum(e.rs_vs_theme, 1, " %")}</td>
+      <td>${leadNum(e.p6m, 0, " %")}</td>
+      <td>${leadNum(e.dist_52wh_pct, 1, " %")}</td>
+      <td>${e.trigger === true ? `<span class="lead-pos">▲</span>` : "—"}</td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="8" class="empty-msg">—</td></tr>`;
+
+  box.innerHTML = `<div class="heading-group"><h2>Lab · Leader × Rising/Confirmed</h2></div>
+    <p class="picks-subtitle">${list.length} von ${leadersWatchlist().length} Watchlist-Namen · Stand ${leadersDataDate()} · Test, unvalidiert</p>
+    <button class="top20-btn lab-copy-btn">📋 Copy Tickers</button>
+    <div class="table-scroll"><table class="lead-table">
+      <thead><tr><th>#</th><th>Ticker</th><th>RS</th><th>Theme (Zustand)</th><th>RS vs Theme 3M</th><th>6M</th><th>Abst. 52W-Hoch</th><th>Trigger</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
+  box.querySelector(".lab-copy-btn").onclick = async () => {
+    try { await navigator.clipboard.writeText(list.map(e => e.ticker).join(",")); showToast(`${list.length} Ticker kopiert`); }
+    catch { showToast("Kopieren fehlgeschlagen"); }
+  };
 }
 
 async function renderLeadersTab() {

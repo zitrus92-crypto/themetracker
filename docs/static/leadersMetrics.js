@@ -502,7 +502,8 @@ export function buildWatchlist(result, { minDollarVol = 0, minAtrPct = 0 } = {})
       if (minDollarVol > 0 && !(r.dollar_vol_20d >= minDollarVol)) continue;
       if (minAtrPct > 0 && !(r.atr_pct >= minAtrPct)) continue;
       const e = per.get(r.ticker) ?? { ...r, themes: [] };
-      e.themes.push({ name: t.name, rank: t.rank, leader: r.ticker === leaderTk });
+      e.themes.push({ name: t.name, rank: t.rank, leader: r.ticker === leaderTk,
+        state: t.state ?? null, rank_3m: t.rank_3m ?? null, rank_12m: t.rank_12m ?? null });
       per.set(r.ticker, e);
     }
   }
