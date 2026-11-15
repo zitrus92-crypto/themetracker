@@ -3801,6 +3801,8 @@ function leadersWatchlistHtml() {
   const list = leadersWatchlist();
   const diff = leadersWeekDiff();
   if (!diff && ui.wlView === "new") ui.wlView = "all";
+  // Lab: "In Play heute" leer (z. B. Wochenende) -> "Alle" statt leerer Seite.
+  if (_labMode && ui.wlView === "inplay" && !list.some(e => e.trigger === true)) ui.wlView = "all";
   const added = new Set(diff?.added ?? []);
   for (const e of list) e.is_new = diff ? added.has(e.ticker) : null;
   const shown = leadersWatchlistShown(list);
