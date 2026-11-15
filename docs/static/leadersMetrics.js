@@ -7,7 +7,7 @@
 // Grundregel: Fehlt ein Wert im benoetigten Fenster, ist das Ergebnis null
 // ("n/a" in der UI). Es wird nie interpoliert oder ueber Luecken gerechnet.
 
-import { LEADERS } from "./config.js";
+import { LEADERS } from "./config.js?v=20261115";   // gleiche URL wie in app.js
 
 const isNum = (x) => typeof x === "number" && Number.isFinite(x);
 const mean = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;

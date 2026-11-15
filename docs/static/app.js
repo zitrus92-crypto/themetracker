@@ -3650,7 +3650,7 @@ async function ensureLeadersData() {
         // genau einmal geladen wird.
         const [lm, cfg] = await Promise.all([
           import("./leadersMetrics.js?v=" + v),
-          import("./config.js"),
+          import("./config.js?v=20261115"),   // Version bei Aenderungen an config.js erhoehen (gleich wie in leadersMetrics.js)
         ]);
         const bust = `?t=${v}`;
         const [bRes, cRes] = await Promise.all([
