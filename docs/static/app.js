@@ -3711,7 +3711,9 @@ function leadersResult() {
 // Sichtbare Themes inkl. gefilterter Zeilen — Grundlage für Tabelle UND Export.
 function leadersVisibleThemes() {
   const ui = _leadersUi;
-  return _LM.orderThemes(leadersResult(), ui.sort).slice(0, ui.topN).map(t => ({
+  // Lab: alle Rising/Confirmed-Themes, ohne Top-N-Kappung.
+  const ordered = _LM.orderThemes(leadersResult(), ui.sort);
+  return (_labMode ? ordered.filter(th => LAB_STATES.has(th.state)) : ordered.slice(0, ui.topN)).map(t => ({
     ...t, rows: _LM.filterRows(t.rows, { minDollarVol: ui.minDvol, minAtrPct: ui.minAtr }),
   }));
 }
@@ -3801,8 +3803,10 @@ function leadersWatchlistHtml() {
   const list = leadersWatchlist();
   const diff = leadersWeekDiff();
   if (!diff && ui.wlView === "new") ui.wlView = "all";
-  // Lab: "In Play heute" leer (z. B. Wochenende) -> "Alle" statt leerer Seite.
-  if (_labMode && ui.wlView === "inplay" && !list.some(e => e.trigger === true)) ui.wlView = "all";
+  // Lab-Default: "In Play heute"; ist heute nichts in Play (z. B. Wochenende),
+  // "RS >= 95" (Studie: Trefferquote 20 % statt 12 %), notfalls "Alle".
+  if (_labMode && ui.wlView === "inplay" && !list.some(e => e.trigger === true))
+    ui.wlView = list.some(e => e.strong) ? "strong" : "all";
   const added = new Set(diff?.added ?? []);
   for (const e of list) e.is_new = diff ? added.has(e.ticker) : null;
   const shown = leadersWatchlistShown(list);
@@ -4073,8 +4077,8 @@ function leadersBarHtml() {
     <span class="lead-group"><span class="xaxis-toggle-label">${t("leadSortLabel")}</span>
       ${seg("lsort", [["group_rs", t("leadSortGroupRs")], ["score", t("leadSortScore")], ["breadth", t("leadSortBreadth")]], ui.sort)}
      </span>
-    <span class="lead-group"><span class="xaxis-toggle-label">${t("leadTopN")}</span>
-      <select class="lead-select" data-lfilter="topN">${opt(_LCFG.TOP_N_OPTIONS, ui.topN, v => v)}</select></span>
+    ${_labMode ? "" : `<span class="lead-group"><span class="xaxis-toggle-label">${t("leadTopN")}</span>
+      <select class="lead-select" data-lfilter="topN">${opt(_LCFG.TOP_N_OPTIONS, ui.topN, v => v)}</select></span>`}
     <span class="lead-group"><span class="xaxis-toggle-label">${t("leadMinDvol")}</span>
       <select class="lead-select" data-lfilter="minDvol">${opt(_LCFG.MIN_DOLLAR_VOL_OPTIONS, ui.minDvol, v => v ? leadDvol(v) : t("leadAll"))}</select></span>
     <span class="lead-group"><span class="xaxis-toggle-label">${t("leadAtr")}</span>
@@ -4216,7 +4220,7 @@ const leadersBox = () => document.getElementById(_labMode ? "lab-container" : "l
 const leadersPanelVisible = () => !document.querySelector(`[data-panel="${_labMode ? "lab" : "leaders"}"]`)?.classList.contains("hidden");
 // Eigene Ansicht fuer den Lab-Tab (Default: In Play heute + Charts), damit
 // Leading Stocks seine Einstellung behaelt.
-const LAB_VIEW_KEYS = { wlView: ["leadWlView", "labWlView", "inplay"], wlMode: ["leadWlMode", "labWlMode", "charts"] };
+const LAB_VIEW_KEYS = { wlView: ["leadWlView", "labWlView2", "inplay"], wlMode: ["leadWlMode", "labWlMode2", "charts"] };
 function switchLeadersMode(lab) {
   if (_labMode === lab) return;
   _labMode = lab;
@@ -4254,10 +4258,10 @@ async function renderLeadersTab() {
   if (!ok) { box.innerHTML = `<p class="pick-empty">${t("leadNoData")}</p>`; return; }
   if (!_etfData?.themes) { box.innerHTML = `<p class="loading">${t("loading")}</p>`; return; }
 
-  const themes = leadersVisibleThemes().filter(th => !_labMode || LAB_STATES.has(th.state));
+  const themes = leadersVisibleThemes();
   const nCons = Object.values(_leadersCons.themes).reduce((s, c) => s + c.tickers.length, 0);
   const nUniq = new Set(Object.values(_leadersCons.themes).flatMap(c => c.tickers)).size;
-  box.innerHTML = `${_labMode ? `<div class="heading-group"><h2>&#128293; In Play Stocks &amp; Themes</h2></div><p class="picks-subtitle">Leader-Watchlist × Themes im Zustand Rising/Confirmed · Pivot/Stop: ${_LCFG.LAB.PIVOT_BARS}-Tage-Hoch/-Tief, Position = ${_LCFG.LAB.RISK_PCT} % Risiko ÷ Stop-Abstand (max. ${_LCFG.LAB.MAX_POS_PCT} %) · ❗ = Earnings in ≤ ${_LCFG.LAB.EARNINGS_WARN_DAYS} Handelstagen · Konvention, unvalidiert</p>` : ""}${leadersBarHtml()}
+  box.innerHTML = `${_labMode ? `<div class="heading-group"><h2>&#128293; In Play Stocks &amp; Themes</h2></div><p class="picks-subtitle">„Leading Stocks“ zeigt alle Leader, die die Watchlist-Kriterien der Studie erfüllen, unabhängig davon, wie stark ihr Theme gerade ist. „In Play Stocks &amp; Themes“ zeigt nur die Leader, deren Theme gerade Rising oder Confirmed ist, und ergänzt pro Ticker Pivot, Stop, Positionsgröße sowie die Earnings-Warnung (❗).</p><p class="lead-dim lead-wl__criteria">Standard: In Play heute (sonst RS ≥ 95) · Charts · Sortierung Gruppen-RS 3M · alle Rising/Confirmed-Themes · Pivot/Stop: ${_LCFG.LAB.PIVOT_BARS}-Tage-Hoch/-Tief, Position = ${_LCFG.LAB.RISK_PCT} % Risiko ÷ Stop-Abstand (max. ${_LCFG.LAB.MAX_POS_PCT} %) · ❗ = Earnings in ≤ ${_LCFG.LAB.EARNINGS_WARN_DAYS} Handelstagen · Konvention, unvalidiert</p>` : ""}${leadersBarHtml()}
     <p class="picks-subtitle lead-meta">${t("leadMeta", leadersDataDate(), nCons, nUniq, Object.keys(_leadersCons.themes).length)}</p>
     ${leadersWatchlistHtml()}
     <h3 class="lead-section-title">${t("leadThemesTitle")}</h3>
