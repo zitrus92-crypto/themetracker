@@ -1447,7 +1447,7 @@ function initTabs() {
         subNav.classList.add("hidden");
         themesSubNav.classList.add("hidden");
         showPanel("leaders");
-        _labMode = false;
+        switchLeadersMode(false);
         renderLeadersTab();
       } else if (btn.dataset.top === "tickers") {
         subNav.classList.add("hidden");
@@ -1921,7 +1921,7 @@ function updateSubSelectionBar() {
 function renderEtfList(data) {
   const tbody = document.getElementById("etf-list-body");
   if (!data || !data.subnodes) {
-    tbody.innerHTML = `<tr><td colspan="13" class="empty-msg">${t("etfNoData")}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${_labMode ? 17 : 13}" class="empty-msg">${t("etfNoData")}</td></tr>`;
     return;
   }
 
@@ -3752,7 +3752,7 @@ const leadSym = (tv) => (tv.includes(":") ? tv.split(":")[1] : tv);
 function leadersWatchlist() {
   const ui = _leadersUi;
   const list = _LM.buildWatchlist(leadersResult(), { minDollarVol: ui.minDvol, minAtrPct: ui.minAtr });
-  return _labMode ? list.filter(e => e.themes.some(th => LAB_STATES.has(th.state))) : list;
+  return _labMode ? list.filter(e => e.themes.some(th => LAB_STATES.has(th.state))).map(labEnrich) : list;
 }
 function leadersWatchlistShown(list) {
   const v = _leadersUi.wlView;
@@ -3815,7 +3815,8 @@ function leadersWatchlistHtml() {
     .map(([k, label]) => `<button class="xaxis-btn${ui.wlView === k ? " active" : ""}" data-lwl="${k}">${label} <span class="lead-count">${n[k]}</span></button>`).join("");
   const setups = leadSetupMap();
   const cols = ["rs_rating", "best_theme", "p6m", "wl_dist", "rmv", "rvol_50d", "trigger", "ep", "setup", "atr_pct", "dollar_vol_50d"];
-  const head = `<th>#</th><th>Ticker</th>` + cols.map(k => {
+  const labHead = _labMode ? `<th title="Höchstes Hoch der letzten ${_LCFG.LAB.PIVOT_BARS} Tage">Pivot</th><th title="Tiefstes Tief der letzten ${_LCFG.LAB.PIVOT_BARS} Tage">Stop</th><th title="Abstand Pivot → Stop">Stop %</th><th title="${_LCFG.LAB.RISK_PCT} % Depot-Risiko ÷ Stop-Abstand, max. ${_LCFG.LAB.MAX_POS_PCT} %">Pos. %</th>` : "";
+  const head = `<th>#</th><th>Ticker</th>${labHead}` + cols.map(k => {
     const label = `${t("leadCols")[k][0]}${k === "atr_pct" ? ` ${ui.atrPeriod}` : ""}`;
     if (k !== "dollar_vol_50d") return `<th>${label}</th>`;
     const arrow = ui.dvolSort === "asc" ? " ▲" : ui.dvolSort === "desc" ? " ▼" : "";
@@ -3840,7 +3841,8 @@ function leadersWatchlistHtml() {
       ? ` <span class="lead-dim" title="${esc(thList.slice(2).map(th => `${th.name} #${th.rank}`).join(" · "))}">+${thList.length - 2}</span>` : "";
     return `<tr class="${e.trigger === true ? "lead-wl-row--inplay" : ""}">
       <td>${i + 1}</td>
-      <td><a href="${finvizQuoteUrl(sym.replace(".", "-"))}" target="_blank" rel="noopener" class="lead-sym">${esc(e.ticker)}</a>${leadMulti(e.ticker)}${e.is_new ? ` <span class="lead-new-badge">${t("leadNewBadge")}</span>` : ""}</td>
+      <td><a href="${finvizQuoteUrl(sym.replace(".", "-"))}" target="_blank" rel="noopener" class="lead-sym">${esc(e.ticker)}</a>${leadMulti(e.ticker)}${e.is_new ? ` <span class="lead-new-badge">${t("leadNewBadge")}</span>` : ""}${_labMode ? labEarnHtml(e) : ""}</td>
+      ${!_labMode ? "" : e.plan ? `<td>${labPx(e.plan.pivot)}</td><td>${labPx(e.plan.stop)}</td><td>${e.plan.stop_pct.toFixed(1)} %</td><td><b>${e.plan.pos_pct.toFixed(0)} %</b></td>` : `<td>${leadNa()}</td><td>${leadNa()}</td><td>${leadNa()}</td><td>${leadNa()}</td>`}
       <td>${e.strong ? `<b class="lead-rs-strong">${e.rs_rating}</b>` : e.rs_rating}</td>
       <td class="lead-theme-cell">${chips}${more}</td>
       <td>${leadNum(e.p6m, 0, " %")}</td>
@@ -3937,11 +3939,12 @@ function leadersChartsHtml(list, setups) {
     return `<figure class="exp-chart lead-chart${e.trigger ? " lead-chart--inplay" : ""}">
       <figcaption>
         <span class="lead-dim">${i + 1}</span>
-        <a class="exp-ticker" href="${finvizQuoteUrl(sym)}" target="_blank" rel="noopener">${esc(e.ticker)}</a>${leadMulti(e.ticker)}${e.is_new ? ` <span class="lead-new-badge">${t("leadNewBadge")}</span>` : ""}
+        <a class="exp-ticker" href="${finvizQuoteUrl(sym)}" target="_blank" rel="noopener">${esc(e.ticker)}</a>${leadMulti(e.ticker)}${e.is_new ? ` <span class="lead-new-badge">${t("leadNewBadge")}</span>` : ""}${_labMode ? labEarnHtml(e) : ""}
         ${tags}
         <span class="exp-chart-nums">${leadNum(e.p6m, 0, " %")} 6M · ${e.dist_52wh_pct.toFixed(1)} %</span>
       </figcaption>
       <div class="exp-chart-groups">${themes}</div>
+      ${_labMode && e.plan ? `<div class="lead-dim exp-chart-nums">Pivot ${labPx(e.plan.pivot)} · Stop ${labPx(e.plan.stop)} (−${e.plan.stop_pct.toFixed(1)} %) · Pos. <b>${e.plan.pos_pct.toFixed(0)} %</b></div>` : ""}
       <a href="${finvizQuoteUrl(sym)}${ta ? "&ta=1" : ""}" target="_blank" rel="noopener">
         <img src="${finvizChartUrl(sym, 1, ta, size, opts)}" alt="${esc(e.ticker)}" loading="lazy" referrerpolicy="no-referrer"
              ${size ? `width="${size.w}" height="${size.h}" data-fallback="${esc(finvizChartUrl(sym, 1, ta, null, opts))}"` : ""}
@@ -4209,7 +4212,37 @@ function setLabEnabled(on) {
 })();
 const leadersBox = () => document.getElementById(_labMode ? "lab-container" : "leaders-container");
 const leadersPanelVisible = () => !document.querySelector(`[data-panel="${_labMode ? "lab" : "leaders"}"]`)?.classList.contains("hidden");
-function renderLabTab() { _labMode = true; return renderLeadersTab(); }
+// Eigene Ansicht fuer den Lab-Tab (Default: In Play heute + Charts), damit
+// Leading Stocks seine Einstellung behaelt.
+const LAB_VIEW_KEYS = { wlView: ["leadWlView", "labWlView", "inplay"], wlMode: ["leadWlMode", "labWlMode", "charts"] };
+function switchLeadersMode(lab) {
+  if (_labMode === lab) return;
+  _labMode = lab;
+  if (!_leadersUi) return;
+  for (const [k, [leadKey, labKey, labDef]] of Object.entries(LAB_VIEW_KEYS)) {
+    const v = prefGet(lab ? labKey : leadKey);
+    _leadersUi[k] = v || (lab ? labDef : k === "wlView" ? "all" : "table");
+  }
+}
+const leadPrefKey = (k) => (_labMode ? LAB_VIEW_KEYS[k][1] : LAB_VIEW_KEYS[k][0]);
+async function renderLabTab() {
+  _labMode = false;                                   // erzwingt den Wechsel
+  if (!(await ensureLeadersData())) return renderLeadersTab();
+  switchLeadersMode(true);
+  return renderLeadersTab();
+}
+// Trade-Plan + Earnings je Watchlist-Eintrag (nur Lab).
+function labEnrich(e) {
+  const b = _leadersBars?.tickers?.[leadSym(e.ticker).replace(".", "-")];
+  e.plan = b ? _LM.tradePlan(b.h, b.l) : null;
+  e.earn_date = b?.e ?? null;
+  e.earn_days = _LM.businessDaysUntil(e.earn_date, leadersDataDate());
+  e.earn_warn = e.earn_days !== null && e.earn_days <= _LCFG.LAB.EARNINGS_WARN_DAYS;
+  return e;
+}
+const labEarnHtml = (e) => e.earn_warn
+  ? ` <span class="lead-neg" title="Earnings ${esc(leadDate(e.earn_date))} (in ${e.earn_days} Handelstagen)">❗</span>` : "";
+const labPx = (v) => (v >= 100 ? v.toFixed(1) : v.toFixed(2));
 
 async function renderLeadersTab() {
   const box = leadersBox();
@@ -4222,7 +4255,7 @@ async function renderLeadersTab() {
   const themes = leadersVisibleThemes().filter(th => !_labMode || LAB_STATES.has(th.state));
   const nCons = Object.values(_leadersCons.themes).reduce((s, c) => s + c.tickers.length, 0);
   const nUniq = new Set(Object.values(_leadersCons.themes).flatMap(c => c.tickers)).size;
-  box.innerHTML = `${_labMode ? `<div class="heading-group"><h2>Lab · Leader × Rising/Confirmed</h2></div><p class="picks-subtitle">Test, unvalidiert</p>` : ""}${leadersBarHtml()}
+  box.innerHTML = `${_labMode ? `<div class="heading-group"><h2>&#128293; In Play Stocks &amp; Themes</h2></div><p class="picks-subtitle">Leader-Watchlist × Themes im Zustand Rising/Confirmed · Pivot/Stop: ${_LCFG.LAB.PIVOT_BARS}-Tage-Hoch/-Tief, Position = ${_LCFG.LAB.RISK_PCT} % Risiko ÷ Stop-Abstand (max. ${_LCFG.LAB.MAX_POS_PCT} %) · ❗ = Earnings in ≤ ${_LCFG.LAB.EARNINGS_WARN_DAYS} Handelstagen · Konvention, unvalidiert</p>` : ""}${leadersBarHtml()}
     <p class="picks-subtitle lead-meta">${t("leadMeta", leadersDataDate(), nCons, nUniq, Object.keys(_leadersCons.themes).length)}</p>
     ${leadersWatchlistHtml()}
     <h3 class="lead-section-title">${t("leadThemesTitle")}</h3>
@@ -4244,7 +4277,7 @@ function wireLeadersControls(box) {
   const copyBtn = box.querySelector(".lead-copy-btn");
   copyBtn.onclick = () => copyLeadersWatchlist(copyBtn);
   box.querySelectorAll("[data-lwlmode]").forEach(b => b.onclick = () => {
-    ui.wlMode = b.dataset.lwlmode; prefSet("leadWlMode", ui.wlMode); renderLeadersTab();
+    ui.wlMode = b.dataset.lwlmode; prefSet(leadPrefKey("wlMode"), ui.wlMode); renderLeadersTab();
   });
   box.querySelectorAll("[data-lta]").forEach(b => b.onclick = () => {
     ui.ta = !ui.ta; prefSet("leadTa", ui.ta ? "1" : "0"); renderLeadersTab();
@@ -4262,7 +4295,7 @@ function wireLeadersControls(box) {
     ui.sort = b.dataset.lsort; prefSet("leadSort", ui.sort); renderLeadersTab();
   });
   box.querySelectorAll("[data-lwl]").forEach(b => b.onclick = () => {
-    ui.wlView = b.dataset.lwl; prefSet("leadWlView", ui.wlView); renderLeadersTab();
+    ui.wlView = b.dataset.lwl; prefSet(leadPrefKey("wlView"), ui.wlView); renderLeadersTab();
   });
   box.querySelectorAll("[data-ltheme]").forEach(b => b.onclick = () => {
     const n = b.dataset.ltheme;

@@ -56,6 +56,7 @@ LEADERS_CONFIG = {
     "SHORT_BARS": 57,
     "CHUNK": 150,
     "EXCHANGE_WORKERS": 8,
+    "EARNINGS_WORKERS": 8,     # yfinance .calendar, einmal pro Tag
 
     # -- RS-Universum --------------------------------------------------------
     "RS_ROCS": [63, 126, 189, 252],
@@ -274,6 +275,30 @@ def fetch_exchanges(tickers: list, known: dict, cfg: dict = LEADERS_CONFIG) -> d
     return out
 
 
+def fetch_earnings(tickers: list, prev: dict, today: str, cfg: dict = LEADERS_CONFIG) -> dict:
+    """{ticker: naechstes Earnings-Datum 'YYYY-MM-DD' >= today | None}.
+    Einmal pro Tag: lief der Abruf heute schon, werden die Werte aus dem
+    Vorlauf uebernommen (prev = {ticker: datum}, nur gueltig bei gleichem Tag)."""
+    import yfinance as yf
+
+    out = {tk: prev[tk] for tk in tickers if tk in prev}
+    todo = [tk for tk in tickers if tk not in out]
+
+    def _one(tk):
+        try:
+            ds = yf.Ticker(tk).calendar.get("Earnings Date") or []
+            fut = sorted(d.isoformat() for d in ds if d.isoformat() >= today)
+            return tk, fut[0] if fut else None
+        except Exception:
+            return tk, None
+
+    with ThreadPoolExecutor(max_workers=cfg["EARNINGS_WORKERS"]) as pool:
+        for fut in as_completed([pool.submit(_one, tk) for tk in todo]):
+            tk, d = fut.result()
+            out[tk] = d
+    return out
+
+
 def compact_series(b: dict, cfg: dict = LEADERS_CONFIG) -> dict:
     """Kurze Feldnamen + Kappung: c/h ueber LONG_BARS, o/l/v ueber SHORT_BARS."""
     L, S = cfg["LONG_BARS"], cfg["SHORT_BARS"]
@@ -343,6 +368,10 @@ def build_leaders(themes: dict, industries: dict | None = None, cfg: dict = LEAD
 
     now = datetime.now(timezone.utc)
     today = now.strftime("%Y-%m-%d")
+    prev_earn = ({tk: row.get("e") for tk, row in (prev_bars.get("tickers") or {}).items()}
+                 if prev_bars.get("earnings_date") == today else {})
+    earnings = fetch_earnings([tk for tk in picked if tk in bars], prev_earn, today, cfg)
+    print(f"    Earnings: {sum(1 for v in earnings.values() if v)} Termine bekannt.")
 
     const_out = {
         "schema_version": SCHEMA_VERSION,
@@ -371,13 +400,14 @@ def build_leaders(themes: dict, industries: dict | None = None, cfg: dict = LEAD
         "schema_version": SCHEMA_VERSION,
         "date": today,
         "fetched_at": now.isoformat(),
+        "earnings_date": today,
         "benchmark": cfg["BENCHMARK"],
         "long_bars": L,
         "short_bars": cfg["SHORT_BARS"],
         "dates": master[-L:],
         "bench": compact_series(bars[cfg["BENCHMARK"]], cfg),
         "tickers": {
-            tk: {"x": exchanges.get(tk), **compact_series(bars[tk], cfg)}
+            tk: {"x": exchanges.get(tk), "e": earnings.get(tk), **compact_series(bars[tk], cfg)}
             for tk in picked if tk in bars
         },
         "rs_universe": {

@@ -98,6 +98,12 @@ export const LEADERS = {
   // -- RMV = ATR5 / ATR50: < 1 Kontraktion (nur Spalte, deskriptiv)
   RMV: { SHORT: 5, LONG: 50, CONTRACTION_MAX: 1 },
 
+  // -- Lab: Trade-Plan + Earnings (Konvention, unvalidiert) -------------------
+  // Pivot = hoechstes Hoch, Stop = tiefstes Tief der letzten PIVOT_BARS Tage.
+  // Positionsgroesse = RISK_PCT / Stop-Abstand (Anteil am Depot, gekappt).
+  // Kein Regime-Bezug (Chris: kein zuverlaessiges On/Off-Signal).
+  LAB: { PIVOT_BARS: 5, RISK_PCT: 1, MAX_POS_PCT: 25, EARNINGS_WARN_DAYS: 5 },
+
   // -- Gruppen-RS (Performer Study): Median des 3M-RS der Mitglieder ----------
   // 3M-RS je Aktie = Perzentil ihrer 63-Tage-Rendite im RS-Universum (wie
   // RS-Rating, nur 3M). Theme-Wert = Median, nur ab MIN_MEMBERS Werten.

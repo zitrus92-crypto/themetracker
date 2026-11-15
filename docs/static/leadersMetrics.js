@@ -598,3 +598,26 @@ export function diffWatchlist(current, reference) {
     removed: reference.filter((t) => !cur.has(t)),
   };
 }
+
+/** Trade-Plan aus den letzten n Bars: Pivot = max High, Stop = min Low,
+ *  stop_pct = Abstand Pivot->Stop in %, pos_pct = risk/stop_pct (gekappt).
+ *  null, wenn Daten fehlen. Konvention, unvalidiert (config.js LAB). */
+export function tradePlan(h, l, cfg = LEADERS.LAB) {
+  const n = cfg.PIVOT_BARS;
+  const hs = (h ?? []).slice(-n).filter(isNum), ls = (l ?? []).slice(-n).filter(isNum);
+  if (hs.length < n || ls.length < n) return null;
+  const pivot = Math.max(...hs), stop = Math.min(...ls);
+  if (!(pivot > 0) || !(stop < pivot)) return null;
+  const stop_pct = (pivot - stop) / pivot * 100;
+  return { pivot, stop, stop_pct, pos_pct: Math.min(cfg.RISK_PCT / stop_pct * 100, cfg.MAX_POS_PCT) };
+}
+
+/** Handelstage (Mo-Fr) von ref bis date, beide 'YYYY-MM-DD'; null bei
+ *  fehlendem/vergangenem Datum. 0 = am selben Tag. */
+export function businessDaysUntil(date, ref) {
+  if (!date || !ref || date < ref) return null;
+  const d = new Date(ref + "T00:00:00Z"), end = new Date(date + "T00:00:00Z");
+  let n = 0;
+  while (d < end) { d.setUTCDate(d.getUTCDate() + 1); const w = d.getUTCDay(); if (w !== 0 && w !== 6) n++; }
+  return n;
+}

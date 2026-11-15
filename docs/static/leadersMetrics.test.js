@@ -4,7 +4,7 @@ import {
   retOver, smaLast, high52, isNewHigh, basketIndex, lastBasketLow, atrPct, adrPct,
   rvol, dollarVol, weightedRs, downDayStrength, rankChange, firstToHigh,
   computeLeaders, filterRows, orderThemes, tradingViewWatchlist,
-  rsUniverse, rsRating, triggerMetrics, watchlistFails, buildWatchlist, tradingViewFromWatchlist,
+  rsUniverse, rsRating, tradePlan, businessDaysUntil, triggerMetrics, watchlistFails, buildWatchlist, tradingViewFromWatchlist,
   applyGroupRs, applyGroupState, rs3mUniverse,
   weekMonday, weekReference, diffWatchlist,
 } from "./leadersMetrics.js";
@@ -324,4 +324,20 @@ test("applyGroupState: Raenge, Gap und Zustand (N=8 -> Top=2, Cool=4)", () => {
   const thin = applyGroupRs({ X: { name: "X", rows: [{ rs3m: 90, rs_rating: 90 }] } }, 3);
   assert.equal(thin.X.state, null);
   assert.equal(thin.X.rank_3m, null);
+});
+
+test("tradePlan: Pivot/Stop der letzten 5 Bars, Position gekappt", () => {
+  const p = tradePlan([9, 10, 11, 12, 13, 12], [8, 9, 10, 11, 12, 11]);
+  assert.equal(p.pivot, 13); assert.equal(p.stop, 9);
+  assert.ok(Math.abs(p.stop_pct - 30.769) < 0.01);
+  assert.ok(Math.abs(p.pos_pct - 3.25) < 0.01);
+  assert.equal(tradePlan([10, 10, 10, 10, 10], [9.99, 9.99, 9.99, 9.99, 9.99]).pos_pct, 25);
+  assert.equal(tradePlan([1, 2], [1, 2]), null);
+});
+
+test("businessDaysUntil: Wochenende zaehlt nicht", () => {
+  assert.equal(businessDaysUntil("2026-11-13", "2026-11-13"), 0);
+  assert.equal(businessDaysUntil("2026-11-17", "2026-11-13"), 2);   // Fr -> Di
+  assert.equal(businessDaysUntil("2026-11-10", "2026-11-13"), null);
+  assert.equal(businessDaysUntil(null, "2026-11-13"), null);
 });
