@@ -641,5 +641,120 @@
   "rs": {},
   "in_play_tab": [],
   "theme_state": {}
+ },
+ "2026-11-17": {
+  "generated_at": "2026-11-17T21:43:53.657Z",
+  "n": 14,
+  "criteria": {
+   "RS_MIN": 90,
+   "RS_STRONG": 95,
+   "P6M_BARS": 126,
+   "P6M_MIN": 50,
+   "DIST_MAX_PCT": 20,
+   "ABOVE_SMA50": true,
+   "ABOVE_SMA200": true,
+   "MIN_PRICE": 10,
+   "MIN_DVOL50": 5000000
+  },
+  "tickers": [
+   "NASDAQ:CDNA",
+   "NASDAQ:PUBM",
+   "NASDAQ:BRZE",
+   "NASDAQ:MGNI",
+   "NYSE:SN",
+   "NASDAQ:LFST",
+   "NYSE:U",
+   "NYSE:PEB",
+   "NASDAQ:MANH",
+   "NASDAQ:EVER",
+   "NASDAQ:DOCU",
+   "NASDAQ:TBCH",
+   "NASDAQ:ALRM",
+   "NYSE:BBY"
+  ],
+  "rs": {
+   "NASDAQ:CDNA": 99,
+   "NASDAQ:PUBM": 99,
+   "NASDAQ:BRZE": 99,
+   "NASDAQ:MGNI": 98,
+   "NYSE:SN": 98,
+   "NASDAQ:LFST": 97,
+   "NYSE:U": 97,
+   "NYSE:PEB": 96,
+   "NASDAQ:MANH": 95,
+   "NASDAQ:EVER": 93,
+   "NASDAQ:DOCU": 93,
+   "NASDAQ:TBCH": 91,
+   "NASDAQ:ALRM": 91,
+   "NYSE:BBY": 91
+  },
+  "in_play_tab": [
+   "NASDAQ:CDNA",
+   "NASDAQ:PUBM",
+   "NASDAQ:BRZE",
+   "NASDAQ:MGNI",
+   "NYSE:SN",
+   "NASDAQ:LFST",
+   "NYSE:U",
+   "NASDAQ:MANH",
+   "NASDAQ:DOCU",
+   "NASDAQ:ALRM",
+   "NYSE:BBY"
+  ],
+  "theme_state": {
+   "NASDAQ:CDNA": [
+    "confirmed"
+   ],
+   "NASDAQ:PUBM": [
+    "rising",
+    "neutral"
+   ],
+   "NASDAQ:BRZE": [
+    "confirmed"
+   ],
+   "NASDAQ:MGNI": [
+    "rising",
+    "confirmed",
+    "neutral"
+   ],
+   "NYSE:SN": [
+    "confirmed"
+   ],
+   "NASDAQ:LFST": [
+    "confirmed"
+   ],
+   "NYSE:U": [
+    "rising",
+    "confirmed",
+    "neutral",
+    "confirmed"
+   ],
+   "NYSE:PEB": [
+    "neutral"
+   ],
+   "NASDAQ:MANH": [
+    "neutral",
+    "rising",
+    "neutral",
+    "neutral"
+   ],
+   "NASDAQ:EVER": [
+    "neutral"
+   ],
+   "NASDAQ:DOCU": [
+    "confirmed",
+    "cooling"
+   ],
+   "NASDAQ:TBCH": [
+    "neutral"
+   ],
+   "NASDAQ:ALRM": [
+    "rising",
+    "confirmed"
+   ],
+   "NYSE:BBY": [
+    "rising"
+   ]
+  }
  }
 }
