@@ -898,5 +898,133 @@
     "confirmed"
    ]
   }
+ },
+ "2026-11-19": {
+  "generated_at": "2026-11-19T21:43:07.437Z",
+  "n": 15,
+  "criteria": {
+   "RS_MIN": 90,
+   "RS_STRONG": 95,
+   "P6M_BARS": 126,
+   "P6M_MIN": 50,
+   "DIST_MAX_PCT": 20,
+   "ABOVE_SMA50": true,
+   "ABOVE_SMA200": true,
+   "MIN_PRICE": 10,
+   "MIN_DVOL50": 5000000
+  },
+  "tickers": [
+   "NASDAQ:OKTA",
+   "NASDAQ:PUBM",
+   "NASDAQ:BRZE",
+   "NASDAQ:FROG",
+   "NYSE:SN",
+   "NASDAQ:MGNI",
+   "NASDAQ:TENB",
+   "NASDAQ:RPD",
+   "NASDAQ:LFST",
+   "NYSE:U",
+   "NASDAQ:MANH",
+   "NASDAQ:EVER",
+   "NYSE:BBY",
+   "NASDAQ:DOCU",
+   "NYSE:A"
+  ],
+  "rs": {
+   "NASDAQ:OKTA": 99,
+   "NASDAQ:PUBM": 99,
+   "NASDAQ:BRZE": 99,
+   "NASDAQ:FROG": 98,
+   "NYSE:SN": 98,
+   "NASDAQ:MGNI": 98,
+   "NASDAQ:TENB": 98,
+   "NASDAQ:RPD": 97,
+   "NASDAQ:LFST": 97,
+   "NYSE:U": 96,
+   "NASDAQ:MANH": 95,
+   "NASDAQ:EVER": 93,
+   "NYSE:BBY": 93,
+   "NASDAQ:DOCU": 93,
+   "NYSE:A": 90
+  },
+  "in_play_tab": [
+   "NASDAQ:OKTA",
+   "NASDAQ:PUBM",
+   "NASDAQ:BRZE",
+   "NASDAQ:FROG",
+   "NYSE:SN",
+   "NASDAQ:MGNI",
+   "NASDAQ:TENB",
+   "NASDAQ:RPD",
+   "NYSE:U",
+   "NASDAQ:MANH",
+   "NYSE:BBY",
+   "NASDAQ:DOCU"
+  ],
+  "theme_state": {
+   "NASDAQ:OKTA": [
+    "confirmed",
+    "confirmed",
+    "confirmed",
+    "neutral",
+    "cooling",
+    "neutral"
+   ],
+   "NASDAQ:PUBM": [
+    "rising",
+    "neutral"
+   ],
+   "NASDAQ:BRZE": [
+    "confirmed"
+   ],
+   "NASDAQ:FROG": [
+    "confirmed",
+    "cooling"
+   ],
+   "NYSE:SN": [
+    "confirmed"
+   ],
+   "NASDAQ:MGNI": [
+    "rising",
+    "confirmed",
+    "neutral"
+   ],
+   "NASDAQ:TENB": [
+    "confirmed",
+    "confirmed",
+    "confirmed"
+   ],
+   "NASDAQ:RPD": [
+    "confirmed"
+   ],
+   "NASDAQ:LFST": [
+    "neutral"
+   ],
+   "NYSE:U": [
+    "rising",
+    "confirmed",
+    "rising",
+    "confirmed"
+   ],
+   "NASDAQ:MANH": [
+    "neutral",
+    "rising",
+    "neutral",
+    "neutral"
+   ],
+   "NASDAQ:EVER": [
+    "neutral"
+   ],
+   "NYSE:BBY": [
+    "rising"
+   ],
+   "NASDAQ:DOCU": [
+    "confirmed",
+    "cooling"
+   ],
+   "NYSE:A": [
+    "neutral"
+   ]
+  }
  }
 }
