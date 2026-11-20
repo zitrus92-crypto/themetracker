@@ -1026,5 +1026,84 @@
     "neutral"
    ]
   }
+ },
+ "2026-11-20": {
+  "generated_at": "2026-11-20T21:42:11.833Z",
+  "n": 9,
+  "criteria": {
+   "RS_MIN": 90,
+   "RS_STRONG": 95,
+   "P6M_BARS": 126,
+   "P6M_MIN": 50,
+   "DIST_MAX_PCT": 20,
+   "ABOVE_SMA50": true,
+   "ABOVE_SMA200": true,
+   "MIN_PRICE": 10,
+   "MIN_DVOL50": 5000000
+  },
+  "tickers": [
+   "NASDAQ:BRZE",
+   "NASDAQ:PUBM",
+   "NYSE:SN",
+   "NASDAQ:LFST",
+   "NYSE:U",
+   "NASDAQ:MANH",
+   "NASDAQ:EVER",
+   "NYSE:BBY",
+   "NYSE:PCOR"
+  ],
+  "rs": {
+   "NASDAQ:BRZE": 99,
+   "NASDAQ:PUBM": 99,
+   "NYSE:SN": 98,
+   "NASDAQ:LFST": 98,
+   "NYSE:U": 96,
+   "NASDAQ:MANH": 96,
+   "NASDAQ:EVER": 94,
+   "NYSE:BBY": 93,
+   "NYSE:PCOR": 90
+  },
+  "in_play_tab": [
+   "NASDAQ:BRZE",
+   "NYSE:SN",
+   "NYSE:U",
+   "NYSE:PCOR"
+  ],
+  "theme_state": {
+   "NASDAQ:BRZE": [
+    "confirmed"
+   ],
+   "NASDAQ:PUBM": [
+    "neutral",
+    "neutral"
+   ],
+   "NYSE:SN": [
+    "confirmed"
+   ],
+   "NASDAQ:LFST": [
+    "neutral"
+   ],
+   "NYSE:U": [
+    "rising",
+    "rising",
+    "confirmed",
+    "rising"
+   ],
+   "NASDAQ:MANH": [
+    "neutral",
+    "neutral",
+    "neutral",
+    "neutral"
+   ],
+   "NASDAQ:EVER": [
+    "neutral"
+   ],
+   "NYSE:BBY": [
+    "neutral"
+   ],
+   "NYSE:PCOR": [
+    "confirmed"
+   ]
+  }
  }
 }
