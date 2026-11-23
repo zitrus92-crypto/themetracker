@@ -1105,5 +1105,24 @@
     "confirmed"
    ]
   }
+ },
+ "2026-11-23": {
+  "generated_at": "2026-11-23T21:47:07.142Z",
+  "n": 0,
+  "criteria": {
+   "RS_MIN": 90,
+   "RS_STRONG": 95,
+   "P6M_BARS": 126,
+   "P6M_MIN": 50,
+   "DIST_MAX_PCT": 20,
+   "ABOVE_SMA50": true,
+   "ABOVE_SMA200": true,
+   "MIN_PRICE": 10,
+   "MIN_DVOL50": 5000000
+  },
+  "tickers": [],
+  "rs": {},
+  "in_play_tab": [],
+  "theme_state": {}
  }
 }
