@@ -1124,5 +1124,143 @@
   "rs": {},
   "in_play_tab": [],
   "theme_state": {}
+ },
+ "2026-11-24": {
+  "generated_at": "2026-11-24T21:41:45.426Z",
+  "n": 18,
+  "criteria": {
+   "RS_MIN": 90,
+   "RS_STRONG": 95,
+   "P6M_BARS": 126,
+   "P6M_MIN": 50,
+   "DIST_MAX_PCT": 20,
+   "ABOVE_SMA50": true,
+   "ABOVE_SMA200": true,
+   "MIN_PRICE": 10,
+   "MIN_DVOL50": 5000000
+  },
+  "tickers": [
+   "NASDAQ:MRNA",
+   "NASDAQ:CDNA",
+   "NASDAQ:PUBM",
+   "NASDAQ:BRZE",
+   "NYSE:SN",
+   "NASDAQ:TENB",
+   "NYSE:ANF",
+   "NASDAQ:RPD",
+   "NASDAQ:LFST",
+   "NASDAQ:MGNI",
+   "NYSE:U",
+   "NASDAQ:DOCU",
+   "NASDAQ:MANH",
+   "NYSE:BBY",
+   "NYSE:A",
+   "NASDAQ:ALRM",
+   "NASDAQ:REGN",
+   "NYSE:PCOR"
+  ],
+  "rs": {
+   "NASDAQ:MRNA": 99,
+   "NASDAQ:CDNA": 99,
+   "NASDAQ:PUBM": 99,
+   "NASDAQ:BRZE": 99,
+   "NYSE:SN": 98,
+   "NASDAQ:TENB": 98,
+   "NYSE:ANF": 98,
+   "NASDAQ:RPD": 98,
+   "NASDAQ:LFST": 98,
+   "NASDAQ:MGNI": 98,
+   "NYSE:U": 97,
+   "NASDAQ:DOCU": 96,
+   "NASDAQ:MANH": 96,
+   "NYSE:BBY": 92,
+   "NYSE:A": 91,
+   "NASDAQ:ALRM": 91,
+   "NASDAQ:REGN": 91,
+   "NYSE:PCOR": 90
+  },
+  "in_play_tab": [
+   "NASDAQ:BRZE",
+   "NYSE:SN",
+   "NASDAQ:TENB",
+   "NYSE:ANF",
+   "NASDAQ:RPD",
+   "NASDAQ:MGNI",
+   "NYSE:U",
+   "NASDAQ:DOCU",
+   "NASDAQ:ALRM",
+   "NYSE:PCOR"
+  ],
+  "theme_state": {
+   "NASDAQ:MRNA": [
+    "neutral",
+    "neutral"
+   ],
+   "NASDAQ:CDNA": [
+    "neutral"
+   ],
+   "NASDAQ:PUBM": [
+    "neutral",
+    "neutral"
+   ],
+   "NASDAQ:BRZE": [
+    "confirmed"
+   ],
+   "NYSE:SN": [
+    "confirmed"
+   ],
+   "NASDAQ:TENB": [
+    "confirmed",
+    "confirmed",
+    "neutral"
+   ],
+   "NYSE:ANF": [
+    "confirmed"
+   ],
+   "NASDAQ:RPD": [
+    "confirmed"
+   ],
+   "NASDAQ:LFST": [
+    "neutral"
+   ],
+   "NASDAQ:MGNI": [
+    "neutral",
+    "confirmed",
+    "neutral"
+   ],
+   "NYSE:U": [
+    "rising",
+    "confirmed",
+    "neutral",
+    "confirmed"
+   ],
+   "NASDAQ:DOCU": [
+    "confirmed",
+    "cooling"
+   ],
+   "NASDAQ:MANH": [
+    "neutral",
+    "neutral",
+    "neutral",
+    "neutral"
+   ],
+   "NYSE:BBY": [
+    "neutral"
+   ],
+   "NYSE:A": [
+    "neutral"
+   ],
+   "NASDAQ:ALRM": [
+    "confirmed",
+    "rising"
+   ],
+   "NASDAQ:REGN": [
+    "neutral",
+    "neutral"
+   ],
+   "NYSE:PCOR": [
+    "confirmed"
+   ]
+  }
  }
 }
