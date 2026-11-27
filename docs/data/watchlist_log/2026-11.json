@@ -1401,5 +1401,163 @@
     "neutral"
    ]
   }
+ },
+ "2026-11-27": {
+  "generated_at": "2026-11-27T21:43:25.447Z",
+  "n": 19,
+  "criteria": {
+   "RS_MIN": 90,
+   "RS_STRONG": 95,
+   "P6M_BARS": 126,
+   "P6M_MIN": 50,
+   "DIST_MAX_PCT": 20,
+   "ABOVE_SMA50": true,
+   "ABOVE_SMA200": true,
+   "MIN_PRICE": 10,
+   "MIN_DVOL50": 5000000
+  },
+  "tickers": [
+   "NASDAQ:MRNA",
+   "NASDAQ:CDNA",
+   "NASDAQ:OKTA",
+   "NYSE:SN",
+   "NASDAQ:PUBM",
+   "NYSE:ANF",
+   "NASDAQ:BRZE",
+   "NASDAQ:LFST",
+   "NASDAQ:RPD",
+   "NASDAQ:TENB",
+   "NASDAQ:MGNI",
+   "NYSE:U",
+   "NASDAQ:QLYS",
+   "NYSE:S",
+   "NASDAQ:MANH",
+   "NASDAQ:DOCU",
+   "NASDAQ:TRUP",
+   "NASDAQ:ZS",
+   "NASDAQ:REGN"
+  ],
+  "rs": {
+   "NASDAQ:MRNA": 99,
+   "NASDAQ:CDNA": 99,
+   "NASDAQ:OKTA": 99,
+   "NYSE:SN": 98,
+   "NASDAQ:PUBM": 98,
+   "NYSE:ANF": 98,
+   "NASDAQ:BRZE": 98,
+   "NASDAQ:LFST": 98,
+   "NASDAQ:RPD": 98,
+   "NASDAQ:TENB": 98,
+   "NASDAQ:MGNI": 97,
+   "NYSE:U": 97,
+   "NASDAQ:QLYS": 96,
+   "NYSE:S": 95,
+   "NASDAQ:MANH": 95,
+   "NASDAQ:DOCU": 94,
+   "NASDAQ:TRUP": 93,
+   "NASDAQ:ZS": 92,
+   "NASDAQ:REGN": 91
+  },
+  "in_play_tab": [
+   "NASDAQ:MRNA",
+   "NASDAQ:CDNA",
+   "NASDAQ:OKTA",
+   "NYSE:SN",
+   "NYSE:ANF",
+   "NASDAQ:LFST",
+   "NASDAQ:RPD",
+   "NASDAQ:TENB",
+   "NASDAQ:MGNI",
+   "NYSE:U",
+   "NASDAQ:QLYS",
+   "NYSE:S",
+   "NASDAQ:ZS",
+   "NASDAQ:REGN"
+  ],
+  "theme_state": {
+   "NASDAQ:MRNA": [
+    "neutral",
+    "confirmed"
+   ],
+   "NASDAQ:CDNA": [
+    "confirmed"
+   ],
+   "NASDAQ:OKTA": [
+    "neutral",
+    "confirmed",
+    "neutral",
+    "rising",
+    "cooling",
+    "neutral"
+   ],
+   "NYSE:SN": [
+    "confirmed"
+   ],
+   "NASDAQ:PUBM": [
+    "neutral",
+    "neutral"
+   ],
+   "NYSE:ANF": [
+    "confirmed"
+   ],
+   "NASDAQ:BRZE": [
+    "neutral"
+   ],
+   "NASDAQ:LFST": [
+    "confirmed"
+   ],
+   "NASDAQ:RPD": [
+    "confirmed"
+   ],
+   "NASDAQ:TENB": [
+    "neutral",
+    "confirmed",
+    "neutral"
+   ],
+   "NASDAQ:MGNI": [
+    "confirmed",
+    "neutral",
+    "neutral"
+   ],
+   "NYSE:U": [
+    "rising",
+    "confirmed",
+    "neutral",
+    "neutral"
+   ],
+   "NASDAQ:QLYS": [
+    "neutral",
+    "confirmed"
+   ],
+   "NYSE:S": [
+    "neutral",
+    "confirmed",
+    "cooling",
+    "neutral"
+   ],
+   "NASDAQ:MANH": [
+    "neutral",
+    "neutral",
+    "neutral",
+    "neutral"
+   ],
+   "NASDAQ:DOCU": [
+    "neutral",
+    "cooling"
+   ],
+   "NASDAQ:TRUP": [
+    "neutral"
+   ],
+   "NASDAQ:ZS": [
+    "neutral",
+    "confirmed",
+    "cooling",
+    "neutral"
+   ],
+   "NASDAQ:REGN": [
+    "neutral",
+    "confirmed"
+   ]
+  }
  }
 }

@@ -1,7 +1,7 @@
 {
  "schema_version": 2,
- "date": "2026-11-25",
- "generated_at": "2026-11-25T21:43:56.765949+00:00",
+ "date": "2026-11-27",
+ "generated_at": "2026-11-27T21:43:13.082990+00:00",
  "selection": {
   "rule": "alle Finviz-Theme-Mitglieder 1:1 (inkl. Mehrfach-Zuordnungen)",
   "min": 5
