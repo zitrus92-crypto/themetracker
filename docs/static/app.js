@@ -652,7 +652,7 @@ function applyTranslations() {
   if (_etfData) renderEtfTab();
   renderExperimental();
   if (_leadersBars) renderLeadersTab();
-  if (_IP && _inPlaySub !== "main") renderInPlayHorizon(_inPlaySub);
+  renderInPlaySub();
   renderRegime();
   renderSituational();
 }
@@ -4244,7 +4244,7 @@ async function renderLabTab() {
 // (optional Themes) per Perzentil-Schnittmenge zweier Zeitfenster und darin
 // die liquiden, volatilen Aktien. Logik: static/inPlayHorizon.js.
 // Spec: docs/superpowers/specs/2026-11-28-in-play-submenus-design.md
-const IP_SUBS = ["main", "day", "swing", "position"];
+const IP_SUBS = ["main", "day", "swing", "position", "ipo"];
 let _IP = null;                 // static/inPlayHorizon.js (lazy)
 let _ipLast = null;             // {sub, groups} der letzten Anzeige, fuer den Export
 let _inPlaySub = IP_SUBS.includes(prefGet("ipSub")) ? prefGet("ipSub") : "main";
@@ -4256,7 +4256,8 @@ function renderInPlay() {
   const main = _inPlaySub === "main";
   document.getElementById("lab-container")?.classList.toggle("hidden", !main);
   document.getElementById("inplay-container")?.classList.toggle("hidden", main);
-  return main ? renderLabTab() : renderInPlayHorizon(_inPlaySub);
+  if (main) return renderLabTab();
+  return _inPlaySub === "ipo" ? renderIpoTab() : renderInPlayHorizon(_inPlaySub);
 }
 document.querySelectorAll("#lab-subnav [data-ipsub]").forEach(b => b.onclick = () => {
   _inPlaySub = b.dataset.ipsub;
@@ -4349,6 +4350,144 @@ async function renderInPlayHorizon(sub) {
   const txtBtn = box.querySelector(".ip-txt-btn"), copyBtn = box.querySelector(".ip-copy-btn");
   txtBtn.onclick = () => inPlayExport(txtBtn, "txt");
   copyBtn.onclick = () => inPlayExport(copyBtn, "copy");
+}
+
+// -- In-Play-Unterreiter "IPOs" ----------------------------------------------
+// Neulinge (<= 365 Tage) mit Pivot A/B, Basis-Status und Ampel
+// "IPO-Risikoappetit". Logik: static/ipoMetrics.js, Daten: data/ipo_bars.json.
+// Spec: docs/superpowers/specs/2026-11-28-ipo-subtab-design.md
+let _IPOM = null;              // static/ipoMetrics.js (lazy)
+let _ipoData = null;           // data/ipo_bars.json
+let _ipoFailed = false;
+let _ipoLast = null;           // angezeigte Zeilen, fuer den Export
+
+// Zeit-Reiter oder IPOs neu zeichnen (Sprachwechsel, neue Daten).
+function renderInPlaySub() {
+  if (_inPlaySub === "ipo") return _IPOM ? renderIpoTab() : undefined;
+  if (_inPlaySub !== "main" && _IP) return renderInPlayHorizon(_inPlaySub);
+}
+
+async function renderIpoTab() {
+  const box = document.getElementById("inplay-container");
+  if (!box) return;
+  const de = ipDe();
+  if (!_IPOM || !_ipoData) box.innerHTML = `<p class="loading">${t("loading")}</p>`;
+  try {
+    if (!_IPOM) _IPOM = await import("./ipoMetrics.js?v=" + Date.now());
+    if (!_ipoData && !_ipoFailed) {
+      const r = await fetch("data/ipo_bars.json?t=" + Date.now());
+      if (r.ok) _ipoData = await r.json(); else _ipoFailed = true;
+    }
+  } catch (e) {
+    console.error("IPO-Reiter konnte nicht geladen werden:", e);
+    _ipoFailed = true;
+  }
+  if (_inPlaySub !== "ipo") return;
+  if (!_ipoData) {
+    box.innerHTML = `<p class="ip-hint">${de ? "IPO-Daten folgen mit dem nächsten Post-Close-Lauf." : "IPO data arrives with the next post-close run."}</p>`;
+    return;
+  }
+  // Börsenpräfixe nur aus den Theme-Konstituenten (kein Nachladen).
+  await ensureLeadersData();
+  const exch = new Map();
+  for (const c of Object.values(_leadersCons?.themes || {}))
+    for (const tv of c.tickers || []) if (tv.includes(":")) exch.set(tv.split(":").pop().replace(/\./g, "-").toUpperCase(), tv);
+
+  const get = (n) => prefGet(`ip_ipo_${n}`);
+  const num = (v, d) => { const x = Number(String(v ?? "").trim().replace(",", ".")); return v !== null && v !== "" && Number.isFinite(x) && x >= 0 ? x : d; };
+  const s = { minDvolM: num(get("dvol"), 20), minAtr: num(get("atr"), 5) };
+  const { rows, total, analyses } = _IPOM.buildIpoList(_ipoData, { ...s, exchangeOf: (k) => exch.get(k) ?? null });
+  const risk = _IPOM.riskAppetite(_ipoData, analyses);
+  _ipoLast = rows;
+
+  const light = { green: ["🟢", de ? "GRÜN" : "GREEN"], yellow: ["🟡", de ? "GELB" : "YELLOW"], red: ["🔴", de ? "ROT" : "RED"] }[risk.light];
+  const mark = (ok) => (ok === true ? "✓" : ok === false ? "✗" : (de ? "zu wenig Daten" : "not enough data"));
+  const fmt = (x, d = 1) => (x === null || x === undefined || !Number.isFinite(x) ? "—" : x.toFixed(d));
+  const sg = Object.fromEntries(risk.signals.map((x) => [x.key, x]));
+  const sigLine = [
+    `${de ? "IPO-Index/SPY über 21-EMA" : "IPO index/SPY above 21-EMA"} ${mark(sg.index.ok)}`,
+    `${fmt(sg.breadth.value, 0)} % ${de ? "über 50T-Schnitt" : "above 50D avg"} ${mark(sg.breadth.ok)}`,
+    `${de ? "Ausbrüche halten" : "Breakouts holding"} ${sg.hold.detail.held}/${sg.hold.detail.total} ${mark(sg.hold.ok)}`,
+  ].join(" · ");
+  const statusTxt = (a) => {
+    const bo = a.breakout;
+    switch (a.status) {
+      case "breakoutB": case "breakoutA": {
+        const k = a.status.slice(-1);
+        return `<span class="lead-pos">${de ? "Ausbruch" : "Breakout"} ${k}</span> <span class="lead-dim">(${de ? "seit" : "since"} ${bo.since} T · ${fmt(bo.volX)}× Vol)</span>`;
+      }
+      case "failed": return `<span class="lead-neg">${de ? "Fehlausbruch" : "Failed breakout"}</span>`;
+      case "near": return `<span class="lead-warn">${de ? "nahe" : "near"} ${a.near}</span>`;
+      case "base": return a.pivotA !== null && !a.handleOk && a.distA >= -_IPOM.IPO_CFG.NEAR_PCT
+        ? `${de ? "Basis" : "Base"} <span class="lead-dim">· ${de ? "Henkel" : "handle"} ${a.handleDays}/${_IPOM.IPO_CFG.MIN_HANDLE} T</span>`
+        : (de ? "Basis" : "Base");
+      default: return `<span class="lead-dim">${de ? "zu frisch" : "too fresh"}</span>`;
+    }
+  };
+  const px = (v) => (v >= 100 ? v.toFixed(1) : v.toFixed(2));
+  const pct = (v) => (v === null ? "—" : `${v > 0 ? "+" : ""}${v.toFixed(0)} %`);
+  const head = [de ? "Ticker" : "Ticker", de ? "Erster Tag" : "First day", "B (IPO-Hoch)", de ? "A (früh)" : "A (early)",
+    de ? "Tiefe" : "Depth", "Basis", de ? "Abst. A / B" : "Dist. A / B", de ? "Verengung ATR%" : "Tightening ATR%", "$-Vol", "Status"]
+    .map((h) => `<th>${h}</th>`).join("");
+  const body = rows.map(({ sym, tv, a, dvol }) => `<tr>
+      <td><a class="lead-name" href="https://finviz.com/quote.ashx?t=${encodeURIComponent(sym)}" target="_blank" rel="noopener" title="${esc(tv)}">${esc(sym)}</a></td>
+      <td>${esc(a.first)}</td><td>${px(a.pivotB)}</td><td>${a.pivotA === null ? "—" : px(a.pivotA)}</td>
+      <td>${pct(a.depthPct)}</td><td>${a.baseLen} T</td><td>${pct(a.distA)} / ${pct(a.distB)}</td>
+      <td>${fmt(a.atrAtLow)} → ${fmt(a.atrNow)}</td><td>${leadDvol(dvol)}</td><td>${statusTxt(a)}</td></tr>`).join("");
+
+  box.innerHTML = `<div class="heading-group"><h2>&#128640; In Play · IPOs</h2></div>
+    <p class="picks-subtitle">${de
+      ? `Neulinge der letzten ${_ipoData.window_days} Kalendertage (IPOs und Spin-offs; ohne Shell Companies). Pivot B = IPO-Hoch, Pivot A = frühes Hoch seit dem Basis-Tief. Ausbruch = Close über Pivot aus einer Basis von ≥ ${_IPOM.IPO_CFG.MIN_BASE} Handelstagen (Pivot A zusätzlich mit Henkel ≥ ${_IPOM.IPO_CFG.MIN_HANDLE} Tagen); Pivot danach eingefroren, Status hält ${_IPOM.IPO_CFG.HOLD_DAYS} Tage. Konvention, unvalidiert.`
+      : `Newcomers of the last ${_ipoData.window_days} calendar days (IPOs and spin-offs; no shell companies). Pivot B = IPO high, pivot A = early high since the base low. Breakout = close above pivot from a base of ≥ ${_IPOM.IPO_CFG.MIN_BASE} trading days (pivot A also needs a handle of ≥ ${_IPOM.IPO_CFG.MIN_HANDLE} days); pivot frozen afterwards, status holds ${_IPOM.IPO_CFG.HOLD_DAYS} days. Convention, unvalidated.`}</p>
+    <div class="lead-card ip-card ipo-risk">
+      <div class="lead-card__head"><span class="lead-name">${light[0]} ${de ? "IPO-Risikoappetit" : "IPO risk appetite"}: ${light[1]} (${risk.score}/3)</span>
+        <span class="lead-tag lead-ev--convention">${de ? "Konvention, unvalidiert" : "convention, unvalidated"}</span></div>
+      <div class="lead-dim">${sigLine}</div>
+      <div class="lead-dim">${de ? "Kontrolle" : "Control"}: Renaissance IPO ETF/SPY ${de ? "über" : "above"} 21-EMA ${mark(risk.etf.ok)}</div>
+    </div>
+    <div class="lead-bar">
+      <span class="lead-group"><span class="xaxis-toggle-label">$-Vol ≥</span><input class="lead-select ip-input" data-ipo="dvol" inputmode="decimal" value="${s.minDvolM}"> ${de ? "Mio" : "M"}</span>
+      <span class="lead-group"><span class="xaxis-toggle-label">ATR% ≥</span><input class="lead-select ip-input" data-ipo="atr" inputmode="decimal" value="${s.minAtr}"></span>
+      <span class="lead-group lead-actions">
+        <button class="top20-btn ipo-txt-btn" title="${de ? "TradingView: Watchlist → Liste importieren. Sektionen Ausbruch / Nahe Pivot / Basis." : "TradingView: watchlist → import list. Sections breakout / near pivot / base."}">⬇ .txt</button>
+        <button class="top20-btn ipo-copy-btn">⧉ ${de ? "Kopieren" : "Copy"}</button>
+      </span>
+    </div>
+    <p class="picks-subtitle lead-meta">${de ? "Stand" : "As of"} ${esc(_ipoData.dates.at(-1))} · ${total} ${de ? "Neulinge" : "newcomers"} · ${rows.length} ${de ? "nach Filter" : "after filter"}</p>
+    ${rows.length
+      ? `<div class="table-scroll"><table class="lead-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`
+      : `<p class="ip-hint">${de ? "Keine Neulinge – Filter lockern." : "No newcomers – loosen the filters."}</p>`}`;
+
+  box.querySelectorAll("[data-ipo]").forEach((el) => el.onchange = () => {
+    prefSet(`ip_ipo_${el.dataset.ipo}`, el.value.trim());
+    renderIpoTab();
+  });
+  const txtBtn = box.querySelector(".ipo-txt-btn"), copyBtn = box.querySelector(".ipo-copy-btn");
+  txtBtn.onclick = () => ipoExport(txtBtn, "txt");
+  copyBtn.onclick = () => ipoExport(copyBtn, "copy");
+}
+
+function ipoExport(btn, mode) {
+  const de = ipDe();
+  const txt = _ipoLast ? _IPOM.ipoTvText(_ipoLast) : "";
+  if (!txt) { showToast(de ? "Keine exportierbaren Neulinge (Ausbruch / Nahe Pivot / Basis)" : "No exportable newcomers (breakout / near pivot / base)"); return; }
+  const clip = _IPOM.ipoClipboard(_ipoLast);
+  const n = clip.split(",").length;
+  if (mode === "copy") {
+    navigator.clipboard.writeText(clip).then(() => {
+      flashDone(btn);
+      showToast(de ? `${n} Ticker kopiert!` : `${n} tickers copied!`);
+    });
+    return;
+  }
+  const blob = new Blob([txt], { type: "text/plain" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `inplay_ipo_${_ipoData.dates.at(-1)}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  showToast(de ? `Watchlist mit ${n} Tickern gespeichert` : `Watchlist with ${n} tickers saved`);
 }
 
 function inPlayExport(btn, mode) {
@@ -4519,7 +4658,8 @@ async function loadData() {
       _leadersBars = null; _leadersLoad = null; _leadersFailed = false; _leadersCache = {};
       if (leadersPanelVisible()) renderLeadersTab();
       // In-Play-Zeitreiter zeichnet in einen eigenen Container nach.
-      if (_inPlaySub !== "main" && !document.querySelector('[data-panel="lab"]')?.classList.contains("hidden")) renderInPlayHorizon(_inPlaySub);
+      _ipoData = null; _ipoFailed = false;   // IPO-Datei beim naechsten Zeichnen frisch holen
+      if (_inPlaySub !== "main" && !document.querySelector('[data-panel="lab"]')?.classList.contains("hidden")) renderInPlaySub();
     } else {
       document.getElementById("etf-loading").classList.add("hidden");
       document.getElementById("etf-error").textContent = t("etfNoData");
