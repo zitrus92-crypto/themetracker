@@ -274,8 +274,13 @@ def fetch_monthly(tickers: list, cfg: dict = LEADERS_CONFIG):
 
 
 def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG,
-                            ipo_set: set | None = None, glb_monthly: dict | None = None):
+                            ipo_set: set | None = None, glb_fetch=None):
     """(master_dates, bars, rs_universe, inplay_universe, ipo, etf, glb_rows).
+
+    glb_fetch = Callable -> {ticker: Monatsbars} | None (fetch_monthly). Wird
+            erst NACH dem erfolgreichen Benchmark-Abruf aufgerufen, damit der
+            grosse Monatsabruf (Yahoo-Drosselung) nie SPY und damit den ganzen
+            Leaders-Lauf kostet; Fehler -> glb_rows = None (kein GLB).
 
     ipo_set = Kandidaten fuer den IPO-Reiter (Industry-Universum ohne
             ausgeschlossene Industries); ipo = {ticker: ipo_series(...)},
@@ -332,6 +337,13 @@ def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG,
         raise RuntimeError(f"Benchmark {bench} ohne Kursdaten (3 Versuche)")
     master = got_bench[bench]["dates"]
 
+    glb_monthly = None
+    if glb_fetch is not None:
+        try:
+            glb_monthly = glb_fetch()
+        except Exception as e:
+            print(f"      WARNING: GLB-Monatsdaten nicht verfuegbar ({e})")
+
     def _aligned(r):
         return {k: align(master, r["dates"], r[k]) for k in ("c", "h", "o", "l", "v")}
 
@@ -372,7 +384,8 @@ def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG,
             # GLB: eigener try; veraltete/gehaltene Ticker (letzter Close nicht
             # am letzten Master-Tag) werden uebersprungen.
             try:
-                if glb_monthly is not None and tk in ipo_set and tk in glb_monthly                         and a["c"] and a["c"][-1] is not None:
+                if (glb_monthly is not None and tk in ipo_set and tk in glb_monthly
+                        and a["c"] and a["c"][-1] is not None):
                     row = glb.analyze(glb_monthly[tk], master, a["h"], a["l"], a["c"], a["v"])
                     if row is not None:
                         ip2 = ip if ip is not None else [None, None]
@@ -404,7 +417,8 @@ def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG,
             except Exception as e:
                 print(f"      WARNING: retry failed for {tk}: {e}")
         print(f"      Retry: {len(bars) - before}/{len(missing)} nachgeholt.")
-    return master, bars, universe, inplay, ipo, etf.get("a"), glb_rows
+    return (master, bars, universe, inplay, ipo, etf.get("a"),
+            glb_rows if glb_monthly is not None else None)
 
 
 def fetch_exchanges(tickers: list, known: dict, cfg: dict = LEADERS_CONFIG) -> dict:
@@ -511,14 +525,10 @@ def build_leaders(themes: dict, industries: dict | None = None, cfg: dict = LEAD
     excluded = {tk for name in cfg["IPO_EXCLUDE_INDUSTRIES"]
                 for tk in ((industries or {}).get(name) or {}).get("tickers") or []}
     ipo_set = {tk for tk in broad if tk not in excluded} if industries else set()
-    glb_monthly = None
-    if ipo_set:
-        try:
-            glb_monthly = fetch_monthly(sorted(ipo_set), cfg)
-        except Exception as e:
-            print(f"      WARNING: GLB-Monatsdaten nicht verfuegbar ({e})")
+    # Monatsabruf erst nach SPY (siehe fetch_bars_and_universe).
+    glb_fetch = (lambda: fetch_monthly(sorted(ipo_set), cfg)) if ipo_set else None
     master, bars, universe, inplay, ipo, etf, glb_rows = fetch_bars_and_universe(
-        keep, broad, cfg, ipo_set=ipo_set, glb_monthly=glb_monthly)
+        keep, broad, cfg, ipo_set=ipo_set, glb_fetch=glb_fetch)
     print(f"    Kursdaten: {len(bars) - 1}/{len(keep)} Konstituenten, "
           f"RS-Universum {len(universe)}/{len(broad)} mit vollstaendiger Historie, "
           f"In-Play-Universum {len(inplay)}, IPO-Neulinge {len(ipo)}.")
@@ -600,7 +610,7 @@ def build_leaders(themes: dict, industries: dict | None = None, cfg: dict = LEAD
         "tickers": ipo,
     }
     glb_out = None
-    if glb_monthly is not None and industries:
+    if glb_rows is not None and industries:
         glb_out = {
             "schema_version": 1,
             "date": today,

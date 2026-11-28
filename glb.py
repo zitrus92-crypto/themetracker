@@ -6,7 +6,8 @@ docs/superpowers/specs/2026-11-28-glb-subtab-design.md (Abschnitt "Regeln").
 - Green Line: Allzeithoch (Intraday-High der Monatsbalken), gueltig, wenn danach
   3 volle Monatsbalken es nicht ueberschreiten. Waehrend der Entstehung setzt
   jedes hoehere High die Uhr zurueck; eine gueltige Line bleibt bis zum ersten
-  Schluss darueber (= GLB).
+  Schluss darueber (= GLB). Ein hoeheres Intraday-High ohne Schluss darueber,
+  das selbst 3 volle Monate ungebrochen bleibt, hebt die Line auf dieses ATH.
 - Monatsphase: Monatsbalken vor dem ersten vollen Tagesmonat (Monatsschluss als
   Naeherung fuer historische GLBs). Tagesphase: 2y-Tagesbalken (Tagesschluss).
 - Status: glb_today / glb_holds / near / glb_failed (oder None).
@@ -63,6 +64,16 @@ def _next_month(ym: str) -> str:
     return f"{y:04d}-{m:02d}"
 
 
+def _settle_line(line, line_since, ath, ath_ym, ym, need):
+    """Line festschreiben, sobald das ATH `need` Monate zurueckliegt (= 3 volle
+    Monate ungebrochen). Auch eine gueltige Line folgt einem hoeheren
+    Intraday-Pierce-ATH, wenn dieses selbst so lange gehalten hat; der Pierce
+    allein (ohne Schluss darueber) beendet die Line nicht."""
+    if ath is not None and months_between(ath_ym, ym) >= need and (line is None or ath > line):
+        return ath, ath_ym
+    return line, line_since
+
+
 def scan_green_line(monthly, dates, h, c, cfg=GLB_CFG) -> dict:
     """Green Line ueber Monats- und Tagesphase verfolgen, GLB-Ereignisse sammeln."""
     need = cfg["LINE_MONTHS"] + 1
@@ -76,8 +87,7 @@ def scan_green_line(monthly, dates, h, c, cfg=GLB_CFG) -> dict:
             break
         if H is None:
             continue
-        if line is None and ath is not None and months_between(ath_ym, ym) >= need:
-            line, line_since = ath, ath_ym
+        line, line_since = _settle_line(line, line_since, ath, ath_ym, ym, need)
         if line is not None and C is not None and C > line:
             line = None
             if H >= ath:
@@ -93,8 +103,7 @@ def scan_green_line(monthly, dates, h, c, cfg=GLB_CFG) -> dict:
         hi, cl = h[i], c[i]
         if hi is None or cl is None:
             continue
-        if line is None and ath is not None and months_between(ath_ym, ym) >= need:
-            line, line_since = ath, ath_ym
+        line, line_since = _settle_line(line, line_since, ath, ath_ym, ym, need)
         if line is not None and cl > line:
             events.append({"i": i, "line": line, "line_since": line_since})
             line = None
@@ -106,18 +115,20 @@ def scan_green_line(monthly, dates, h, c, cfg=GLB_CFG) -> dict:
 
 
 def _week_groups(dates, c, v):
-    """[(iso_key, last_close, vol_sum, last_date)] je ISO-Woche mit gueltigem Close."""
+    """[(iso_key, last_close, vol_sum, last_date, vol_days)] je ISO-Woche mit
+    gueltigem Close; vol_days = Tage mit Volumenwert."""
     groups = []
     for i, d in enumerate(dates):
         if c[i] is None:
             continue
         key = _dt.date.fromisoformat(d).isocalendar()[:2]
-        vol = v[i] if v is not None and v[i] is not None else 0.0
+        has_v = v is not None and v[i] is not None
+        vol = v[i] if has_v else 0.0
         if groups and groups[-1][0] == key:
-            k, _, vs, _ = groups[-1]
-            groups[-1] = (k, c[i], vs + vol, d)
+            k, _, vs, _, nd = groups[-1]
+            groups[-1] = (k, c[i], vs + vol, d, nd + (1 if has_v else 0))
         else:
-            groups.append((key, c[i], vol, d))
+            groups.append((key, c[i], vol, d, 1 if has_v else 0))
     return groups
 
 
@@ -194,15 +205,17 @@ def blue_dot_recent(h, l, c, cfg=GLB_CFG) -> bool:
 
 
 def _week_volx(dates, c, v, idx, cfg):
-    """Wochenvolumen der GLB-Woche / Mittel der VOL_WEEKS Vorwochen."""
+    """Tagesdurchschnitts-Volumen der GLB-Woche / dasjenige der VOL_WEEKS
+    Vorwochen. Anteilig gerechnet, damit eine angebrochene Woche (GLB am
+    Montag) und Feiertagswochen nicht gegen volle Wochen verlieren."""
     key = _dt.date.fromisoformat(dates[idx]).isocalendar()[:2]
-    groups = [g for g in _week_groups(dates, c, v) if g[2] > 0]
+    groups = [g for g in _week_groups(dates, c, v) if g[2] > 0 and g[4] > 0]
     pos = next((j for j, g in enumerate(groups) if g[0] == key), None)
     if pos is None or pos < 1:
         return None
     prior = groups[max(0, pos - cfg["VOL_WEEKS"]):pos]
-    avg = sum(g[2] for g in prior) / len(prior)
-    return groups[pos][2] / avg if avg > 0 else None
+    avg = sum(g[2] for g in prior) / sum(g[4] for g in prior)
+    return (groups[pos][2] / groups[pos][4]) / avg if avg > 0 else None
 
 
 def _r(x, nd):

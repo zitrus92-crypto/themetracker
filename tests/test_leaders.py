@@ -222,5 +222,112 @@ class TestGlbIntegration(unittest.TestCase):
         self.assertTrue(c and b)
 
 
+class TestGlbFetchFlow(unittest.TestCase):
+    """fetch_bars_and_universe mit Fake-yfinance (kein Netzwerk)."""
+    N = 60
+
+    def _fake_yf(self, data, calls):
+        import sys
+        import pandas as pd
+        from unittest import mock
+        nan = float("nan")
+        base = {"Open": 100.0, "High": 102.0, "Low": 98.0, "Close": 100.0, "Volume": 1e6}
+
+        def download(chunk, period=None, interval=None, **kw):
+            calls.append(("daily", tuple(chunk)))
+            idx = pd.bdate_range(end="2026-11-27", periods=self.N)
+            cols = {}
+            for tk in chunk:
+                if tk not in data:
+                    continue
+                start, stop = data[tk]
+                for f, val in base.items():
+                    cols[(tk, f)] = [val if start <= i < stop else nan for i in range(self.N)]
+            df = pd.DataFrame(cols, index=idx)
+            if cols:
+                df.columns = pd.MultiIndex.from_tuples(df.columns)
+            return df
+
+        fake = mock.MagicMock()
+        fake.download.side_effect = download
+        return mock.patch.dict(sys.modules, {"yfinance": fake})
+
+    def test_monthly_fetch_after_bench_and_failure_is_isolated(self):
+        calls = []
+        data = {"SPY": (0, self.N), "AAA": (0, self.N)}
+
+        def glb_fetch():
+            calls.append("monthly")
+            raise RuntimeError("Yahoo throttled")
+
+        with self._fake_yf(data, calls):
+            master, bars, universe, inplay, ipo, etf, glb_rows = \
+                leaders.fetch_bars_and_universe(["AAA"], ["AAA"], leaders.LEADERS_CONFIG,
+                                                ipo_set={"AAA"}, glb_fetch=glb_fetch)
+        self.assertEqual(calls[0], ("daily", ("SPY",)))
+        self.assertEqual(calls[1], "monthly")
+        self.assertIn(("daily", ("AAA", leaders.LEADERS_CONFIG["IPO_ETF"])), calls[2:])
+        self.assertEqual(len(master), self.N)
+        self.assertIn("AAA", bars)
+        self.assertIn("AAA", inplay)
+        self.assertIsNone(glb_rows)
+
+    def test_absorb_glb_branch(self):
+        from unittest import mock
+        calls = []
+        n = self.N
+        data = {"SPY": (0, n), "AAA": (0, n), "OLD": (0, n - 5), "THIN": (n - 20, n),
+                "NOTIPO": (0, n)}
+        monthly = {tk: [("2020-01", 1.0, 1.0)] for tk in ("AAA", "OLD", "THIN", "NOTIPO")}
+        row = {"status": "near", "gl": 101.0}
+        with self._fake_yf(data, calls), \
+                mock.patch.object(leaders.glb, "analyze", return_value=dict(row)) as an:
+            *_, glb_rows = leaders.fetch_bars_and_universe(
+                ["AAA"], ["AAA", "OLD", "THIN", "NOTIPO"], leaders.LEADERS_CONFIG,
+                ipo_set={"AAA", "OLD", "THIN"}, glb_fetch=lambda: monthly)
+        self.assertEqual(set(glb_rows), {"AAA", "THIN"})   # OLD veraltet, NOTIPO kein Kandidat
+        self.assertEqual(glb_rows["AAA"], {**row, "dvol50": 100_000_000, "atr14": 4.0})
+        self.assertEqual(glb_rows["THIN"], {**row, "dvol50": None, "atr14": None})
+        self.assertEqual(an.call_count, 2)
+
+    def _build(self, glb_rows):
+        from unittest import mock
+        master = ["2026-11-26", "2026-11-27"]
+        spy = {k: [100.0, 101.0] for k in "chlov"}
+        seen = {}
+
+        def fbu(keep, broad, cfg, ipo_set=None, glb_fetch=None):
+            seen["monthly_calls_before"] = fm.call_count
+            seen["glb_fetch"] = glb_fetch
+            if glb_fetch is not None:
+                glb_fetch()
+            return master, {"SPY": spy}, {}, {}, {}, None, glb_rows
+
+        industries = {"Software": {"tickers": ["AAA", "BBB"]}}
+        with mock.patch.object(leaders, "fetch_monthly", return_value={}) as fm, \
+                mock.patch.object(leaders, "fetch_bars_and_universe", side_effect=fbu), \
+                mock.patch.object(leaders, "_read_json", return_value=None), \
+                mock.patch.object(leaders, "fetch_exchanges", return_value={}), \
+                mock.patch.object(leaders, "fetch_earnings", return_value={}):
+            out = leaders.build_leaders({}, industries)
+            seen["fm_args"] = fm.call_args
+        return out, seen
+
+    def test_build_leaders_defers_monthly_to_fetcher(self):
+        (_, _, _, glb_out), seen = self._build({"AAA": {"status": "near"}})
+        self.assertEqual(seen["monthly_calls_before"], 0)
+        self.assertTrue(callable(seen["glb_fetch"]))
+        self.assertEqual(seen["fm_args"].args[0], ["AAA", "BBB"])
+        self.assertEqual(set(glb_out), {"schema_version", "date", "data_date", "source",
+                                        "cfg", "rows"})
+        self.assertEqual(glb_out["data_date"], "2026-11-27")
+        self.assertEqual(glb_out["rows"], {"AAA": {"status": "near"}})
+        self.assertEqual(glb_out["source"], leaders.GLB_SOURCE)
+
+    def test_build_leaders_no_monthly_no_glb_out(self):
+        (_, _, _, glb_out), _ = self._build(None)
+        self.assertIsNone(glb_out)
+
+
 if __name__ == "__main__":
     unittest.main()

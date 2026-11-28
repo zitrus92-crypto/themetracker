@@ -101,6 +101,61 @@ class TestLineFormation(unittest.TestCase):
         self.assertEqual((r["ath"], r["ath_ym"]), (110.0, "2025-07"))
 
 
+class TestLineFollowsHeldPierce(unittest.TestCase):
+    """Ein Intraday-Pierce ohne Schluss darueber, der selbst >= 3 volle Monate
+    ungebrochen bleibt, hebt die Line auf das neue ATH."""
+
+    def pierce_history(self, end_ym):
+        out = [("2019-01", 100.0, 95.0)]
+        for ym in months("2019-02", end_ym):
+            if ym == "2023-03":
+                out.append((ym, 110.0, 95.0))     # Pierce, Schluss unter Line
+            else:
+                out.append((ym, 90.0, 85.0))
+        return out
+
+    def test_monthly_line_moves_up_after_three_months(self):
+        r = glb.scan_green_line(self.pierce_history("2023-06"), [], [], [], glb.GLB_CFG)
+        self.assertEqual((r["line"], r["line_since"]), (100.0, "2019-01"))
+        self.assertEqual((r["ath"], r["ath_ym"]), (110.0, "2023-03"))
+        r = glb.scan_green_line(self.pierce_history("2023-07"), [], [], [], glb.GLB_CFG)
+        self.assertEqual((r["line"], r["line_since"]), (110.0, "2023-03"))
+
+    def test_daily_close_between_old_and_new_line(self):
+        monthly = self.pierce_history("2024-12")
+        dates = bdays_until("2024-12-02", "2025-03-28")
+        n = len(dates)
+        h, c = [92.0] * n, [90.0] * n
+        h[-5], c[-5] = 106.0, 105.0               # ueber alter Line 100, unter 110
+        r = glb.scan_green_line(monthly, dates, h, c, glb.GLB_CFG)
+        self.assertEqual(r["events"], [])
+        self.assertEqual(r["line"], 110.0)
+        h[-1], c[-1] = 112.0, 111.0
+        r = glb.scan_green_line(monthly, dates, h, c, glb.GLB_CFG)
+        self.assertEqual(len(r["events"]), 1)
+        self.assertEqual(r["events"][0]["i"], n - 1)
+        self.assertEqual((r["events"][0]["line"], r["events"][0]["line_since"]),
+                         (110.0, "2023-03"))
+
+    def test_daily_phase_pierce_moves_line(self):
+        monthly = history_with_ath(end_ym="2026-11")      # Line 200 seit 2022-03
+        dates = bdays_until("2025-01-02", "2025-12-31")
+        n = len(dates)
+        h, c = [150.0] * n, [148.0] * n
+        k = dates.index("2025-03-10")
+        h[k], c[k] = 210.0, 199.0                 # Pierce im Tagesmodus
+        r = glb.scan_green_line(monthly, dates[:dates.index("2025-06-30") + 1],
+                                h, c, glb.GLB_CFG)
+        self.assertEqual((r["line"], r["line_since"]), (200.0, "2022-03"))
+        r = glb.scan_green_line(monthly, dates[:dates.index("2025-07-01") + 1],
+                                h, c, glb.GLB_CFG)
+        self.assertEqual((r["line"], r["line_since"]), (210.0, "2025-03"))
+        j = dates.index("2025-08-04")
+        h[j], c[j] = 206.0, 205.0                 # zwischen 200 und 210: kein GLB
+        r = glb.scan_green_line(monthly, dates, h, c, glb.GLB_CFG)
+        self.assertEqual(r["events"], [])
+
+
 class TestAnalyze(unittest.TestCase):
     def setUp(self):
         self.dates = bdays_until("2024-12-02", "2026-11-27")   # endet Freitag
@@ -182,6 +237,15 @@ class TestAnalyze(unittest.TestCase):
                 v[j] = 2000.0
         row = glb.analyze(self.monthly, self.dates, h, l, c, v)
         self.assertEqual(row["status"], "glb_holds")
+        self.assertAlmostEqual(row["glb_volx"], 2.0, places=2)
+
+    def test_weekly_volume_factor_partial_week(self):
+        dates = bdays_until("2024-12-02", "2026-11-30")    # endet Montag
+        n = len(dates)
+        h, l, c, v = [151.0] * n, [149.0] * n, [150.0] * n, [1000.0] * n
+        h[-1], c[-1], v[-1] = 203.0, 201.0, 2000.0         # GLB am Montag, 2x Volumen
+        row = glb.analyze(self.monthly, dates, h, l, c, v)
+        self.assertEqual(row["status"], "glb_today")
         self.assertAlmostEqual(row["glb_volx"], 2.0, places=2)
 
     def test_gaps_and_no_monthly(self):
