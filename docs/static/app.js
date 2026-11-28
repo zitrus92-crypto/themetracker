@@ -4425,7 +4425,7 @@ async function renderIpoTab() {
     }
   };
   const px = (v) => (v >= 100 ? v.toFixed(1) : v.toFixed(2));
-  const pct = (v) => (v === null ? "—" : `${v > 0 ? "+" : ""}${v.toFixed(0)} %`);
+  const pct = (v) => (v === null || !Number.isFinite(v) ? "—" : `${v > 0 ? "+" : ""}${v.toFixed(0)} %`);
   const head = [de ? "Ticker" : "Ticker", de ? "Erster Tag" : "First day", "B (IPO-Hoch)", de ? "A (früh)" : "A (early)",
     de ? "Tiefe" : "Depth", "Basis", de ? "Abst. A / B" : "Dist. A / B", de ? "Verengung ATR%" : "Tightening ATR%", "$-Vol", "Status"]
     .map((h) => `<th>${h}</th>`).join("");

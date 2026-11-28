@@ -144,5 +144,21 @@ class TestIpoSeries(unittest.TestCase):
         self.assertIsNone(leaders.ipo_series(a, self.MASTER, "2026-01-01"))
 
 
+class TestWriteOrder(unittest.TestCase):
+    def test_ipo_write_failure_keeps_leaders_files(self):
+        import tempfile
+        from pathlib import Path
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            fake = ({"c": 1}, {"tickers": {}}, {"tickers": {}, "etf": None})
+            bad_ipo = mock.MagicMock()
+            bad_ipo.write_text.side_effect = OSError("disk full")
+            with mock.patch.object(leaders, "build_leaders", return_value=fake),                  mock.patch.object(leaders, "DATA_DIR", d),                  mock.patch.object(leaders, "CONSTITUENTS_PATH", d / "c.json"),                  mock.patch.object(leaders, "BARS_PATH", d / "b.json"),                  mock.patch.object(leaders, "IPO_PATH", bad_ipo):
+                leaders.write_leaders({}, {})
+            self.assertTrue((d / "c.json").exists())
+            self.assertTrue((d / "b.json").exists())
+
+
 if __name__ == "__main__":
     unittest.main()

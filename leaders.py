@@ -540,14 +540,18 @@ def build_leaders(themes: dict, industries: dict | None = None, cfg: dict = LEAD
 def write_leaders(themes: dict, industries: dict | None = None, cfg: dict = LEADERS_CONFIG) -> dict:
     const_out, bars_out, ipo_out = build_leaders(themes, industries, cfg)
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    IPO_PATH.write_text(
-        json.dumps(ipo_out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    print(f"    Saved ipo_bars.json ({len(ipo_out['tickers'])} Neulinge, "
-          f"ETF {'ja' if ipo_out['etf'] else 'nein'})")
     CONSTITUENTS_PATH.write_text(
         json.dumps(const_out, ensure_ascii=False, indent=1), encoding="utf-8")
     BARS_PATH.write_text(
         json.dumps(bars_out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    # IPO-Datei zuletzt und isoliert: ein Fehler hier kostet nie die Leader-Dateien.
+    try:
+        IPO_PATH.write_text(
+            json.dumps(ipo_out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        print(f"    Saved ipo_bars.json ({len(ipo_out['tickers'])} Neulinge, "
+              f"ETF {'ja' if ipo_out['etf'] else 'nein'})")
+    except Exception as e:
+        print(f"    WARNING: ipo_bars.json nicht geschrieben ({e}) — alte Datei bleibt.")
     return bars_out
 
 

@@ -42,13 +42,15 @@ function volFactor(t, i, n) {
 /** Pivots, Basis-Kennzahlen und Status eines Neulings (siehe Plan Task 2). */
 export function analyzeIpo(t, cfg = IPO_CFG) {
   const n = t.c.length;
-  const ok = (i) => isNum(t.c[i]) && isNum(t.h[i]) && isNum(t.l[i]);
+  // Nur Bars mit positiven Kursen (yfinance liefert vereinzelt h = l = 0).
+  const ok = (i) => isNum(t.c[i]) && isNum(t.h[i]) && isNum(t.l[i]) && t.c[i] > 0 && t.h[i] > 0 && t.l[i] > 0;
   let i0 = 0;
   while (i0 < n && !ok(i0)) i0++;
   if (i0 >= n) return null;
 
   let hiB = t.h[i0], hiIdx = i0, low = t.l[i0], lowIdx = i0, hiA = null, hiAIdx = null;
   let bo = null, last = null, failedAt = null, L = i0;
+  let aBlockedUntil = -1;   // nach gehaltenem A-Ausbruch: neuer A erst nach neuer Basis
 
   // Bar j in die Basis-Größen aufnehmen (nur ohne aktiven Ausbruch).
   const absorb = (j) => {
@@ -77,16 +79,25 @@ export function analyzeIpo(t, cfg = IPO_CFG) {
       if (bo.kind === "A" && c > pivB && baseLen >= cfg.MIN_BASE) {
         bo = last = mk("B", pivB, i);
       } else if (bo.age >= cfg.HOLD_DAYS) {
-        // Ausbruch hat gehalten: neues Hoch = IPO-Hoch für eine nächste Basis.
+        const held = bo;
         bo = null;
-        for (let j = hiIdx; j <= i; j++) if (ok(j) && t.h[j] >= hiB) { hiB = t.h[j]; hiIdx = j; }
-        low = t.l[i]; lowIdx = i; hiA = null;
+        if (held.kind === "B") {
+          // B hat gehalten: neues Hoch = IPO-Hoch für eine nächste Basis.
+          for (let j = hiIdx; j <= i; j++) if (ok(j) && t.h[j] >= hiB) { hiB = t.h[j]; hiIdx = j; }
+          low = t.l[i]; lowIdx = i; hiA = null;
+        } else {
+          // A hat gehalten (unter B): Basis-Tief und B bleiben; eingefrorene Bars
+          // nachtragen, neuer A-Ausbruch erst nach einer neuen Basis.
+          hiA = null;
+          for (let j = held.day; j <= i; j++) if (ok(j)) absorb(j);
+          aBlockedUntil = i + cfg.MIN_BASE;
+        }
       }
       continue;
     }
     if (baseLen >= cfg.MIN_BASE) {
       if (c > pivB) { bo = last = mk("B", pivB, i); continue; }
-      if (pivA !== null && c > pivA) { bo = last = mk("A", pivA, i); continue; }
+      if (pivA !== null && c > pivA && i >= aBlockedUntil) { bo = last = mk("A", pivA, i); continue; }
     }
     absorb(i);
   }

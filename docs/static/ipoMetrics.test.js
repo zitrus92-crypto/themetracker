@@ -104,6 +104,28 @@ test("Pivot A braucht einen Henkel: kurzer Rücksetzer + Erholung ist kein Ausbr
   assert.equal(b.handleDays, 1);
 });
 
+test("Nach gehaltenem A-Ausbruch: neuer A-Ausbruch erst nach neuer 15-Tage-Basis, Tiefe bleibt", () => {
+  // IPO-Hoch 10 (Tag 5), Tief 5 (25), A-Hoch 7 (40), Henkel 6.5 (47), Ausbruch A 7.2 (48),
+  // hält bis Tag 53 (7.6), Dip 7.3 (58), Close 7.8 an Tag 60 (nur 7 Tage nach Ablauf).
+  const t = series([[0, 6], [5, 9.95], [25, 5.05], [40, 6.95], [47, 6.5], [48, 7.2], [53, 7.6], [58, 7.3], [60, 7.8]]);
+  const a = analyzeIpo(t);
+  assert.equal(a.breakout.kind, "A");
+  assert.equal(a.breakout.since, 60 - 48);    // kein zweiter A-Ausbruch an Tag 60
+  assert.notEqual(a.status, "breakoutA");
+  near(a.depthPct, -50, 0.5);                 // Basis-Tief bleibt das ursprüngliche
+});
+
+test("Null-/Nullwert-Bars werden ignoriert (keine Infinity/NaN)", () => {
+  const t = { first: "2026-01-02", o: [0, 19, 19], h: [0, 19.5, 19.4], l: [0, 18.8, 18.9], c: [19, 19.2, 19.1], v: [0, 100, 100] };
+  const a = analyzeIpo(t);
+  assert.ok(Number.isFinite(a.pivotB) && a.pivotB > 0);
+  assert.ok(Number.isFinite(a.distB));
+  assert.ok(Number.isFinite(a.depthPct));
+  // Wie OPAY in echten Daten: einziger Bar mit h = l = 0, danach nur Lücken.
+  const opay = { first: "2026-01-02", o: [0, null], h: [0, null], l: [0, null], c: [19, null], v: [0, null] };
+  assert.equal(analyzeIpo(opay), null);
+});
+
 test("null-Bar in der Basis ändert die Pivots nicht", () => {
   const t = cut(SNDK, 121);
   for (const k of ["o", "h", "l", "c", "v"]) t[k][60] = null;
