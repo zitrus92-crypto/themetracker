@@ -69,7 +69,7 @@
   - `parseNum(str, fallback) -> number` — trimmt, `,`→`.`, nicht endlich oder < 0 → fallback.
   - `normSym(s) -> string` — Präfix `EX:` entfernen, `.`→`-`, Großbuchstaben (Lookup-Schlüssel wie `inplay_universe.rows`).
   - `rankAndPct(groups, tf) -> Map<name, {rank, pct}>` — `groups: [{name, perfs}]`; nur Gruppen mit endlichem `perfs[tf]`; `rank = 1 + #(perf strikt größer)`; `pct = 100 * (n - rank) / n`.
-  - `buildHorizon({ industries, themes, universe, exchangeOf, horizon, pct:[a,b], minDvolM, minAtr, includeThemes }) -> { groups: [{name, kind:"industry"|"theme", ranks:[r1,r2], key:[weak,best], rows:[{sym, tv, dvol, atr}]}], missingData: bool }`
+  - `buildHorizon({ industries, themes, themeMembers, universe, exchangeOf, horizon, pct:[a,b], minDvolM, minAtr, includeThemes }) -> { groups: [{name, kind:"industry"|"theme", ranks:[r1,r2], key:[weak,best], rows:[{sym, tv, dvol, atr}]}], missingData: bool }`
     - `industries`: `{name: {perfs, tickers:[bare]}}` (data.json), `themes`: `{name: {perfs}}` (etf_data), `themeMembers`: `{name: ["EX:SYM"]}` (theme_constituents), `horizon`: Schlüssel aus `HORIZONS`.
     - `universe`: `inplay_universe` oder `null` → `{groups: [], missingData: true}`.
     - `exchangeOf(normSym) -> "EX:SYM" | null`; ohne Treffer `tv` = Symbol mit `-`→`.`.
