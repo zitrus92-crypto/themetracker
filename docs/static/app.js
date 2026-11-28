@@ -4365,7 +4365,7 @@ let _ipoLast = null;           // angezeigte Zeilen, fuer den Export
 // Zeit-Reiter oder IPOs neu zeichnen (Sprachwechsel, neue Daten).
 function renderInPlaySub() {
   if (_inPlaySub === "ipo") return _IPOM ? renderIpoTab() : undefined;
-  if (_inPlaySub === "glb") return renderGlbTab();
+  if (_inPlaySub === "glb") return _glbData || _glbFailed ? renderGlbTab() : undefined;
   if (_inPlaySub !== "main" && _IP) return renderInPlayHorizon(_inPlaySub);
 }
 
@@ -4792,7 +4792,7 @@ async function loadData() {
       // In-Play-Zeitreiter zeichnet in einen eigenen Container nach.
       _glbData = null; _glbFailed = false;
       _ipoData = null; _ipoFailed = false;   // IPO-Datei beim naechsten Zeichnen frisch holen
-      if (_inPlaySub !== "main" && !document.querySelector('[data-panel="lab"]')?.classList.contains("hidden")) renderInPlaySub();
+      if (_inPlaySub !== "main" && !document.querySelector('[data-panel="lab"]')?.classList.contains("hidden")) (_inPlaySub === "glb" ? renderGlbTab() : renderInPlaySub());
     } else {
       document.getElementById("etf-loading").classList.add("hidden");
       document.getElementById("etf-error").textContent = t("etfNoData");
