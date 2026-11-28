@@ -34,6 +34,7 @@ from pathlib import Path
 DATA_DIR = Path(__file__).parent / "docs" / "data"
 CONSTITUENTS_PATH = DATA_DIR / "theme_constituents.json"
 BARS_PATH = DATA_DIR / "leaders_bars.json"
+IPO_PATH = DATA_DIR / "ipo_bars.json"
 
 SCHEMA_VERSION = 3   # v2: o/l/v ueber SHORT_BARS=57, rs_universe; v3: inplay_universe
 
@@ -69,6 +70,12 @@ LEADERS_CONFIG = {
     "INPLAY_MIN_BARS": 50,
     "INPLAY_DVOL_BARS": 50,
     "INPLAY_ATR_BARS": 14,
+
+    # -- IPO-Unterreiter (Neulinge <= 365 Kalendertage) ------------------------
+    # Rohreihen ab erstem Handelstag; Pivots/Status/Ampel rechnet ipoMetrics.js.
+    "IPO_WINDOW_DAYS": 365,
+    "IPO_EXCLUDE_INDUSTRIES": ["Shell Companies"],   # SPAC-Maentel kleben bei ~10 $
+    "IPO_ETF": "IPO",                                # Renaissance IPO ETF (Kontrolle)
 }
 
 # yfinance fast_info.exchange -> TradingView-Praefix
@@ -186,8 +193,44 @@ def inplay_summary(c: list, h: list, l: list, v: list, cfg: dict = LEADERS_CONFI
     return [round(dvol), round(sum(trs) / na / last * 100, 2)]
 
 
-def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG):
-    """(master_dates, bars, rs_universe, inplay_universe).
+def first_bar_index(c: list):
+    """Index des ersten Bars mit Close, None wenn es keinen gibt."""
+    return next((i for i, x in enumerate(c) if x is not None), None)
+
+
+def ipo_series(a: dict, master: list, cutoff: str, cfg: dict = LEADERS_CONFIG):
+    """Kompakte Reihen ab erstem Handelstag, wenn dieser >= cutoff liegt.
+
+    Erster Bar am Anfang der Master-Achse = Historie reicht weiter zurueck als
+    der Download -> kein Neuling.
+    """
+    i = first_bar_index(a["c"])
+    if i is None or i == 0 or master[i] < cutoff:
+        return None
+    return {
+        "first": master[i],
+        "o": [_round_px(x) for x in a["o"][i:]],
+        "h": [_round_px(x) for x in a["h"][i:]],
+        "l": [_round_px(x) for x in a["l"][i:]],
+        "c": [_round_px(x) for x in a["c"][i:]],
+        "v": [None if x is None else int(x) for x in a["v"][i:]],
+    }
+
+
+def ipo_cutoff(master: list, cfg: dict = LEADERS_CONFIG) -> str:
+    """Erstes Datum des IPO-Fensters (letzter Master-Tag - IPO_WINDOW_DAYS)."""
+    from datetime import date, timedelta
+    last = date.fromisoformat(master[-1])
+    return (last - timedelta(days=cfg["IPO_WINDOW_DAYS"])).isoformat()
+
+
+def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG,
+                            ipo_set: set | None = None):
+    """(master_dates, bars, rs_universe, inplay_universe, ipo, etf).
+
+    ipo_set = Kandidaten fuer den IPO-Reiter (Industry-Universum ohne
+            ausgeschlossene Industries); ipo = {ticker: ipo_series(...)},
+            etf = aligned Reihen des IPO-ETF oder None.
 
     keep  = Theme-Konstituenten: volle Reihen (c/h/o/l/v), fehlende werden
             einzeln nachgeholt.
@@ -248,6 +291,11 @@ def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG)
     bars = {bench: _aligned(got_bench[bench])}
     universe = {}
     inplay = {}
+    ipo = {}
+    etf = {}
+    ipo_set = ipo_set or set()
+    etf_sym = cfg["IPO_ETF"]
+    cutoff = ipo_cutoff(master, cfg)
 
     def _absorb(got):
         for tk, r in got.items():
@@ -261,9 +309,20 @@ def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG)
             ip = inplay_summary(a["c"], a["h"], a["l"], a["v"], cfg)
             if ip is not None:
                 inplay[tk] = ip
+            # Eigener try: ein Fehler hier darf nie den Block der RS-/In-Play-
+            # Daten kosten.
+            try:
+                if tk == etf_sym:
+                    etf["a"] = a
+                elif tk in ipo_set:
+                    s = ipo_series(a, master, cutoff, cfg)
+                    if s is not None:
+                        ipo[tk] = s
+            except Exception as e:
+                print(f"      WARNING: IPO-Reihe {tk} uebersprungen ({e})")
 
     broad_set = set(broad)
-    order = [tk for tk in dict.fromkeys(list(keep) + list(broad)) if tk != bench]
+    order = [tk for tk in dict.fromkeys(list(keep) + list(broad) + [etf_sym]) if tk != bench]
     chunks = [order[i:i + cfg["CHUNK"]] for i in range(0, len(order), cfg["CHUNK"])]
     for i, chunk in enumerate(chunks, 1):
         try:
@@ -286,7 +345,7 @@ def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG)
             except Exception as e:
                 print(f"      WARNING: retry failed for {tk}: {e}")
         print(f"      Retry: {len(bars) - before}/{len(missing)} nachgeholt.")
-    return master, bars, universe, inplay
+    return master, bars, universe, inplay, ipo, etf.get("a")
 
 
 def fetch_exchanges(tickers: list, known: dict, cfg: dict = LEADERS_CONFIG) -> dict:
@@ -390,10 +449,14 @@ def build_leaders(themes: dict, industries: dict | None = None, cfg: dict = LEAD
     print(f"    Leading Stocks: {len(keep)} Theme-Mitglieder + RS-Universum "
           f"{len(broad)} Ticker ({rs_source}), lade {cfg['PERIOD']} Kursdaten…")
 
-    master, bars, universe, inplay = fetch_bars_and_universe(keep, broad, cfg)
+    excluded = {tk for name in cfg["IPO_EXCLUDE_INDUSTRIES"]
+                for tk in ((industries or {}).get(name) or {}).get("tickers") or []}
+    ipo_set = {tk for tk in broad if tk not in excluded} if industries else set()
+    master, bars, universe, inplay, ipo, etf = fetch_bars_and_universe(
+        keep, broad, cfg, ipo_set=ipo_set)
     print(f"    Kursdaten: {len(bars) - 1}/{len(keep)} Konstituenten, "
           f"RS-Universum {len(universe)}/{len(broad)} mit vollstaendiger Historie, "
-          f"In-Play-Universum {len(inplay)}.")
+          f"In-Play-Universum {len(inplay)}, IPO-Neulinge {len(ipo)}.")
 
     const = select_constituents(themes, overrides, cfg)
     picked = sorted({tk for c in const.values() for tk in c["tickers"]})
@@ -458,12 +521,29 @@ def build_leaders(themes: dict, industries: dict | None = None, cfg: dict = LEAD
             "rows": inplay,
         },
     }
-    return const_out, bars_out
+    cutoff = ipo_cutoff(master, cfg)
+    k0 = next(i for i, d in enumerate(master) if d >= cutoff)
+    ipo_out = {
+        "schema_version": 1,
+        "date": today,
+        "window_days": cfg["IPO_WINDOW_DAYS"],
+        "excluded_industries": cfg["IPO_EXCLUDE_INDUSTRIES"],
+        "dates": master[k0:],
+        "bench": {"c": [_round_px(x) for x in bars[cfg["BENCHMARK"]]["c"][k0:]]},
+        "etf": ({"symbol": cfg["IPO_ETF"], "c": [_round_px(x) for x in etf["c"][k0:]]}
+                if etf else None),
+        "tickers": ipo,
+    }
+    return const_out, bars_out, ipo_out
 
 
 def write_leaders(themes: dict, industries: dict | None = None, cfg: dict = LEADERS_CONFIG) -> dict:
-    const_out, bars_out = build_leaders(themes, industries, cfg)
+    const_out, bars_out, ipo_out = build_leaders(themes, industries, cfg)
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    IPO_PATH.write_text(
+        json.dumps(ipo_out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    print(f"    Saved ipo_bars.json ({len(ipo_out['tickers'])} Neulinge, "
+          f"ETF {'ja' if ipo_out['etf'] else 'nein'})")
     CONSTITUENTS_PATH.write_text(
         json.dumps(const_out, ensure_ascii=False, indent=1), encoding="utf-8")
     BARS_PATH.write_text(

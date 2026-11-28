@@ -112,5 +112,37 @@ class TestInplaySummary(unittest.TestCase):
         self.assertEqual(out[1], 4.0)
 
 
+class TestIpoSeries(unittest.TestCase):
+    MASTER = [f"2026-{m:02d}-{d:02d}" for m in range(1, 13) for d in (1, 15)]  # 24 Daten
+
+    def _a(self, start):
+        n = len(self.MASTER)
+        c = [None] * start + [10.0 + i for i in range(n - start)]
+        return {"c": c, "h": [None if x is None else x + 1 for x in c],
+                "o": list(c), "l": [None if x is None else x - 1 for x in c],
+                "v": [None if x is None else 1000 for x in c]}
+
+    def test_first_bar_index(self):
+        self.assertEqual(leaders.first_bar_index([None, None, 3.0]), 2)
+        self.assertIsNone(leaders.first_bar_index([None, None]))
+
+    def test_newcomer(self):
+        out = leaders.ipo_series(self._a(10), self.MASTER, "2026-03-01")
+        self.assertEqual(out["first"], self.MASTER[10])
+        self.assertEqual(len(out["c"]), len(self.MASTER) - 10)
+        self.assertEqual(out["c"][0], 10.0)
+        self.assertEqual(out["v"][0], 1000)
+
+    def test_history_from_start_is_not_new(self):
+        self.assertIsNone(leaders.ipo_series(self._a(0), self.MASTER, "2025-01-01"))
+
+    def test_first_before_cutoff(self):
+        self.assertIsNone(leaders.ipo_series(self._a(2), self.MASTER, "2026-06-01"))
+
+    def test_all_none(self):
+        a = {k: [None] * len(self.MASTER) for k in "chlov"}
+        self.assertIsNone(leaders.ipo_series(a, self.MASTER, "2026-01-01"))
+
+
 if __name__ == "__main__":
     unittest.main()
