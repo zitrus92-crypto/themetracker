@@ -242,6 +242,7 @@ def fetch_monthly(tickers: list, cfg: dict = LEADERS_CONFIG):
         ok = 0
         chunks = [tickers[i:i + cfg["CHUNK"]] for i in range(0, len(tickers), cfg["CHUNK"])]
         for i, chunk in enumerate(chunks, 1):
+            got_any = False
             try:
                 df = yf.download(chunk, period="max", interval="1mo", auto_adjust=False,
                                  group_by="ticker", threads=True, progress=False)
@@ -256,12 +257,14 @@ def fetch_monthly(tickers: list, cfg: dict = LEADERS_CONFIG):
                         m = glb.monthly_from_df(sub)
                         if m:
                             out[tk] = m
+                            got_any = True
                     except (KeyError, TypeError):
                         continue
-                ok += 1
+                ok += 1 if got_any else 0
             except Exception as e:
                 print(f"      WARNING: GLB-Monatsblock {i}/{len(chunks)} fehlgeschlagen ({e})")
-        if chunks and ok == 0:
+        if not out or ok == 0 or len(out) < 0.5 * len(tickers):
+            print(f"      WARNING: GLB-Monatsdaten unzureichend ({len(out)}/{len(tickers)}) - verworfen")
             return None
         print(f"      GLB Monatsdaten: {len(out)}/{len(tickers)} Ticker in {time.time() - t0:.0f}s")
         return out

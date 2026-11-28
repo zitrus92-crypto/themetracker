@@ -171,6 +171,29 @@ class TestGlbIntegration(unittest.TestCase):
         with mock.patch.dict(sys.modules, {"yfinance": None}):
             self.assertIsNone(leaders.fetch_monthly(["AAA"], leaders.LEADERS_CONFIG))
 
+    def _fake_yf(self, frames):
+        import sys
+        from unittest import mock
+        fake = mock.MagicMock()
+        fake.download.side_effect = frames
+        return mock.patch.dict(sys.modules, {"yfinance": fake})
+
+    def test_fetch_monthly_empty_frame_returns_none(self):
+        import pandas as pd
+        with self._fake_yf([pd.DataFrame()]):
+            self.assertIsNone(leaders.fetch_monthly(["AAA", "BBB"], leaders.LEADERS_CONFIG))
+
+    def test_fetch_monthly_low_coverage_returns_none(self):
+        import pandas as pd
+        from unittest import mock
+        idx = pd.to_datetime(["2026-01-01", "2026-02-01"])
+        df = pd.DataFrame({("AAA", "Close"): [1.0, 2.0]}, index=idx)
+        df.columns = pd.MultiIndex.from_tuples(df.columns)
+        with self._fake_yf([df]), mock.patch.object(
+                leaders.glb, "monthly_from_df", return_value=[{"x": 1}]):
+            tks = ["AAA"] + [f"T{i}" for i in range(9)]
+            self.assertIsNone(leaders.fetch_monthly(tks, leaders.LEADERS_CONFIG))
+
     def _write(self, glb_out, glb_path):
         import tempfile
         from pathlib import Path
