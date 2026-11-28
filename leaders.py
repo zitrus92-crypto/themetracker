@@ -35,7 +35,7 @@ DATA_DIR = Path(__file__).parent / "docs" / "data"
 CONSTITUENTS_PATH = DATA_DIR / "theme_constituents.json"
 BARS_PATH = DATA_DIR / "leaders_bars.json"
 
-SCHEMA_VERSION = 2   # v2: o/l/v ueber SHORT_BARS=57, rs_universe
+SCHEMA_VERSION = 3   # v2: o/l/v ueber SHORT_BARS=57, rs_universe; v3: inplay_universe
 
 LEADERS_CONFIG = {
     # -- Konstituenten -------------------------------------------------------
@@ -62,6 +62,13 @@ LEADERS_CONFIG = {
     "RS_ROCS": [63, 126, 189, 252],
     "RS_DVOL_BARS": 50,
     "RS_MIN_PRICE": 1.0,       # wie die Studie: unadjustierter Kurs >= 1 $
+
+    # -- In-Play-Universum (Unterreiter Day/Swing/Position) -------------------
+    # Eigene Zeilenmenge neben rs_universe: kurze Mindesthistorie, damit
+    # junge Aktien/IPOs drin bleiben; kein Kurs-Gate (filtert der Client).
+    "INPLAY_MIN_BARS": 50,
+    "INPLAY_DVOL_BARS": 50,
+    "INPLAY_ATR_BARS": 14,
 }
 
 # yfinance fast_info.exchange -> TradingView-Praefix
@@ -155,8 +162,32 @@ def rs_summary(c: list, v: list, cfg: dict = LEADERS_CONFIG):
     return rocs + [round(dvol)]
 
 
+def inplay_summary(c: list, h: list, l: list, v: list, cfg: dict = LEADERS_CONFIG):
+    """[Ø$-Vol50, ATR14 in %] fuer das In-Play-Universum.
+
+    Betrachtet nur die letzten INPLAY_MIN_BARS Bars; eine Luecke darin oder
+    zu kurze Historie -> None. Kein Kurs-Gate (anders als rs_summary).
+    """
+    k = cfg["INPLAY_MIN_BARS"]
+    if min(len(c), len(h), len(l), len(v)) < k:
+        return None
+    win = [s[-k:] for s in (c, h, l, v)]
+    if any(x is None for s in win for x in s):
+        return None
+    wc, wh, wl, wv = win
+    last = wc[-1]
+    if last <= 0:
+        return None
+    nd = cfg["INPLAY_DVOL_BARS"]
+    dvol = sum(a * b for a, b in zip(wc[-nd:], wv[-nd:])) / nd
+    na = cfg["INPLAY_ATR_BARS"]
+    trs = [max(wh[i] - wl[i], abs(wh[i] - wc[i - 1]), abs(wl[i] - wc[i - 1]))
+           for i in range(k - na, k)]
+    return [round(dvol), round(sum(trs) / na / last * 100, 2)]
+
+
 def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG):
-    """(master_dates, bars, rs_universe).
+    """(master_dates, bars, rs_universe, inplay_universe).
 
     keep  = Theme-Konstituenten: volle Reihen (c/h/o/l/v), fehlende werden
             einzeln nachgeholt.
@@ -216,6 +247,7 @@ def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG)
     keep_set = set(keep)
     bars = {bench: _aligned(got_bench[bench])}
     universe = {}
+    inplay = {}
 
     def _absorb(got):
         for tk, r in got.items():
@@ -226,6 +258,9 @@ def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG)
                 s = rs_summary(a["c"], a["v"], cfg)
                 if s is not None:
                     universe[tk] = s
+            ip = inplay_summary(a["c"], a["h"], a["l"], a["v"], cfg)
+            if ip is not None:
+                inplay[tk] = ip
 
     broad_set = set(broad)
     order = [tk for tk in dict.fromkeys(list(keep) + list(broad)) if tk != bench]
@@ -251,7 +286,7 @@ def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG)
             except Exception as e:
                 print(f"      WARNING: retry failed for {tk}: {e}")
         print(f"      Retry: {len(bars) - before}/{len(missing)} nachgeholt.")
-    return master, bars, universe
+    return master, bars, universe, inplay
 
 
 def fetch_exchanges(tickers: list, known: dict, cfg: dict = LEADERS_CONFIG) -> dict:
@@ -355,9 +390,10 @@ def build_leaders(themes: dict, industries: dict | None = None, cfg: dict = LEAD
     print(f"    Leading Stocks: {len(keep)} Theme-Mitglieder + RS-Universum "
           f"{len(broad)} Ticker ({rs_source}), lade {cfg['PERIOD']} Kursdaten…")
 
-    master, bars, universe = fetch_bars_and_universe(keep, broad, cfg)
+    master, bars, universe, inplay = fetch_bars_and_universe(keep, broad, cfg)
     print(f"    Kursdaten: {len(bars) - 1}/{len(keep)} Konstituenten, "
-          f"RS-Universum {len(universe)}/{len(broad)} mit vollstaendiger Historie.")
+          f"RS-Universum {len(universe)}/{len(broad)} mit vollstaendiger Historie, "
+          f"In-Play-Universum {len(inplay)}.")
 
     const = select_constituents(themes, overrides, cfg)
     picked = sorted({tk for c in const.values() for tk in c["tickers"]})
@@ -415,6 +451,11 @@ def build_leaders(themes: dict, industries: dict | None = None, cfg: dict = LEAD
             "fields": [f"roc{n}" for n in cfg["RS_ROCS"]] + [f"dvol{cfg['RS_DVOL_BARS']}"],
             "min_price": cfg["RS_MIN_PRICE"],
             "rows": universe,
+        },
+        "inplay_universe": {
+            "fields": [f"dvol{cfg['INPLAY_DVOL_BARS']}", f"atr{cfg['INPLAY_ATR_BARS']}"],
+            "min_bars": cfg["INPLAY_MIN_BARS"],
+            "rows": inplay,
         },
     }
     return const_out, bars_out

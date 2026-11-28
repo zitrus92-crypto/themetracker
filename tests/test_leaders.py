@@ -83,5 +83,34 @@ class TestRsSummary(unittest.TestCase):
         self.assertIsNone(leaders.rs_summary([100, 110, 121], [1, None, 3], self.CFG))
 
 
+class TestInplaySummary(unittest.TestCase):
+    def _bars(self, n, c=100.0, h=102.0, l=98.0, v=1_000_000):
+        return [c] * n, [h] * n, [l] * n, [v] * n
+
+    def test_values(self):
+        c, h, l, v = self._bars(60)
+        self.assertEqual(leaders.inplay_summary(c, h, l, v), [100_000_000, 4.0])
+
+    def test_short_history_ok(self):
+        self.assertIsNotNone(leaders.inplay_summary(*self._bars(50)))
+        self.assertIsNone(leaders.inplay_summary(*self._bars(49)))
+
+    def test_gap_in_window_is_none(self):
+        for i in range(4):
+            bars = [list(x) for x in self._bars(60)]
+            bars[i][-10] = None
+            self.assertIsNone(leaders.inplay_summary(*bars))
+
+    def test_gap_before_window_is_ok(self):
+        c, h, l, v = self._bars(60)
+        c[0] = None
+        self.assertIsNotNone(leaders.inplay_summary(c, h, l, v))
+
+    def test_no_price_floor(self):
+        out = leaders.inplay_summary(*self._bars(60, c=0.5, h=0.51, l=0.49))
+        self.assertIsNotNone(out)
+        self.assertEqual(out[1], 4.0)
+
+
 if __name__ == "__main__":
     unittest.main()
