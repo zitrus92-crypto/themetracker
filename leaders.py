@@ -27,14 +27,19 @@ Zwei Dateien unter docs/data/ (GitHub Pages serviert nur docs/):
 """
 import json
 import math
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
+
+import glb
 
 DATA_DIR = Path(__file__).parent / "docs" / "data"
 CONSTITUENTS_PATH = DATA_DIR / "theme_constituents.json"
 BARS_PATH = DATA_DIR / "leaders_bars.json"
 IPO_PATH = DATA_DIR / "ipo_bars.json"
+GLB_PATH = DATA_DIR / "glb.json"
+GLB_SOURCE = "https://wishingwealthblog.com/glossary/"
 
 SCHEMA_VERSION = 3   # v2: o/l/v ueber SHORT_BARS=57, rs_universe; v3: inplay_universe
 
@@ -224,9 +229,50 @@ def ipo_cutoff(master: list, cfg: dict = LEADERS_CONFIG) -> str:
     return (last - timedelta(days=cfg["IPO_WINDOW_DAYS"])).isoformat()
 
 
+def fetch_monthly(tickers: list, cfg: dict = LEADERS_CONFIG):
+    """{ticker: [Monatsbars]} (glb.monthly_from_df) oder None bei Totalausfall.
+
+    Voller Verlauf (period=max), sequenzielle Bloecke. Ein fehlgeschlagener
+    Block fehlt nur selbst; ist gar kein Block erfolgreich, None.
+    """
+    t0 = time.time()
+    try:
+        import yfinance as yf
+        out = {}
+        ok = 0
+        chunks = [tickers[i:i + cfg["CHUNK"]] for i in range(0, len(tickers), cfg["CHUNK"])]
+        for i, chunk in enumerate(chunks, 1):
+            try:
+                df = yf.download(chunk, period="max", interval="1mo", auto_adjust=False,
+                                 group_by="ticker", threads=True, progress=False)
+                for tk in chunk:
+                    try:
+                        sub = df[tk] if len(chunk) > 1 else df
+                        if hasattr(sub.columns, "nlevels") and sub.columns.nlevels > 1:
+                            sub = sub.droplevel(0, axis=1)
+                        sub = sub.dropna(how="all")
+                        if sub.empty:
+                            continue
+                        m = glb.monthly_from_df(sub)
+                        if m:
+                            out[tk] = m
+                    except (KeyError, TypeError):
+                        continue
+                ok += 1
+            except Exception as e:
+                print(f"      WARNING: GLB-Monatsblock {i}/{len(chunks)} fehlgeschlagen ({e})")
+        if chunks and ok == 0:
+            return None
+        print(f"      GLB Monatsdaten: {len(out)}/{len(tickers)} Ticker in {time.time() - t0:.0f}s")
+        return out
+    except Exception as e:
+        print(f"      WARNING: GLB-Monatsabruf fehlgeschlagen ({e})")
+        return None
+
+
 def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG,
-                            ipo_set: set | None = None):
-    """(master_dates, bars, rs_universe, inplay_universe, ipo, etf).
+                            ipo_set: set | None = None, glb_monthly: dict | None = None):
+    """(master_dates, bars, rs_universe, inplay_universe, ipo, etf, glb_rows).
 
     ipo_set = Kandidaten fuer den IPO-Reiter (Industry-Universum ohne
             ausgeschlossene Industries); ipo = {ticker: ipo_series(...)},
@@ -269,7 +315,6 @@ def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG,
     # Benchmark mit Wiederholung: ohne SPY gibt es keine Datumsachse, und ein
     # einzelner leerer Yahoo-Response (lokal am 03.10.2026 direkt nach einem
     # grossen Abruf beobachtet) wuerde sonst den ganzen Tageslauf kosten.
-    import time
     bench = cfg["BENCHMARK"]
     got_bench = {}
     for attempt in range(3):
@@ -293,6 +338,7 @@ def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG,
     inplay = {}
     ipo = {}
     etf = {}
+    glb_rows = {}
     ipo_set = ipo_set or set()
     etf_sym = cfg["IPO_ETF"]
     cutoff = ipo_cutoff(master, cfg)
@@ -320,6 +366,16 @@ def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG,
                         ipo[tk] = s
             except Exception as e:
                 print(f"      WARNING: IPO-Reihe {tk} uebersprungen ({e})")
+            # GLB: eigener try; veraltete/gehaltene Ticker (letzter Close nicht
+            # am letzten Master-Tag) werden uebersprungen.
+            try:
+                if glb_monthly is not None and tk in ipo_set and tk in glb_monthly                         and a["c"] and a["c"][-1] is not None:
+                    row = glb.analyze(glb_monthly[tk], master, a["h"], a["l"], a["c"], a["v"])
+                    if row is not None:
+                        ip2 = ip if ip is not None else [None, None]
+                        glb_rows[tk] = {**row, "dvol50": ip2[0], "atr14": ip2[1]}
+            except Exception as e:
+                print(f"      WARNING: GLB {tk} uebersprungen ({e})")
 
     broad_set = set(broad)
     order = [tk for tk in dict.fromkeys(list(keep) + list(broad) + [etf_sym]) if tk != bench]
@@ -345,7 +401,7 @@ def fetch_bars_and_universe(keep: list, broad: list, cfg: dict = LEADERS_CONFIG,
             except Exception as e:
                 print(f"      WARNING: retry failed for {tk}: {e}")
         print(f"      Retry: {len(bars) - before}/{len(missing)} nachgeholt.")
-    return master, bars, universe, inplay, ipo, etf.get("a")
+    return master, bars, universe, inplay, ipo, etf.get("a"), glb_rows
 
 
 def fetch_exchanges(tickers: list, known: dict, cfg: dict = LEADERS_CONFIG) -> dict:
@@ -452,8 +508,14 @@ def build_leaders(themes: dict, industries: dict | None = None, cfg: dict = LEAD
     excluded = {tk for name in cfg["IPO_EXCLUDE_INDUSTRIES"]
                 for tk in ((industries or {}).get(name) or {}).get("tickers") or []}
     ipo_set = {tk for tk in broad if tk not in excluded} if industries else set()
-    master, bars, universe, inplay, ipo, etf = fetch_bars_and_universe(
-        keep, broad, cfg, ipo_set=ipo_set)
+    glb_monthly = None
+    if ipo_set:
+        try:
+            glb_monthly = fetch_monthly(sorted(ipo_set), cfg)
+        except Exception as e:
+            print(f"      WARNING: GLB-Monatsdaten nicht verfuegbar ({e})")
+    master, bars, universe, inplay, ipo, etf, glb_rows = fetch_bars_and_universe(
+        keep, broad, cfg, ipo_set=ipo_set, glb_monthly=glb_monthly)
     print(f"    Kursdaten: {len(bars) - 1}/{len(keep)} Konstituenten, "
           f"RS-Universum {len(universe)}/{len(broad)} mit vollstaendiger Historie, "
           f"In-Play-Universum {len(inplay)}, IPO-Neulinge {len(ipo)}.")
@@ -534,11 +596,21 @@ def build_leaders(themes: dict, industries: dict | None = None, cfg: dict = LEAD
                 if etf else None),
         "tickers": ipo,
     }
-    return const_out, bars_out, ipo_out
+    glb_out = None
+    if glb_monthly is not None and industries:
+        glb_out = {
+            "schema_version": 1,
+            "date": today,
+            "data_date": master[-1],
+            "source": GLB_SOURCE,
+            "cfg": glb.GLB_CFG,
+            "rows": glb_rows,
+        }
+    return const_out, bars_out, ipo_out, glb_out
 
 
 def write_leaders(themes: dict, industries: dict | None = None, cfg: dict = LEADERS_CONFIG) -> dict:
-    const_out, bars_out, ipo_out = build_leaders(themes, industries, cfg)
+    const_out, bars_out, ipo_out, glb_out = build_leaders(themes, industries, cfg)
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     CONSTITUENTS_PATH.write_text(
         json.dumps(const_out, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -552,6 +624,14 @@ def write_leaders(themes: dict, industries: dict | None = None, cfg: dict = LEAD
               f"ETF {'ja' if ipo_out['etf'] else 'nein'})")
     except Exception as e:
         print(f"    WARNING: ipo_bars.json nicht geschrieben ({e}) — alte Datei bleibt.")
+    # GLB zuletzt und isoliert; None -> nichts schreiben (alte Datei bleibt).
+    if glb_out is not None:
+        try:
+            GLB_PATH.write_text(
+                json.dumps(glb_out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+            print(f"    Saved glb.json ({len(glb_out['rows'])} Zeilen)")
+        except Exception as e:
+            print(f"    WARNING: glb.json nicht geschrieben ({e}) — alte Datei bleibt.")
     return bars_out
 
 

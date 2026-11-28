@@ -151,13 +151,52 @@ class TestWriteOrder(unittest.TestCase):
         from unittest import mock
         with tempfile.TemporaryDirectory() as d:
             d = Path(d)
-            fake = ({"c": 1}, {"tickers": {}}, {"tickers": {}, "etf": None})
+            fake = ({"c": 1}, {"tickers": {}}, {"tickers": {}, "etf": None}, None)
             bad_ipo = mock.MagicMock()
             bad_ipo.write_text.side_effect = OSError("disk full")
             with mock.patch.object(leaders, "build_leaders", return_value=fake),                  mock.patch.object(leaders, "DATA_DIR", d),                  mock.patch.object(leaders, "CONSTITUENTS_PATH", d / "c.json"),                  mock.patch.object(leaders, "BARS_PATH", d / "b.json"),                  mock.patch.object(leaders, "IPO_PATH", bad_ipo):
                 leaders.write_leaders({}, {})
             self.assertTrue((d / "c.json").exists())
             self.assertTrue((d / "b.json").exists())
+
+
+class TestGlbIntegration(unittest.TestCase):
+    def test_fetch_monthly_whole_failure_returns_none(self):
+        import sys
+        from unittest import mock
+        fake_yf = mock.MagicMock()
+        fake_yf.download.side_effect = RuntimeError("boom")
+        with mock.patch.dict(sys.modules, {"yfinance": fake_yf}):
+            self.assertIsNone(leaders.fetch_monthly(["AAA"], leaders.LEADERS_CONFIG))
+        with mock.patch.dict(sys.modules, {"yfinance": None}):
+            self.assertIsNone(leaders.fetch_monthly(["AAA"], leaders.LEADERS_CONFIG))
+
+    def _write(self, glb_out, glb_path):
+        import tempfile
+        from pathlib import Path
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            fake = ({"c": 1}, {"tickers": {}}, {"tickers": {}, "etf": None}, glb_out)
+            with mock.patch.object(leaders, "build_leaders", return_value=fake),                  mock.patch.object(leaders, "DATA_DIR", d),                  mock.patch.object(leaders, "CONSTITUENTS_PATH", d / "c.json"),                  mock.patch.object(leaders, "BARS_PATH", d / "b.json"),                  mock.patch.object(leaders, "IPO_PATH", d / "i.json"),                  mock.patch.object(leaders, "GLB_PATH", glb_path(d)):
+                leaders.write_leaders({}, {})
+            return d, (d / "c.json").exists(), (d / "b.json").exists(), (d / "g.json").exists()
+
+    def test_glb_none_writes_nothing(self):
+        d, c, b, g = self._write(None, lambda d: d / "g.json")
+        self.assertTrue(c and b)
+        self.assertFalse(g)
+
+    def test_glb_written_last(self):
+        d, c, b, g = self._write({"rows": {}}, lambda d: d / "g.json")
+        self.assertTrue(c and b and g)
+
+    def test_glb_write_failure_keeps_leaders_files(self):
+        from unittest import mock
+        bad = mock.MagicMock()
+        bad.write_text.side_effect = OSError("disk full")
+        d, c, b, g = self._write({"rows": {}}, lambda d: bad)
+        self.assertTrue(c and b)
 
 
 if __name__ == "__main__":
