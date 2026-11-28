@@ -4244,7 +4244,7 @@ async function renderLabTab() {
 // (optional Themes) per Perzentil-Schnittmenge zweier Zeitfenster und darin
 // die liquiden, volatilen Aktien. Logik: static/inPlayHorizon.js.
 // Spec: docs/superpowers/specs/2026-11-28-in-play-submenus-design.md
-const IP_SUBS = ["main", "day", "swing", "position", "ipo"];
+const IP_SUBS = ["main", "day", "swing", "position", "ipo", "glb"];
 let _IP = null;                 // static/inPlayHorizon.js (lazy)
 let _ipLast = null;             // {sub, groups} der letzten Anzeige, fuer den Export
 let _inPlaySub = IP_SUBS.includes(prefGet("ipSub")) ? prefGet("ipSub") : "main";
@@ -4257,6 +4257,7 @@ function renderInPlay() {
   document.getElementById("lab-container")?.classList.toggle("hidden", !main);
   document.getElementById("inplay-container")?.classList.toggle("hidden", main);
   if (main) return renderLabTab();
+  if (_inPlaySub === "glb") return renderGlbTab();
   return _inPlaySub === "ipo" ? renderIpoTab() : renderInPlayHorizon(_inPlaySub);
 }
 document.querySelectorAll("#lab-subnav [data-ipsub]").forEach(b => b.onclick = () => {
@@ -4364,6 +4365,7 @@ let _ipoLast = null;           // angezeigte Zeilen, fuer den Export
 // Zeit-Reiter oder IPOs neu zeichnen (Sprachwechsel, neue Daten).
 function renderInPlaySub() {
   if (_inPlaySub === "ipo") return _IPOM ? renderIpoTab() : undefined;
+  if (_inPlaySub === "glb") return renderGlbTab();
   if (_inPlaySub !== "main" && _IP) return renderInPlayHorizon(_inPlaySub);
 }
 
@@ -4489,6 +4491,136 @@ function ipoExport(btn, mode) {
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
   showToast(de ? `Watchlist mit ${n} Tickern gespeichert` : `Watchlist with ${n} tickers saved`);
 }
+
+// -- In-Play-Unterreiter "GLB" (Green Line Breakout, Dr. Eric Wish) ------------
+// Daten: data/glb.json (leaders.py / glb.py). Spec: docs/superpowers/specs/2026-11-28-glb-subtab-design.md
+let _glbData = null;
+let _glbFailed = false;
+let _glbLast = null;           // gefilterte, sortierte Zeilen, fuer den Export
+
+async function renderGlbTab() {
+  const box = document.getElementById("inplay-container");
+  if (!box) return;
+  const de = ipDe();
+  if (!_glbData) box.innerHTML = `<p class="loading">${t("loading")}</p>`;
+  try {
+    if (!_glbData && !_glbFailed) {
+      const r = await fetch("data/glb.json?t=" + Date.now());
+      if (r.ok) _glbData = await r.json(); else _glbFailed = true;
+    }
+  } catch (e) {
+    console.error("GLB-Reiter konnte nicht geladen werden:", e);
+    _glbFailed = true;
+  }
+  if (_inPlaySub !== "glb") return;
+  if (!_glbData) {
+    box.innerHTML = `<p class="ip-hint">${de ? "GLB-Daten folgen mit dem nächsten Post-Close-Lauf." : "GLB data arrives with the next post-close run."}</p>`;
+    return;
+  }
+  await ensureLeadersData();
+  const exch = new Map();
+  for (const c of Object.values(_leadersCons?.themes || {}))
+    for (const tv of c.tickers || []) if (tv.includes(":")) exch.set(tv.split(":").pop().replace(/\./g, "-").toUpperCase(), tv);
+
+  const get = (n) => prefGet(`ip_glb_${n}`);
+  const num = (v, d) => { const x = Number(String(v ?? "").trim().replace(",", ".")); return v !== null && v !== "" && Number.isFinite(x) && x >= 0 ? x : d; };
+  const s = { minDvolM: num(get("dvol"), 20), minAtr: num(get("atr"), 0), rwb: get("rwb") === "1", stage2: get("stage2") === "1" };
+  // Sortierung: heute, hält+Blue Dot, hält, nahe, Fehl-GLB
+  const rank = (r) => ({ glb_today: 0, glb_holds: r.blue_dot ? 1 : 2, near: 3, glb_failed: 4 })[r.status] ?? 5;
+  const all = Object.entries(_glbData.rows || {}).map(([sym, r]) => ({ sym, ...r }));
+  const rows = all.filter((r) =>
+    (s.minDvolM <= 0 || (r.dvol50 != null && r.dvol50 >= s.minDvolM * 1e6)) &&
+    (r.atr14 ?? 0) >= s.minAtr && (!s.rwb || r.rwb === true) && (!s.stage2 || r.stage2 === true))
+    .map((r) => ({ ...r, tv: exch.get(r.sym.toUpperCase()) ?? r.sym.replace(/-/g, ".") }))
+    .sort((a, b) => rank(a) - rank(b)
+      || (a.status === "near" ? (b.dist_pct ?? -1e9) - (a.dist_pct ?? -1e9) : 0)
+      || (b.dvol50 ?? 0) - (a.dvol50 ?? 0));
+  _glbLast = rows;
+
+  const px = (v) => (v === null || v === undefined ? "—" : v >= 100 ? v.toFixed(1) : v.toFixed(2));
+  const mk = (v) => (v === true ? `<span class="lead-pos">✓</span>` : v === false ? `<span class="lead-neg">✗</span>` : "—");
+  const statusTxt = (st) => ({
+    glb_today: `<span class="lead-pos">${de ? "GLB heute" : "GLB today"}</span>`,
+    glb_holds: `<span class="lead-pos">${de ? "GLB hält" : "GLB holds"}</span>`,
+    near: `<span class="lead-warn">${de ? "Nahe Green Line" : "Near green line"}</span>`,
+    glb_failed: `<span class="lead-neg">${de ? "Fehl-GLB" : "Failed GLB"}</span>`,
+  })[st] || esc(st);
+  const head = ["Ticker", "Green Line", de ? "seit" : "since", "Close", de ? "Abstand" : "Distance", de ? "GLB am" : "GLB on",
+    de ? "Vol (Woche)" : "Vol (week)", "RWB", "Stage 2", "🔵", "Status"].map((h) => `<th>${h}</th>`).join("");
+  const body = rows.map((r) => `<tr>
+      <td><a class="lead-name" href="https://finviz.com/quote.ashx?t=${encodeURIComponent(r.sym)}" target="_blank" rel="noopener" title="${esc(r.tv)}">${esc(r.sym)}</a></td>
+      <td>${px(r.gl)}</td><td>${esc(r.gl_since ?? "—")}</td><td>${px(r.close)}</td>
+      <td>${r.dist_pct == null ? "—" : `${r.dist_pct > 0 ? "+" : ""}${r.dist_pct.toFixed(1)} %`}</td>
+      <td>${esc(r.glb_date ?? "—")}</td><td>${r.glb_volx == null ? "—" : `${r.glb_volx.toFixed(1)}×`}</td>
+      <td>${mk(r.rwb)}</td><td>${mk(r.stage2)}</td><td>${r.blue_dot ? "🔵" : "—"}</td><td>${statusTxt(r.status)}</td></tr>`).join("");
+
+  const src = esc(_glbData.source || "https://wishingwealthblog.com/glossary/");
+  box.innerHTML = `<div class="heading-group"><h2>&#128994; In Play · GLB (Dr. Eric Wish)</h2></div>
+    <p class="picks-subtitle">${de
+      ? `Green Line = Allzeithoch (Intraday) auf Monatsbalken, das ≥ 3 abgeschlossene Monatsbalken lang nicht überschritten wurde. GLB = erster Tagesschluss über der Green Line. Status: „GLB hält“ = GLB in den letzten 63 Handelstagen, Close weiter darüber; „Nahe“ = Close ≤ 5 % unter der Line; Fehl-GLB = Close wieder unter der Line (Wish verkauft dann sofort).`
+      : `Green line = all-time (intraday) high on monthly bars that was not exceeded for ≥ 3 completed monthly bars. GLB = first daily close above the green line. Status: "GLB holds" = GLB within the last 63 trading days, close still above; "near" = close ≤ 5 % below the line; failed GLB = close back below the line (Wish sells immediately).`}</p>
+    <p class="picks-subtitle">${de
+      ? `Eigene Auslegung: nur abgeschlossene Monatsbalken zählen; Tagesschluss als GLB-Basis; 3-Monats-Fenster für „GLB hält“; ≤ 5 % für „nahe“; 30-Wochen-Schnitt als SMA, „steigt“ = heute > vor 4 Wochen; keine IPO-Ausnahme (siehe IPO-Reiter); $-Vol-/ATR-Filter.`
+      : `Own interpretation: only completed monthly bars count; daily close as GLB basis; 3-month window for "GLB holds"; ≤ 5 % for "near"; 30-week average as SMA, "rising" = today > 4 weeks ago; no IPO exception (see IPO tab); $-volume/ATR filters.`}
+      <a href="${src}" target="_blank" rel="noopener">${de ? "Quelle: Glossar" : "Source: glossary"} (wishingwealthblog.com)</a></p>
+    <div class="lead-bar">
+      <span class="lead-group"><span class="xaxis-toggle-label">$-Vol ≥</span><input class="lead-select ip-input" data-glb="dvol" inputmode="decimal" value="${s.minDvolM}"> ${de ? "Mio" : "M"}</span>
+      <span class="lead-group"><span class="xaxis-toggle-label">ATR% ≥</span><input class="lead-select ip-input" data-glb="atr" inputmode="decimal" value="${s.minAtr}"></span>
+      <label class="lead-group"><input type="checkbox" data-glbchk="rwb"${s.rwb ? " checked" : ""}> ${de ? "nur RWB" : "RWB only"}</label>
+      <label class="lead-group"><input type="checkbox" data-glbchk="stage2"${s.stage2 ? " checked" : ""}> ${de ? "nur Stage 2" : "Stage 2 only"}</label>
+      <span class="lead-group lead-actions">
+        <button class="top20-btn glb-txt-btn" title="${de ? "TradingView: Watchlist → Liste importieren. Sektionen GLB heute / hält · Blue Dot / hält / Nahe Green Line." : "TradingView: watchlist → import list. Sections GLB today / holds · blue dot / holds / near green line."}">⬇ .txt</button>
+        <button class="top20-btn glb-copy-btn">⧉ ${de ? "Kopieren" : "Copy"}</button>
+      </span>
+    </div>
+    <p class="picks-subtitle lead-meta">${de ? "Stand" : "As of"} ${esc(_glbData.data_date)} · ${all.length} ${de ? "Kandidaten" : "candidates"} · ${rows.length} ${de ? "nach Filter" : "after filter"}</p>
+    ${rows.length
+      ? `<div class="table-scroll"><table class="lead-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`
+      : `<p class="ip-hint">${de ? "Keine Kandidaten – Filter lockern." : "No candidates – loosen the filters."}</p>`}`;
+
+  box.querySelectorAll("[data-glb]").forEach((el) => el.onchange = () => {
+    prefSet(`ip_glb_${el.dataset.glb}`, el.value.trim());
+    renderGlbTab();
+  });
+  box.querySelectorAll("[data-glbchk]").forEach((el) => el.onchange = () => {
+    prefSet(`ip_glb_${el.dataset.glbchk}`, el.checked ? "1" : "0");
+    renderGlbTab();
+  });
+  const txtBtn = box.querySelector(".glb-txt-btn"), copyBtn = box.querySelector(".glb-copy-btn");
+  txtBtn.onclick = () => glbExport(txtBtn, "txt");
+  copyBtn.onclick = () => glbExport(copyBtn, "copy");
+}
+
+function glbExport(btn, mode) {
+  const de = ipDe();
+  const rows = _glbLast || [];
+  const sections = [
+    ["GLB heute", rows.filter((r) => r.status === "glb_today")],
+    ["GLB hält · Blue Dot", rows.filter((r) => r.status === "glb_holds" && r.blue_dot)],
+    ["GLB hält", rows.filter((r) => r.status === "glb_holds" && !r.blue_dot)],
+    ["Nahe Green Line", rows.filter((r) => r.status === "near")],
+  ].filter(([, g]) => g.length);
+  if (!sections.length) { showToast(de ? "Keine exportierbaren Aktien (GLB / Nahe Green Line)" : "No exportable stocks (GLB / near green line)"); return; }
+  const txt = sections.map(([h, g]) => `###${h}\n${g.map((r) => r.tv).join("\n")}`).join("\n") + "\n";
+  const syms = sections.flatMap(([, g]) => g.map((r) => r.tv));
+  const n = syms.length;
+  if (mode === "copy") {
+    navigator.clipboard.writeText(syms.join(",")).then(() => {
+      flashDone(btn);
+      showToast(de ? `${n} Ticker kopiert!` : `${n} tickers copied!`);
+    });
+    return;
+  }
+  const blob = new Blob([txt], { type: "text/plain" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `inplay_glb_${_glbData.data_date}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  showToast(de ? `Watchlist mit ${n} Tickern gespeichert` : `Watchlist with ${n} tickers saved`);
+}
+
 
 function inPlayExport(btn, mode) {
   const groups = _ipLast?.groups || [];
@@ -4658,6 +4790,7 @@ async function loadData() {
       _leadersBars = null; _leadersLoad = null; _leadersFailed = false; _leadersCache = {};
       if (leadersPanelVisible()) renderLeadersTab();
       // In-Play-Zeitreiter zeichnet in einen eigenen Container nach.
+      _glbData = null; _glbFailed = false;
       _ipoData = null; _ipoFailed = false;   // IPO-Datei beim naechsten Zeichnen frisch holen
       if (_inPlaySub !== "main" && !document.querySelector('[data-panel="lab"]')?.classList.contains("hidden")) renderInPlaySub();
     } else {
