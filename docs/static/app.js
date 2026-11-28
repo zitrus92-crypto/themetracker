@@ -1474,6 +1474,7 @@ function initTabs() {
   // damit der Top-Level-Wechsel zum zuletzt gewählten Untertab zurückkehrt.
   document.querySelectorAll(".sub-btn").forEach(btn => {
     btn.addEventListener("click", () => {
+      if (!btn.dataset.tab) return;   // In-Play-Unterreiter haben eigenen Handler
       btn.closest(".sub-nav").querySelectorAll(".sub-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       showPanel(btn.dataset.tab);
@@ -4517,6 +4518,8 @@ async function loadData() {
       // Leading Stocks: Kursdatei beim nächsten Öffnen frisch holen.
       _leadersBars = null; _leadersLoad = null; _leadersFailed = false; _leadersCache = {};
       if (leadersPanelVisible()) renderLeadersTab();
+      // In-Play-Zeitreiter zeichnet in einen eigenen Container nach.
+      if (_inPlaySub !== "main" && !document.querySelector('[data-panel="lab"]')?.classList.contains("hidden")) renderInPlayHorizon(_inPlaySub);
     } else {
       document.getElementById("etf-loading").classList.add("hidden");
       document.getElementById("etf-error").textContent = t("etfNoData");
