@@ -5,6 +5,7 @@
 
 export const IPO_CFG = {
   MIN_BASE: 15,      // Handelstage seit IPO-Hoch, bevor ein Ausbruch zählt
+  MIN_HANDLE: 5,     // Pivot A gilt erst, wenn sein Hoch so viele Tage zurückliegt (Henkel)
   NEAR_PCT: 5,       // "nahe Pivot": höchstens so viel % unter A oder B
   HOLD_DAYS: 5,      // so lange bleibt der Ausbruchs-/Fehlausbruchs-Status stehen
   ATR_BARS: 14,
@@ -46,14 +47,14 @@ export function analyzeIpo(t, cfg = IPO_CFG) {
   while (i0 < n && !ok(i0)) i0++;
   if (i0 >= n) return null;
 
-  let hiB = t.h[i0], hiIdx = i0, low = t.l[i0], lowIdx = i0, hiA = null;
+  let hiB = t.h[i0], hiIdx = i0, low = t.l[i0], lowIdx = i0, hiA = null, hiAIdx = null;
   let bo = null, last = null, failedAt = null, L = i0;
 
   // Bar j in die Basis-Größen aufnehmen (nur ohne aktiven Ausbruch).
   const absorb = (j) => {
     if (t.h[j] > hiB) { hiB = t.h[j]; hiIdx = j; low = t.l[j]; lowIdx = j; hiA = null; }
     else if (t.l[j] < low) { low = t.l[j]; lowIdx = j; hiA = null; }
-    else hiA = Math.max(hiA ?? -Infinity, t.h[j]);
+    else if (hiA === null || t.h[j] > hiA) { hiA = t.h[j]; hiAIdx = j; }
   };
   const mk = (kind, pivot, i) => ({ kind, day: i, pivot, volX: volFactor(t, i, cfg.VOL_BARS), age: 0 });
 
@@ -61,7 +62,7 @@ export function analyzeIpo(t, cfg = IPO_CFG) {
     if (!ok(i)) continue;
     L = i;
     const pivB = hiB;
-    const pivA = hiA !== null && hiA < hiB ? hiA : null;
+    const pivA = hiA !== null && hiA < hiB && i - hiAIdx >= cfg.MIN_HANDLE ? hiA : null;
     const baseLen = i - hiIdx;
     const c = t.c[i];
     if (bo) {
@@ -91,7 +92,9 @@ export function analyzeIpo(t, cfg = IPO_CFG) {
   }
 
   const pivotB = hiB;
+  // Anzeige: A auch während des Henkel-Aufbaus (Status "nahe A" erst mit Henkel).
   const pivotA = hiA !== null && hiA < hiB ? hiA : null;
+  const handleOk = pivotA !== null && L - hiAIdx >= cfg.MIN_HANDLE;
   const lastClose = t.c[L];
   const baseLen = L - hiIdx;
   const distB = (lastClose / pivotB - 1) * 100;
@@ -103,7 +106,7 @@ export function analyzeIpo(t, cfg = IPO_CFG) {
   else if (failedAt !== null && L - failedAt < cfg.HOLD_DAYS) status = "failed";
   else if (baseLen < cfg.MIN_BASE) status = "fresh";
   else {
-    const cands = [["A", distA], ["B", distB]].filter(([, d]) => d !== null);
+    const cands = [["A", handleOk ? distA : null], ["B", distB]].filter(([, d]) => d !== null);
     const [which, d] = cands.reduce((a, b) => (b[1] > a[1] ? b : a));
     if (d >= -cfg.NEAR_PCT) { status = "near"; nearWhich = which; } else status = "base";
   }
@@ -113,6 +116,7 @@ export function analyzeIpo(t, cfg = IPO_CFG) {
     depthPct: (low / pivotB - 1) * 100, distA, distB,
     atrNow: atrPctAt(t, L, cfg.ATR_BARS), atrAtLow: atrPctAt(t, lowIdx, cfg.ATR_BARS),
     status, near: nearWhich, breakout,
+    handleDays: pivotA !== null ? L - hiAIdx : null, handleOk,
   };
 }
 

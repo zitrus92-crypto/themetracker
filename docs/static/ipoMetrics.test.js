@@ -92,6 +92,18 @@ test("Täglich neue Hochs ohne Basis -> nie Ausbruch", () => {
   assert.equal(a.status, "fresh");
 });
 
+test("Pivot A braucht einen Henkel: kurzer Rücksetzer + Erholung ist kein Ausbruch", () => {
+  // Hoch Tag 10, Fall bis Tag 30, Erholung auf 8.0 (Tag 33), 2 Tage runter, dann Close 8.2
+  const t = series([[0, 5], [10, 10], [30, 6], [33, 8.0], [35, 7.7], [36, 8.2]]);
+  const a = analyzeIpo(t);
+  assert.equal(a.breakout, null);
+  assert.notEqual(a.status, "breakoutA");
+  assert.equal(IPO_CFG.MIN_HANDLE, 5);
+  const b = analyzeIpo(cut(t, 35));            // Tag 34: A-Hoch (Tag 33) erst 1 Tag alt
+  assert.equal(b.handleOk, false);
+  assert.equal(b.handleDays, 1);
+});
+
 test("null-Bar in der Basis ändert die Pivots nicht", () => {
   const t = cut(SNDK, 121);
   for (const k of ["o", "h", "l", "c", "v"]) t[k][60] = null;
