@@ -652,6 +652,7 @@ function applyTranslations() {
   if (_etfData) renderEtfTab();
   renderExperimental();
   if (_leadersBars) renderLeadersTab();
+  if (_IP && _inPlaySub !== "main") renderInPlayHorizon(_inPlaySub);
   renderRegime();
   renderSituational();
 }
@@ -1437,7 +1438,7 @@ function initTabs() {
         subNav.classList.add("hidden");
         themesSubNav.classList.add("hidden");
         showPanel("lab");
-        renderLabTab();
+        renderInPlay();
       } else if (btn.dataset.top === "experimental") {
         subNav.classList.add("hidden");
         themesSubNav.classList.add("hidden");
@@ -4237,6 +4238,140 @@ async function renderLabTab() {
   switchLeadersMode(true);
   return renderLeadersTab();
 }
+// -- In-Play-Unterreiter (Day / Swing / Position) ---------------------------
+// Main = bisherige Lab-Ansicht. Die Zeit-Reiter zeigen heiße Industries
+// (optional Themes) per Perzentil-Schnittmenge zweier Zeitfenster und darin
+// die liquiden, volatilen Aktien. Logik: static/inPlayHorizon.js.
+// Spec: docs/superpowers/specs/2026-11-28-in-play-submenus-design.md
+const IP_SUBS = ["main", "day", "swing", "position"];
+let _IP = null;                 // static/inPlayHorizon.js (lazy)
+let _ipLast = null;             // {sub, groups} der letzten Anzeige, fuer den Export
+let _inPlaySub = IP_SUBS.includes(prefGet("ipSub")) ? prefGet("ipSub") : "main";
+const ipDe = () => _lang === "de";
+
+function renderInPlay() {
+  document.querySelectorAll("#lab-subnav [data-ipsub]").forEach(b =>
+    b.classList.toggle("active", b.dataset.ipsub === _inPlaySub));
+  const main = _inPlaySub === "main";
+  document.getElementById("lab-container")?.classList.toggle("hidden", !main);
+  document.getElementById("inplay-container")?.classList.toggle("hidden", main);
+  return main ? renderLabTab() : renderInPlayHorizon(_inPlaySub);
+}
+document.querySelectorAll("#lab-subnav [data-ipsub]").forEach(b => b.onclick = () => {
+  _inPlaySub = b.dataset.ipsub;
+  prefSet("ipSub", _inPlaySub);
+  renderInPlay();
+});
+
+// Einstellungen je Reiter (Cookie/localStorage), Fallback = Spec-Defaults.
+function inPlaySettings(sub) {
+  const D = _IP.DEFAULTS, get = (n) => prefGet(`ip_${sub}_${n}`);
+  const pctOf = (v, d) => (v !== null && v !== "" && _IP.PCT_OPTIONS.includes(Number(v)) ? Number(v) : d);
+  const th = get("themes");
+  return {
+    pct: [pctOf(get("pa"), D.pct[0]), pctOf(get("pb"), D.pct[1])],
+    minDvolM: _IP.parseNum(get("dvol"), D.minDvolM),
+    minAtr: _IP.parseNum(get("atr"), D.minAtr),
+    includeThemes: th === null || th === "" ? D.themes : th === "1",
+  };
+}
+
+async function renderInPlayHorizon(sub) {
+  const box = document.getElementById("inplay-container");
+  if (!box) return;
+  if (!_IP || !_leadersBars) box.innerHTML = `<p class="loading">${t("leadLoading")}</p>`;
+  if (!(await ensureLeadersData())) { box.innerHTML = `<p class="pick-empty">${t("leadNoData")}</p>`; return; }
+  if (!_IP) _IP = await import("./inPlayHorizon.js?v=" + Date.now());
+  if (_inPlaySub !== sub) return;                     // inzwischen umgeschaltet
+  if (!_lastIndustries || !_etfData?.themes) { box.innerHTML = `<p class="loading">${t("loading")}</p>`; return; }
+
+  const H = _IP.HORIZONS[sub], s = inPlaySettings(sub);
+  const themeMembers = Object.fromEntries(
+    Object.entries(_leadersCons?.themes || {}).map(([n, c]) => [n, c.tickers || []]));
+  // Börsenpräfix nur, wo er schon bekannt ist (Theme-Konstituenten) - kein Nachladen.
+  const exch = new Map();
+  for (const list of Object.values(themeMembers))
+    for (const tv of list) if (tv.includes(":")) exch.set(_IP.normSym(tv), tv);
+  const { groups, missingData } = _IP.buildHorizon({
+    industries: _lastIndustries, themes: _etfData.themes, themeMembers,
+    universe: _leadersBars.inplay_universe, exchangeOf: (x) => exch.get(x) ?? null,
+    horizon: sub, ...s,
+  });
+  _ipLast = { sub, groups };
+
+  const de = ipDe();
+  const tfName = (tf) => (de ? tf.replace("D", "T") : tf);
+  const [tfA, tfB] = H.tfs.map(tfName);
+  const hz = { day: "Daytrade", swing: "Swingtrade", position: "Positiontrade" }[sub];
+  const opt = (cur) => _IP.PCT_OPTIONS.map(v =>
+    `<option value="${v}"${v === cur ? " selected" : ""}>≥ ${v}</option>`).join("");
+  const nStocks = groups.reduce((a, g) => a + g.rows.length, 0);
+  const label = (txt) => `<span class="xaxis-toggle-label">${txt}</span>`;
+  const rk = de ? "Rang" : "rank";
+
+  const body = missingData
+    ? `<p class="ip-hint">${de ? "ATR-Daten folgen mit dem nächsten Post-Close-Lauf." : "ATR data arrives with the next post-close run."}</p>`
+    : !groups.length
+      ? `<p class="ip-hint">${de ? "Keine Aktien – Filter lockern." : "No stocks – loosen the filters."}</p>`
+      : groups.map((g, i) => `<div class="lead-card ip-card"><div class="lead-card__head">
+          <span class="lead-rank">#${i + 1}</span>
+          <span class="lead-name">${g.kind === "theme" ? "Theme: " : ""}${esc(g.name)}</span>
+          <span class="lead-tag">${tfA} ${rk} ${g.ranks[0]} · ${tfB} ${rk} ${g.ranks[1]}</span>
+          <span class="lead-rank">${g.rows.length}</span>
+        </div><div class="lead-chips">${g.rows.map(r =>
+          `<span class="lead-chip" title="${esc(r.tv)}"><b>${esc(r.sym)}</b> ${leadDvol(r.dvol)} · ${r.atr.toFixed(1)} %</span>`).join("")}</div></div>`).join("");
+
+  const intro = de
+    ? `Industries${s.includeThemes ? " und Themes" : ""}, die nach ${tfA} <b>und</b> ${tfB} mindestens das gewählte Perzentil erreichen (Rang im eigenen Universum). Sortiert nach dem schwächeren der beiden Ränge; darin die Aktien mit Ø $-Volumen 50T und ATR% 14T über den Schwellen, absteigend nach $-Volumen. Jede Aktie erscheint nur einmal.`
+    : `Industries${s.includeThemes ? " and themes" : ""} at or above the chosen percentile on ${tfA} <b>and</b> ${tfB} (rank within their own universe). Sorted by the weaker of the two ranks; inside, stocks with avg $ volume 50D and ATR% 14D above the thresholds, by $ volume. Each stock appears once.`;
+
+  box.innerHTML = `<div class="heading-group"><h2>&#128293; In Play · ${H.label} · ${hz}</h2></div>
+    <p class="picks-subtitle">${intro}</p>
+    <div class="lead-bar">
+      <span class="lead-group">${label(`${tfA} ${de ? "Perzentil" : "percentile"}`)}<select class="lead-select" data-ip="pa">${opt(s.pct[0])}</select></span>
+      <span class="lead-group">${label(`${tfB} ${de ? "Perzentil" : "percentile"}`)}<select class="lead-select" data-ip="pb">${opt(s.pct[1])}</select></span>
+      <span class="lead-group">${label("$-Vol ≥")}<input class="lead-select ip-input" data-ip="dvol" inputmode="decimal" value="${s.minDvolM}"> ${de ? "Mio" : "M"}</span>
+      <span class="lead-group">${label("ATR% ≥")}<input class="lead-select ip-input" data-ip="atr" inputmode="decimal" value="${s.minAtr}"></span>
+      <label class="lead-group"><input type="checkbox" data-ip="themes"${s.includeThemes ? " checked" : ""}> ${de ? "Themes einbeziehen" : "Include themes"}</label>
+      <span class="lead-group lead-actions">
+        <button class="top20-btn ip-txt-btn" title="${de ? "TradingView: Watchlist → Liste importieren. Je Gruppe eine ###Sektion." : "TradingView: watchlist → import list. One ###section per group."}">⬇ .txt</button>
+        <button class="top20-btn ip-copy-btn" title="${de ? "Alle Ticker kommasepariert in die Zwischenablage" : "All tickers comma-separated to the clipboard"}">⧉ ${de ? "Kopieren" : "Copy"}</button>
+      </span>
+    </div>
+    <p class="picks-subtitle lead-meta">${de ? "Stand" : "As of"} ${leadersDataDate()} · ${nStocks} ${de ? "Aktien in" : "stocks in"} ${groups.length} ${de ? "Gruppen" : "groups"}</p>
+    ${body}`;
+
+  box.querySelectorAll("[data-ip]").forEach(el => el.onchange = () => {
+    prefSet(`ip_${sub}_${el.dataset.ip}`, el.type === "checkbox" ? (el.checked ? "1" : "0") : el.value.trim());
+    renderInPlayHorizon(sub);
+  });
+  const txtBtn = box.querySelector(".ip-txt-btn"), copyBtn = box.querySelector(".ip-copy-btn");
+  txtBtn.onclick = () => inPlayExport(txtBtn, "txt");
+  copyBtn.onclick = () => inPlayExport(copyBtn, "copy");
+}
+
+function inPlayExport(btn, mode) {
+  const groups = _ipLast?.groups || [];
+  const de = ipDe();
+  if (!groups.length) { showToast(de ? "Keine Aktien – Filter lockern" : "No stocks – loosen the filters"); return; }
+  const n = groups.reduce((a, g) => a + g.rows.length, 0);
+  if (mode === "copy") {
+    navigator.clipboard.writeText(_IP.clipboardText(groups)).then(() => {
+      flashDone(btn);
+      showToast(de ? `${n} Ticker kopiert!` : `${n} tickers copied!`);
+    });
+    return;
+  }
+  const blob = new Blob([_IP.tvText(groups)], { type: "text/plain" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `inplay_${_IP.HORIZONS[_ipLast.sub].file}_${leadersDataDate()}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  showToast(de ? `Watchlist mit ${n} Tickern gespeichert` : `Watchlist with ${n} tickers saved`);
+}
+
 // Trade-Plan + Earnings je Watchlist-Eintrag (nur Lab).
 function labEnrich(e) {
   const b = _leadersBars?.tickers?.[leadSym(e.ticker).replace(".", "-")];

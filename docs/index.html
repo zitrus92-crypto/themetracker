@@ -301,7 +301,15 @@
 
     <!-- Lab (versteckt, nur via ?lab freigeschaltet): Leader in Rising/Confirmed-Themes -->
     <section class="section-lab tab-panel hidden" data-panel="lab">
+      <!-- Unterreiter: Main = bisherige Ansicht, sonst Haltehorizont (static/inPlayHorizon.js) -->
+      <nav class="sub-nav lab-subnav" id="lab-subnav">
+        <button class="sub-btn active" data-ipsub="main">Main</button>
+        <button class="sub-btn" data-ipsub="day">1T ∩ 1W · Day</button>
+        <button class="sub-btn" data-ipsub="swing">1W ∩ 1M · Swing</button>
+        <button class="sub-btn" data-ipsub="position">1M ∩ 3M · Position</button>
+      </nav>
       <div id="lab-container"></div>
+      <div id="inplay-container" class="hidden"></div>
     </section>
 
     <!-- Themes of the day (static/todMetrics.js + static/todView.js) -->
